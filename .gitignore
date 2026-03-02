@@ -1,5 +1,6 @@
 # Google Sites exported files (kept locally for reference)
-*.html
+/*.html
+!_layouts/*.html
 extracted_*.txt
 extract_content.py
 未使用のテーマ.txt

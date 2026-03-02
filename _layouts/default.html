@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: 'ja' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
+  <meta name="description" content="{{ page.description | default: site.description }}">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="{{ '/' | relative_url }}" class="site-title">
+        <span class="name-ja">佐藤健一</span>
+        <span class="affiliation">滋賀大学 データサイエンス学系</span>
+      </a>
+      <button class="nav-toggle" aria-label="メニューを開く">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="site-nav">
+        <a href="{{ '/' | relative_url }}" {% if page.url == '/' or page.url == '/index.html' %}class="active"{% endif %}>近況</a>
+        <a href="{{ '/gallery.html' | relative_url }}" {% if page.url == '/gallery.html' %}class="active"{% endif %}>展示</a>
+        <a href="{{ '/laboratory.html' | relative_url }}" {% if page.url == '/laboratory.html' %}class="active"{% endif %}>ゼミ</a>
+        <a href="{{ '/cv.html' | relative_url }}" {% if page.url == '/cv.html' %}class="active"{% endif %}>略歴</a>
+        <a href="{{ '/papers.html' | relative_url }}" {% if page.url == '/papers.html' %}class="active"{% endif %}>論文</a>
+        <a href="{{ '/english.html' | relative_url }}" {% if page.url == '/english.html' %}class="active"{% endif %}>English</a>
+        <a href="https://ksatohds.github.io/nmfkc/" class="nav-external">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <div class="container">
+      {{ content }}
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; Kenichi Satoh, Shiga University</p>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelector('.nav-toggle').addEventListener('click', function() {
+      document.querySelector('.site-nav').classList.toggle('open');
+      this.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

@@ -60,6 +60,21 @@ img {
   border-radius: var(--radius);
 }
 
+/* Constrain all content images to 200px height */
+.hero-image img,
+.photo-card img,
+.en-hero img {
+  max-height: 200px;
+  width: auto;
+  object-fit: cover;
+}
+
+.gallery-item img {
+  max-height: 200px;
+  width: 100%;
+  object-fit: cover;
+}
+
 /* ============================================
    Header & Navigation
    ============================================ */
