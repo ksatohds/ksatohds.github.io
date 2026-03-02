@@ -1,0 +1,29 @@
+title: "佐藤健一 | Kenichi Satoh"
+description: "滋賀大学データサイエンス学系 教授"
+url: "https://ksatohds.github.io"
+baseurl: ""
+lang: ja
+
+markdown: kramdown
+kramdown:
+  input: GFM
+
+exclude:
+  - "*.html"
+  - "extracted_*.txt"
+  - "未使用のテーマ.txt"
+  - extract_content.py
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - .gitignore
+
+include:
+  - _layouts
+  - _includes
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

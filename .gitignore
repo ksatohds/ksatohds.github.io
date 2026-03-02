@@ -1,0 +1,15 @@
+# Google Sites exported files (kept locally for reference)
+*.html
+extracted_*.txt
+extract_content.py
+未使用のテーマ.txt
+
+# Jekyll build
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+
+# OS files
+Thumbs.db
+.DS_Store
