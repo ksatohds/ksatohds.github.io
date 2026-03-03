@@ -5,12 +5,14 @@ title: English
 
 <div class="en-hero">
   <img src="{{ 'image/c88ccdea44afc2eecacd46729793fbb0.jpg' | relative_url }}" alt="Kenichi Satoh">
-  <h1>Kenichi SATOH, Ph.D.</h1>
-  <h2>Professor</h2>
-  <h3>Associate Dean of Faculty of Data Science</h3>
-  <h3>Shiga University, JAPAN</h3>
-  <p><a href="https://www.ds.shiga-u.ac.jp/">https://www.ds.shiga-u.ac.jp/</a></p>
-  <p><a href="https://www.shiga-u.ac.jp/">https://www.shiga-u.ac.jp/</a></p>
+  <div>
+    <h1>Kenichi SATOH, Ph.D.</h1>
+    <h2>Professor</h2>
+    <h3>Associate Dean of Faculty of Data Science</h3>
+    <h3>Shiga University, JAPAN</h3>
+    <p><a href="https://www.ds.shiga-u.ac.jp/">https://www.ds.shiga-u.ac.jp/</a></p>
+    <p><a href="https://www.shiga-u.ac.jp/">https://www.shiga-u.ac.jp/</a></p>
+  </div>
 </div>
 
 <div class="section">
