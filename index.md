@@ -5,7 +5,7 @@ title: 近況
 
 <div class="hero">
   <div class="hero-image">
-    <img src="{{ 'home/3553071e19389fe70fbf8f42ab909d95.jpg' | relative_url }}" alt="佐藤健一 彦根駅前">
+    <img src="{{ 'image/3553071e19389fe70fbf8f42ab909d95.jpg' | relative_url }}" alt="佐藤健一 彦根駅前">
     <p class="photo-caption">彦根駅前 2024/05/29</p>
   </div>
   <div class="hero-content">

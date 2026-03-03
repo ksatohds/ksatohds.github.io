@@ -7,7 +7,7 @@ title: ゼミ
   <h2 class="section-title">ゼミ</h2>
 
   <div class="photo-card">
-    <img src="{{ 'Laboratory/0137a537d55c987b2280e74c488db6f3.jpg' | relative_url }}" alt="彦根城">
+    <img src="{{ 'image/0137a537d55c987b2280e74c488db6f3.jpg' | relative_url }}" alt="彦根城">
     <p class="photo-caption">&larr; 彦根城 2025/04/11</p>
   </div>
 
@@ -19,7 +19,7 @@ title: ゼミ
   </div>
 
   <h3>ゼミ紹介</h3>
-  <p>ホームページなどからNotebookLMから生成した紹介動画と，<a href="https://drive.google.com/file/d/1MR4rceUkxSpTg_8PickP-OrfrYNifPk9/view?usp=sharing">Deep Researchによる調査結果</a>です．詳しいことは，直接お尋ねください．</p>
+  <p>ホームページなどからNotebookLMから生成した紹介動画と，<a href="{{ 'image/deep_research.pdf' | relative_url }}">Deep Researchによる調査結果</a>です．詳しいことは，直接お尋ねください．</p>
 </div>
 
 <div class="section">

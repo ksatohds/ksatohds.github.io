@@ -4,7 +4,7 @@ title: English
 ---
 
 <div class="en-hero">
-  <img src="{{ 'English/c88ccdea44afc2eecacd46729793fbb0.jpg' | relative_url }}" alt="Kenichi Satoh">
+  <img src="{{ 'image/c88ccdea44afc2eecacd46729793fbb0.jpg' | relative_url }}" alt="Kenichi Satoh">
   <h1>Kenichi SATOH, Ph.D.</h1>
   <h2>Professor</h2>
   <h3>Associate Dean of Faculty of Data Science</h3>
@@ -32,10 +32,10 @@ title: English
   </div>
 
   <div class="photo-card">
-    <img src="{{ 'English/1bcd1fc2838e26e172ed1f8f5ae9d422.jpg' | relative_url }}" alt="DSAIR24 at University of Canberra">
+    <img src="{{ 'image/1bcd1fc2838e26e172ed1f8f5ae9d422.jpg' | relative_url }}" alt="DSAIR24 at University of Canberra">
     <p class="photo-caption">Data Science and AI &amp; Robotics (DSAIR24) @University of Canberra, 19 July 2024</p>
   </div>
-  <p><a href="https://drive.google.com/file/d/1HtdjzhWTH4LDMplzcWilAEKRYTYSLA-o/view?usp=sharing">DSAIR24 Presentation</a></p>
+  <p><a href="{{ 'image/dsair24_presentation.pdf' | relative_url }}">DSAIR24 Presentation</a></p>
 </div>
 
 <div class="section">

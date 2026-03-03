@@ -8,7 +8,7 @@ title: 略歴
 
   <div class="card" style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start;">
     <div style="flex: 0 0 auto;">
-      <img src="{{ 'c-v/c5c94d16fd47f40c566739f70009a821.jpg' | relative_url }}" alt="佐藤健一" class="photo-card" style="max-height: 200px; width: auto;">
+      <img src="{{ 'image/c5c94d16fd47f40c566739f70009a821.jpg' | relative_url }}" alt="佐藤健一" class="photo-card">
     </div>
     <div style="flex: 1 1 300px;">
       <p>佐藤　健一(さとうけんいち) 滋賀大学データサイエンス学部副学部長・教授．広島大学大学院 理学研究科 数学専攻修了．博士（理学）．広島大学原爆放射線医科学研究所准教授を経て現職．専門は統計学．応用統計学会学会賞（優秀論文賞）を3度受賞．2023年に『実況!Rで学ぶ医療・製薬系データサイエンスセミナー』を出版．</p>
