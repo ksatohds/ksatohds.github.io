@@ -24,16 +24,6 @@ title: 近況
   </div>
 </div>
 
-<div class="two-col mb-4">
-  <div class="photo-card">
-    <img src="{{ 'home/793bf7ab5254d1d7f89a6cc8c8e81cf0.jpg' | relative_url }}" alt="応用統計学会論文賞">
-    <p class="photo-caption">応用統計学会論文賞@北海道大学 2023/04/22</p>
-  </div>
-  <div class="photo-card">
-    <img src="{{ 'home/243d923da1eeec5d0524e00780be29bc.jpg' | relative_url }}" alt="招待講演 東京大学">
-    <p class="photo-caption">招待講演@東京大学 2024/09/18</p>
-  </div>
-</div>
 
 <div class="section">
   <h2 class="section-title">近況</h2>
