@@ -93,8 +93,8 @@ title: 展示
   <h2 class="section-title">■カナダの365日の気温変化</h2>
 
   <div class="card">
-    <img src="{{ 'gallery/76dbf4e89cd44e3bbb6f45655a0ebc80.jpg' | relative_url }}" alt="カナダの365日の気温変化" style="max-width: 100%; height: auto;">
-    <p>カナダの35観測地点における365日の日平均気温が，fdaパッケージの<a href="https://rdrr.io/cran/fda/man/CanadianWeather.html">CanadianWeather</a>として提供されている．観測地点の位置情報を用いた基底数2の非負値行列因子分解を適用することで，観測されていない地点における365日の気温を予測し，GIFアニメーションとして示す．</p>
+    <a href="https://x.gd/KUBhB"><img src="{{ 'gallery/76dbf4e89cd44e3bbb6f45655a0ebc80.jpg' | relative_url }}" alt="カナダの365日の気温変化" style="max-width: 100%; height: auto;"></a>
+    <p>カナダの35観測地点における365日の日平均気温が，fdaパッケージの<a href="https://rdrr.io/cran/fda/man/CanadianWeather.html">CanadianWeather</a>として提供されている．観測地点の位置情報を用いた基底数2の非負値行列因子分解を適用することで，観測されていない地点における365日の気温を予測し，<a href="https://x.gd/KUBhB">GIFアニメーション</a>として示す．画像クリックでアニメが開始．</p>
   </div>
 </div>
 
@@ -102,7 +102,7 @@ title: 展示
   <h2 class="section-title">■北条氏政の花押の経時変化</h2>
 
   <div class="card">
-    <img src="{{ 'gallery/0e9b10e2e844555adf878d15b8f62f2d.jpg' | relative_url }}" alt="北条氏政の花押の経時変化" style="max-width: 100%; height: auto;">
-    <p><a href="https://wwwap.hi.u-tokyo.ac.jp/ships/w19/search">東京大学史料編纂所の花押データベース</a>から，北条氏政の1558年から1588年までの31年間96枚の花押画像を用いて基底数を3とする非負値行列因子分解を適用した．</p>
+    <a href="https://x.gd/SGJNt"><img src="{{ 'gallery/0e9b10e2e844555adf878d15b8f62f2d.jpg' | relative_url }}" alt="北条氏政の花押の経時変化" style="max-width: 100%; height: auto;"></a>
+    <p><a href="https://wwwap.hi.u-tokyo.ac.jp/ships/w19/search">東京大学史料編纂所の花押データベース</a>から，北条氏政の1558年から1588年までの31年間96枚の花押画像を用いて基底数を3とする非負値行列因子分解を適用した．左に5つの基底画像によって近似・平滑化された花押を，右に元の花押画像を<a href="https://x.gd/SGJNt">GIFアニメーション</a>として示す．画像クリックでアニメが開始．初期において幅広だった花押が徐々に傾いていく様子が分かる．</p>
   </div>
 </div>
