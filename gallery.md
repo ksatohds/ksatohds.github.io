@@ -18,6 +18,7 @@ title: 展示
           <a href="https://doi.org/10.1007/s42081-025-00314-0">NMF-VAR (JJSDS, 2025)</a>
           <a href="http://arxiv.org/abs/2510.10375">NMF-LAB (arXiv, 2025)</a>
           <a href="http://arxiv.org/abs/2512.18250">NMF-SEM (arXiv, 2025)</a>
+          <a href="http://arxiv.org/abs/2603.01468">NMF-RE (arXiv, 2026)</a>
           <a href="https://ksatohds.github.io/nmfkc/">R package</a>
         </div>
       </div>
