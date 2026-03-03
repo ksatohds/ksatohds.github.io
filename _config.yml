@@ -9,7 +9,6 @@ kramdown:
   input: GFM
 
 exclude:
-  - "*.html"
   - "extracted_*.txt"
   - "未使用のテーマ.txt"
   - extract_content.py
@@ -17,10 +16,7 @@ exclude:
   - Gemfile
   - Gemfile.lock
   - .gitignore
-
-include:
-  - _layouts
-  - _includes
+  - CLAUDE.md
 
 defaults:
   - scope:
