@@ -76,7 +76,7 @@ title: 展示
 
   <div class="card">
     <p>NHK歴史探偵「情報戦 関ヶ原」, BSプレミアム「決戦！関ヶ原II大名たちの野望」の取材時に提供された関ケ原の戦いの3か月前の書状のメタデータを用いて，書状のやり取りをネットワーク分析により視覚化した．吉川広家は東軍と西軍の両方につながっている．吉川は毛利家の家臣で，毛利家存続のため、徳川方と内通していたことが知られている(<a href="https://ja.wikipedia.org/wiki/%E5%90%89%E5%B7%9D%E5%BA%83%E5%AE%B6">Wikipedia</a>)．</p>
-    <p><img src="{{ 'image/network1600.jpg' | relative_url }}" alt="ネットワーク図" style="max-width: 100%; height: auto;"></p>
+    <p><a href="{{ 'image/letter_network20220629.pdf' | relative_url }}"><img src="{{ 'image/network1600.jpg' | relative_url }}" alt="ネットワーク図" style="max-width: 100%; height: auto;"></a></p>
   </div>
 </div>
 
@@ -85,7 +85,7 @@ title: 展示
 
   <div class="card">
     <p><a href="https://www.pref.shiga.lg.jp/ippan/shigotosangyou/kanko/317747.html">滋賀県観光統計調査</a>によるアンケート調査の結果をネットワーク分析により視覚化した．調査地点からこれから行く予定の場所の経路をつないだ．経路が多い調査地点は大きく表示し，媒介中心性を用いたコミュニティ検出を行い色を付けた．</p>
-    <p><img src="{{ 'image/shiga_route.jpg' | relative_url }}" alt="周遊ネットワーク図" style="max-width: 100%; height: auto;"></p>
+    <p><a href="{{ 'image/sightseeing_network.pdf' | relative_url }}"><img src="{{ 'image/shiga_route.jpg' | relative_url }}" alt="周遊ネットワーク図" style="max-width: 100%; height: auto;"></a></p>
   </div>
 </div>
 
