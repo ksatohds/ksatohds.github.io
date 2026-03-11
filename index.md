@@ -29,6 +29,8 @@ title: 近況
   <h2 class="section-title">近況</h2>
   <div class="card">
     <ul class="news-list">
+      <li><span class="news-tag book">書籍</span><a href="https://www.gakujutsu.co.jp/product/978-4-7806-1414-5/">生成AIを活用したデータサイエンス入門</a>が刊行</li>
+      <li><span class="news-tag tv">TV</span>NHK歴史探偵の撮影取材完了（放送は5月？）</li>
       <li><span class="news-tag research">研究</span>フジシール財団の2026年度パッケージ・イノベーション研究助成 採択</li>
       <li><span class="news-tag award">受賞</span>DS学部・2025年度春学期ベストティーチャー賞（2年・基礎統計活用演習A）</li>
       <li><span class="news-tag media">メディア</span><a href="https://news.yahoo.co.jp/articles/672a0baa346e0d8fc5f84f8e34cdd4432b150aab">Yahoo!ニュース</a> 朝日新聞を引用</li>

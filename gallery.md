@@ -62,6 +62,17 @@ title: 展示
     </div>
 
     <div class="gallery-item">
+      <img src="{{ 'image/isbn978-4-7806-1414-5.jpg' | relative_url }}" alt="生成AIを活用したデータサイエンス入門">
+      <div class="gallery-body">
+        <h3>■生成AIを活用したデータサイエンス入門</h3>
+        <div class="gallery-links">
+          <a href="https://www.gakujutsu.co.jp/product/978-4-7806-1414-5/">学術図書出版社</a>
+          <a href="https://www.amazon.co.jp/dp/4780614147/">Amazon</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="gallery-item">
       <img src="{{ 'image/5ee2403f49bab53df1e2bfbc92966087.jpg' | relative_url }}" alt="WEBアプリケーション">
       <div class="gallery-body">
         <h3>■WEBアプリケーション</h3>
