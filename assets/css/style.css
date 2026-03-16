@@ -479,6 +479,27 @@ img {
 .lab-tag.research   { background: #e3f2fd; color: #1565c0; }
 .lab-tag.data       { background: #f3e5f5; color: #6a1b9a; }
 
+.seminar-header {
+  border-left: 4px solid #64b5f6;
+  background: linear-gradient(135deg, #e3f2fd 0%, var(--color-white) 40%);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+
+.seminar-header h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 4px 0;
+}
+
+.seminar-header .seminar-subtitle {
+  font-size: 0.95rem;
+  color: var(--color-text-light);
+  margin: 0;
+}
+
 /* ============================================
    English Page
    ============================================ */
