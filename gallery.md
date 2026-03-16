@@ -28,7 +28,7 @@ title: 展示
       <img src="{{ 'image/090376127020c9bd990a747cf1f7e372.jpg' | relative_url }}" alt="講義資料">
       <div class="gallery-body">
         <h3>■講義資料</h3>
-        <p><a href="https://www.dropbox.com/scl/fo/q7r0bae7ipalfyqyn1t9c/AEwtMC_bFBPmOT0tAnGMN60?rlkey=41xf70360awswghps76593ig0&st=j3xul1af&dl=0">DropBox資料</a> (<a href="https://x.gd/rY727">短縮URL</a>)</p>
+        <p><a href="https://www.dropbox.com/scl/fo/q7r0bae7ipalfyqyn1t9c/AEwtMC_bFBPmOT0tAnGMN60?rlkey=41xf70360awswghps76593ig0&st=j3xul1af&dl=0">DropBox資料</a> (<a href="https://x.gd/rY727">https://x.gd/rY727</a>)</p>
         <ul>
           <li>回帰分析と一般化線形モデル</li>
           <li>成長曲線モデルと変化係数</li>
