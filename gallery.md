@@ -85,6 +85,15 @@ title: 展示
 </div>
 
 <div class="section">
+  <h2 class="section-title">■非負値行列因子分解の計算過程</h2>
+
+  <div class="card">
+    <a href="{{ 'image/nmf_convergence.gif' | relative_url }}"><img src="{{ 'image/nmf_convergence.jpg' | relative_url }}" alt="非負値行列因子分解の計算過程" style="max-width: 100%; height: auto;"></a>
+    <p>非負値行列因子分解(NMF)は，非負の観測行列Yを2つの非負行列の積Y≈X×Bに分解する手法である．6人の食品購入データ(Y)を基底数2で分解する例を示す．乗法更新則により行列XとBが反復的に更新され，XBがYに近づいていく過程をアニメーションで示した．Rパッケージ<a href="https://ksatohds.github.io/nmfkc/">nmfkc</a>として実装されている．画像クリックでアニメが開始．</p>
+  </div>
+</div>
+
+<div class="section">
   <h2 class="section-title">■書状ネットワーク</h2>
 
   <div class="card">
