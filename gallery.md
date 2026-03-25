@@ -34,6 +34,7 @@ title: 展示
           <li>成長曲線モデルと変化係数</li>
           <li>非負値行列因子分解</li>
           <li>生存時間解析</li>
+          <li>NMFネットワーク分析</li>
           <li>Rマークダウン</li>
         </ul>
         <p><a href="https://chatgpt.com/g/g-67f47ee647d081918d6c4888d33f425a-nmfzhi-wen-xiang">NMF質問箱</a> (院生限定)</p>
