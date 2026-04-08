@@ -40,6 +40,7 @@ title: 近況
   <h2 class="section-title">■研究・社会連携</h2>
   <div class="card">
     <ul class="news-list">
+      <li><span class="news-tag talk">講演</span>村田製作所@八日市工場 においてAIに関する講演</li>
       <li><span class="news-tag paper">論文</span>NMFの統計的推測の手法を提案し，<a href="https://arxiv.org/abs/2603.01468">arXiv</a>で公開</li>
       <li><span class="news-tag research">研究</span>フジシール財団・研究助成に採択</li>
       <li><span class="news-tag research">研究</span>Psychometrikaの特集号のproposal通過</li>
