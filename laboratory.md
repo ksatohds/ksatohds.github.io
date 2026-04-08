@@ -7,8 +7,8 @@ title: ゼミ
   <h2 class="section-title">ゼミ</h2>
 
   <div class="photo-card">
-    <img src="{{ 'image/0137a537d55c987b2280e74c488db6f3.jpg' | relative_url }}" alt="彦根城">
-    <p class="photo-caption">&larr; 彦根城 2025/04/11</p>
+    <a href="{{ 'image/night_sakura20260408.jpg' | relative_url }}"><img src="{{ 'image/night_sakura20260408.jpg' | relative_url }}" alt="夜桜" style="max-height: 150px; cursor: zoom-in;"></a>
+    <p class="photo-caption">&larr; 夜桜 2026/04/09</p>
   </div>
 
   <div class="seminar-header">
