@@ -73,7 +73,7 @@ title: ゼミ
   <h2 class="section-title">■開講時限</h2>
 
   <div class="card card-schedule">
-    <p>木2限（学部3年），木3限（学部4年），水2限（修士2年），火？（修士1年）</p>
+    <p>木2限（学部3年），木3限（学部4年），水2限（修士2年），水3限（修士1年）</p>
   </div>
 </div>
 
