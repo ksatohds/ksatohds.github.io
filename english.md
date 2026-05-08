@@ -46,11 +46,11 @@ title: English
   <div class="card">
     <ul>
       <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, in press. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
-      <li>R package for NMF: nmfkc, officially registered on <a href="https://cran.r-project.org/web/packages/nmfkc/index.html">CRAN</a> (Apr 2026); see also <a href="https://ksatohds.github.io/nmfkc/">https://ksatohds.github.io/nmfkc/</a></li>
       <li><strong class="author-highlight">K. Satoh</strong>: Applying Non-negative Matrix Factorization with Covariates to the Longitudinal Data as Growth Curve Model. <a class="pub-link" href="https://arxiv.org/abs/2403.05359">arXiv</a></li>
       <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, in press.</li>
       <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to structural equation modeling for blind input-output analysis. <a class="pub-link" href="https://arxiv.org/abs/2512.18250">arXiv</a></li>
       <li><strong class="author-highlight">K. Satoh</strong>: Wild bootstrap inference for non-negative matrix factorization with random effects. <a class="pub-link" href="https://arxiv.org/abs/2603.01468">arXiv</a></li>
+      <li>R package for NMF: nmfkc, officially registered on <a href="https://cran.r-project.org/web/packages/nmfkc/index.html">CRAN</a> (Apr 2026); see also <a href="https://ksatohds.github.io/nmfkc/">https://ksatohds.github.io/nmfkc/</a></li>
     </ul>
   </div>
 </div>
