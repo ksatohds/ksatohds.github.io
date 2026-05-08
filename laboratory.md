@@ -22,7 +22,7 @@ title: ゼミ
   </div>
 
   <h3>ゼミ紹介</h3>
-  <p>ホームページなどからNotebookLMから生成した紹介動画と，<a href="{{ 'image/deep_research.pdf' | relative_url }}">Deep Researchによる調査結果</a>です．詳しいことは，直接お尋ねください．</p>
+  <p>ホームページなどからNotebookLMから生成した紹介動画です．詳しいことは，直接お尋ねください．</p>
 </div>
 
 <div class="section">
