@@ -30,7 +30,6 @@ title: 論文
   <h2 class="section-title">■学術論文</h2>
   <div class="card">
     <ol class="pub-list" reversed>
-      <li>関口浩至, 星野宗勲, <strong class="author-highlight">佐藤健一</strong> : 2023年台風第6号（KHANUN）がもたらした伊是名村の想定を超えた被害―統計的テキスト解析を用いた可視化の試み―, 地区防災計画学会誌, 34, 2025.</li>
       <li><strong class="author-highlight">K. Satoh</strong> : Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, inpress.</li>
       <li><strong class="author-highlight">K. Satoh</strong> : Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, inpress. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
       <li>T. Nakama, T. Umemura, S. Hoshino, M. Tamashiro, <strong class="author-highlight">K. Satoh</strong>, H. Sekiguchi: Mechanical Power to Predict Ventilator Liberation in Patients with a Tracheostomy, Respiratory Care, in press. <a class="pub-link" href="https://doi.org/10.1089/respcare.12237">DOI</a></li>
