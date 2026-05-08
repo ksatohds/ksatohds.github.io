@@ -5,11 +5,8 @@ title: 論文
 
 <div class="section">
   <div class="card">
-    <div class="video-wrapper">
-      <iframe src="https://www.youtube.com/embed/DPT5I2FyQeQ" allowfullscreen></iframe>
-    </div>
     <p class="mt-2" style="font-size:0.9rem; line-height:1.8;">
-      大まかに解説しています．メールを頂ければ論文のPDFをお送りしますので，遠慮なくご連絡ください．&#x1F646;
+      メールを頂ければ論文のPDFをお送りしますので，遠慮なくご連絡ください．&#x1F646;
       <a href="https://researchmap.jp/read0046045?lang=ja">Researchmap</a>には学会の抄録や，ここで紹介していない日本語の論文も含まれています．
     </p>
   </div>
