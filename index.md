@@ -31,6 +31,7 @@ title: 近況
     <ul class="news-list">
       <li><span class="news-tag book">書籍</span><a href="https://www.gakujutsu.co.jp/product/978-4-7806-1414-5/">生成AIを活用したデータサイエンス入門</a>が刊行</li>
       <li><span class="news-tag tv">TV</span>NHK歴史探偵の撮影取材完了（放送は5月？）</li>
+      <li><span class="news-tag paper">論文</span>教師あり分類の手法がJJSDに受理</li>
       <li><span class="news-tag research">研究</span>フジシール財団の2026年度パッケージ・イノベーション研究助成 採択</li>
     </ul>
   </div>
@@ -40,6 +41,7 @@ title: 近況
   <h2 class="section-title">■研究・社会連携</h2>
   <div class="card">
     <ul class="news-list">
+      <li><span class="news-tag paper">論文</span>教師あり分類の手法がJapanese Journal of Statistics and Data Scienceに受理 2026年5月</li>
       <li><span class="news-tag talk">講演</span>村田製作所@八日市工場 においてAIに関する講演</li>
       <li><span class="news-tag paper">論文</span>NMFの統計的推測の手法を提案し，<a href="https://arxiv.org/abs/2603.01468">arXiv</a>で公開</li>
       <li><span class="news-tag research">研究</span>フジシール財団・研究助成に採択</li>

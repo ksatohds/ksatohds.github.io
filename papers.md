@@ -20,7 +20,6 @@ title: 論文
   <div class="card">
     <ul class="pub-list">
       <li><strong class="author-highlight">K. Satoh</strong>: Applying Non-negative Matrix Factorization with Covariates to the Longitudinal Data as Growth Curve Model. <a class="pub-link" href="https://arxiv.org/abs/2403.05359">arXiv</a></li>
-      <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification. <a class="pub-link" href="https://arxiv.org/abs/2510.10375">arXiv</a></li>
       <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to structural equation modeling for blind input-output analysis. <a class="pub-link" href="https://arxiv.org/abs/2512.18250">arXiv</a></li>
       <li><strong class="author-highlight">K. Satoh</strong>: Wild bootstrap inference for non-negative matrix factorization with random effects. <a class="pub-link" href="https://arxiv.org/abs/2603.01468">arXiv</a></li>
     </ul>
@@ -32,6 +31,7 @@ title: 論文
   <div class="card">
     <ol class="pub-list" reversed>
       <li>関口浩至, 星野宗勲, <strong class="author-highlight">佐藤健一</strong> : 2023年台風第6号（KHANUN）がもたらした伊是名村の想定を超えた被害―統計的テキスト解析を用いた可視化の試み―, 地区防災計画学会誌, 34, 2025.</li>
+      <li><strong class="author-highlight">K. Satoh</strong> : Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, inpress.</li>
       <li><strong class="author-highlight">K. Satoh</strong> : Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, inpress. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
       <li>T. Nakama, T. Umemura, S. Hoshino, M. Tamashiro, <strong class="author-highlight">K. Satoh</strong>, H. Sekiguchi: Mechanical Power to Predict Ventilator Liberation in Patients with a Tracheostomy, Respiratory Care, in press. <a class="pub-link" href="https://doi.org/10.1089/respcare.12237">DOI</a></li>
       <li>A. Jimura, H. Ohno, Y. Nakao and <strong class="author-highlight">K. Satoh</strong>: A New Approach to the Manuscripts and Editions of The Canterbury Tales: With Special Reference to Speght's Editions, English Research Association of Hiroshima (ERA), Vols. 41 &amp; 42, Nos. 1 &amp; 2. pp. 3-22.</li>
