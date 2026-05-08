@@ -29,10 +29,6 @@ title: English
 <div class="section">
   <h2 class="section-title">Our Previous Research</h2>
 
-  <div class="video-wrapper">
-    <iframe src="https://www.youtube.com/embed/EHoHQXeUSZQ" title="Our Previous Research" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-  </div>
-
   <div class="photo-card">
     <img src="{{ 'image/1bcd1fc2838e26e172ed1f8f5ae9d422.jpg' | relative_url }}" alt="DSAIR24 at University of Canberra">
     <p class="photo-caption">Data Science and AI &amp; Robotics (DSAIR24) @University of Canberra, 19 July 2024</p>
