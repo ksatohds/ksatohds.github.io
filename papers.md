@@ -16,17 +16,6 @@ title: 論文
 </div>
 
 <div class="section">
-  <h2 class="section-title">■arXiv</h2>
-  <div class="card">
-    <ul class="pub-list">
-      <li><strong class="author-highlight">K. Satoh</strong>: Applying Non-negative Matrix Factorization with Covariates to the Longitudinal Data as Growth Curve Model. <a class="pub-link" href="https://arxiv.org/abs/2403.05359">arXiv</a></li>
-      <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to structural equation modeling for blind input-output analysis. <a class="pub-link" href="https://arxiv.org/abs/2512.18250">arXiv</a></li>
-      <li><strong class="author-highlight">K. Satoh</strong>: Wild bootstrap inference for non-negative matrix factorization with random effects. <a class="pub-link" href="https://arxiv.org/abs/2603.01468">arXiv</a></li>
-    </ul>
-  </div>
-</div>
-
-<div class="section">
   <h2 class="section-title">■学術論文</h2>
   <div class="card">
     <ol class="pub-list" reversed>
