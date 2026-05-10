@@ -43,16 +43,11 @@ title: 近況
     <ul class="news-list">
       <li><span class="news-tag paper">論文</span>教師あり分類の手法がJapanese Journal of Statistics and Data Scienceに受理 2026年5月</li>
       <li><span class="news-tag talk">講演</span>村田製作所@八日市工場 においてAIに関する講演</li>
-      <li><span class="news-tag paper">論文</span>NMFの統計的推測の手法を提案し，<a href="https://arxiv.org/abs/2603.01468">arXiv</a>で公開</li>
       <li><span class="news-tag research">研究</span>フジシール財団・研究助成に採択</li>
-      <li><span class="news-tag research">研究</span>Psychometrikaの特集号のproposal通過</li>
-      <li><span class="news-tag paper">論文</span>琉球大との共同研究が<a href="https://gakkai.chiku-bousai.jp/">地区防災計画学会誌</a>に受理</li>
-      <li><span class="news-tag paper">論文</span>SEMの手法を提案し，<a href="https://arxiv.org/abs/2512.18250">arXiv</a>で公開</li>
       <li><span class="news-tag media">メディア</span><a href="https://news.yahoo.co.jp/articles/672a0baa346e0d8fc5f84f8e34cdd4432b150aab">Yahoo!ニュース</a> 朝日新聞を引用</li>
       <li><span class="news-tag media">新聞</span>毎日新聞「<a href="https://mainichi.jp/articles/20251031/ddl/k25/040/151000c">科学で迫る「菅浦文書」　滋賀大教授ら花押を分析</a>」</li>
       <li><span class="news-tag media">新聞</span><a href="https://www.asahi.com/articles/ASTC64JWRTC6PTJB00HM.html">朝日新聞</a>「誰の花押? データ科学で解析 滋賀⼤ 国宝の⽂書に挑んだ成果展」</li>
       <li><span class="news-tag exhibition">展示</span>花押×データサイエンス―国宝「菅浦文書」への挑戦@経済学部附属史料館 10/14-11/14</li>
-      <li><span class="news-tag paper">論文</span>教師あり分類の手法を提案し，<a href="https://arxiv.org/abs/2510.10375">arXiv</a>で公開</li>
       <li><span class="news-tag talk">講演</span>計算機統計セミナー@大阪医大 9月下旬</li>
       <li><span class="news-tag talk">講演</span>東北大学・統計科学セミナー 9月上旬</li>
       <li><span class="news-tag paper">論文</span>論文が<a href="https://doi.org/10.1007/s42081-025-00314-0">Japanese Journal of Statistics and Data Science</a>に受理 2025年8月</li>
