@@ -31,7 +31,7 @@ title: 近況
     <ul class="news-list">
       <li><span class="news-tag paper">論文</span>教師あり分類の手法がJapanese Journal of Statistics and Data Scienceに受理 2026年5月</li>
       <li><span class="news-tag talk">講演</span>村田製作所@八日市工場 においてAIに関する講演</li>
-      <li><span class="news-tag research">研究</span>フジシール財団・研究助成に採択</li>
+      <li><span class="news-tag research">研究</span>フジシール財団・研究助成に採択 2026年4月</li>
       <li><span class="news-tag media">メディア</span><a href="https://news.yahoo.co.jp/articles/672a0baa346e0d8fc5f84f8e34cdd4432b150aab">Yahoo!ニュース</a> 朝日新聞を引用</li>
       <li><span class="news-tag media">新聞</span>毎日新聞「<a href="https://mainichi.jp/articles/20251031/ddl/k25/040/151000c">科学で迫る「菅浦文書」　滋賀大教授ら花押を分析</a>」</li>
       <li><span class="news-tag media">新聞</span><a href="https://www.asahi.com/articles/ASTC64JWRTC6PTJB00HM.html">朝日新聞</a>「誰の花押? データ科学で解析 滋賀⼤ 国宝の⽂書に挑んだ成果展」</li>
