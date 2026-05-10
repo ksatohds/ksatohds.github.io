@@ -100,9 +100,9 @@ title: English
   <ol class="pub-list">
     <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, in press.</li>
 
-    <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, in press. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
+    <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, 9, 79-97, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
 
-    <li>T. Nakama et al.: Respiratory Care, in press. <a class="pub-link" href="https://doi.org/10.1089/respcare.12237">DOI</a></li>
+    <li>T. Nakama et al.: Respir Care, 70(8), 979-986, 2025. <a class="pub-link" href="https://doi.org/10.1089/respcare.12237">DOI</a></li>
 
     <li>A. Jimura et al.: ERA, Vols. 41 &amp; 42, pp. 3-22.</li>
 
