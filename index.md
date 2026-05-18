@@ -29,6 +29,7 @@ title: 近況
   <h2 class="section-title">■研究・社会連携</h2>
   <div class="card">
     <ul class="news-list">
+      <li><span class="news-tag media">放送</span>NHK歴史探偵「石山合戦」6/3水22:00-22:45</li>
       <li><span class="news-tag paper">論文</span>教師あり分類の手法がJapanese Journal of Statistics and Data Scienceに受理 2026年5月</li>
       <li><span class="news-tag talk">講演</span>村田製作所@八日市工場 においてAIに関する講演</li>
       <li><span class="news-tag research">研究</span>フジシール財団・研究助成に採択 2026年4月</li>
