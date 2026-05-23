@@ -14,7 +14,7 @@ title: 展示
         <h3>■非負値行列因子分解(NMF)</h3>
         <div class="gallery-links">
           <a href="https://doi.org/10.5023/jappstat.52.59">佐藤 (応用統計学,2023)</a>
-          <a href="https://doi.org/10.1007/s42081-025-00314-0">NMF-VAR (JJSDS, 2025)</a>
+          <a href="https://doi.org/10.1007/s42081-025-00314-0">NMF-VAR (JJSD, 2025)</a>
           <a href="http://arxiv.org/abs/2510.10375">NMF-LAB (JJSD, 2026)</a>
           <a href="https://ksatohds.github.io/nmfkc/">R package</a>
         </div>
