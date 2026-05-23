@@ -22,7 +22,7 @@ title: ゼミ
   </div>
 
   <h3>ゼミ紹介</h3>
-  <p>ホームページなどからNotebookLMから生成した紹介動画です．詳しいことは，直接お尋ねください．</p>
+  <p>NotebookLMで生成した紹介動画です．詳しいことは，直接お尋ねください．</p>
 </div>
 
 <div class="section">
