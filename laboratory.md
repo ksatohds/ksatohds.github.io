@@ -89,6 +89,6 @@ title: ゼミ
   <h2 class="section-title">■計算機環境</h2>
 
   <div class="card card-data">
-    <p>必要に応じて，ゼミのUbuntuワークステーションを学外からSSHで利用したり，ブラウザ越しにRStudio Serverも使うこともできます．ご相談ください．</p>
+    <p>必要に応じて，ゼミのUbuntuワークステーションを学外からSSHで利用したり，ブラウザ越しにRStudio Serverも使えます．ご相談ください．</p>
   </div>
 </div>
