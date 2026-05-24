@@ -75,7 +75,9 @@ title: 展示
       <img src="{{ 'image/5ee2403f49bab53df1e2bfbc92966087.jpg' | relative_url }}" alt="WEBアプリケーション">
       <div class="gallery-body">
         <h3>■WEBアプリケーション</h3>
-        <p>回帰木, 分類木: <a href="https://kenichi-satoh.shinyapps.io/CART/">Shiny App</a> (<a href="https://ksatoh.shinyapps.io/CART/">mirror</a>)</p>
+        <div class="gallery-links">
+          <a href="https://kenichi-satoh.shinyapps.io/CART/">回帰木・分類木 Shiny App</a>
+        </div>
       </div>
     </div>
 
