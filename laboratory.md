@@ -37,7 +37,7 @@ title: ゼミ
   </div>
 
   <div class="card card-research">
-    <p><span class="lab-tag research">研究</span>学術的な研究として，<a href="https://www.dropbox.com/scl/fo/q7r0bae7ipalfyqyn1t9c/AEwtMC_bFBPmOT0tAnGMN60?rlkey=wh58ufufdgxyv88cre38qmiye&st=8gcw7ioz&dl=0">非負値行列因子分解</a>(NMF)の統計的利用に興味があります．機械学習と統計学を埋める領域になります．これまでに，ベクトル自己回帰，教師あり分類，構造方程式(SEM)の手法を開発しました．NMFのR<a href="https://ksatohds.github.io/nmfkc/">パッケージ</a>も開発しています．</p>
+    <p><span class="lab-tag research">研究</span>学術的な研究として，<a href="https://www.dropbox.com/scl/fo/q7r0bae7ipalfyqyn1t9c/AEwtMC_bFBPmOT0tAnGMN60?rlkey=wh58ufufdgxyv88cre38qmiye&st=8gcw7ioz&dl=0">非負値行列因子分解</a>(NMF)の統計的利用に興味があります．機械学習と統計学を埋める領域になります．これまでに，ベクトル自己回帰，教師あり分類の論文が国際誌に受理されています．また，NMFのR<a href="https://ksatohds.github.io/nmfkc/">パッケージ</a>も開発しており，公式<a href="https://cran.r-project.org/web/packages/nmfkc/index.html">CRAN</a>から配布されています．</p>
   </div>
 
   <div class="card card-data">
