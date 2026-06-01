@@ -98,9 +98,9 @@ title: English
   <h2 class="section-title">Publication List (English)</h2>
 
   <ol class="pub-list">
-    <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, in press.</li>
-
     <li>T. Nakama, <strong class="author-highlight">K. Satoh</strong> et al.: Acute and Critical Care, in press.</li>
+
+    <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, in press.</li>
 
     <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, 9, 79-97, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
 
