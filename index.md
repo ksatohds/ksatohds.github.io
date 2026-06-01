@@ -29,7 +29,7 @@ title: 近況
   <h2 class="section-title">■研究・社会連携</h2>
   <div class="card">
     <ul class="news-list">
-      <li><span class="news-tag media">放送</span>NHK歴史探偵「石山合戦」6/3水22:00-22:45</li>
+      <li><span class="news-tag media">放送</span>NHK歴史探偵「信長最大の敵 大坂本願寺」6/3水22:00-22:45</li>
       <li><span class="news-tag paper">論文</span>教師あり分類の手法がJapanese Journal of Statistics and Data Scienceに受理 2026年5月</li>
       <li><span class="news-tag talk">講演</span>村田製作所@八日市工場 においてAIに関する講演</li>
       <li><span class="news-tag research">研究</span>フジシール財団・研究助成に採択 2026年4月</li>
@@ -41,7 +41,7 @@ title: 近況
       <li><span class="news-tag talk">講演</span>東北大学・統計科学セミナー 9月上旬</li>
       <li><span class="news-tag paper">論文</span>論文が<a href="https://doi.org/10.1007/s42081-025-00314-0">Japanese Journal of Statistics and Data Science</a>に受理 2025年8月</li>
       <li><span class="news-tag media">放送</span><a href="https://www.nhk.jp/p/rekishi-tantei/ts/VR22V15XWL/episode/te/2Z7QR3WJWG/">NHK歴史探偵「吉田松陰の教育力」</a> 4/2</li>
-      <li><span class="news-tag tv">TV出演まとめ</span><a href="https://www.nhk-ondemand.jp/goods/G2021114244SA000/">NHK歴史探偵「細かすぎ毛利元就」</a>, <a href="https://www.nhk-ondemand.jp/goods/G2022123781SA000/?np_banID=top_nw_m_123781">NHK歴史探偵「SNSの元祖!?正岡子規」</a>, <a href="https://www.nhk.jp/p/rekishi-tantei/ts/VR22V15XWL/episode/te/85NPJ89265/">NHK歴史探偵「情報戦 関ヶ原」</a>, <a href="https://www.nhk-ondemand.jp/goods/G2023126003SA000/">BSプレミアム「決戦！関ヶ原Ⅱ大名たちの野望」</a>, <a href="https://www.nhk.jp/p/rekishi-tantei/ts/VR22V15XWL/episode/te/6XVLZRRX8Q/">NHK歴史探偵「清少納言と枕草子」</a></li>
+      <li><span class="news-tag tv">TV出演まとめ</span><a href="https://www.nhk-ondemand.jp/goods/G2021114244SA000/">NHK歴史探偵「細かすぎ毛利元就」</a>, <a href="https://www.nhk-ondemand.jp/goods/G2022123781SA000/?np_banID=top_nw_m_123781">NHK歴史探偵「SNSの元祖!?正岡子規」</a>, <a href="https://www.nhk.jp/p/rekishi-tantei/ts/VR22V15XWL/episode/te/85NPJ89265/">NHK歴史探偵「情報戦 関ヶ原」</a>, <a href="https://www.nhk-ondemand.jp/goods/G2023126003SA000/">BSプレミアム「決戦！関ヶ原Ⅱ大名たちの野望」</a>, <a href="https://www.nhk.jp/p/rekishi-tantei/ts/VR22V15XWL/episode/te/6XVLZRRX8Q/">NHK歴史探偵「清少納言と枕草子」</a>, NHK歴史探偵「信長最大の敵 大坂本願寺」</li>
       <li><span class="news-tag collab">企業連携まとめ</span><a href="http://ohmi-dsi.jp/program/">2023年度 滋賀大学データサイエンス人材育成プログラム</a> 主担当 (2019〜)年5回3時間, <a href="http://www.pref.kyoto.jp/info/gyosei/soshiki/026/index.html">京都府政策企画部企画統計課</a>様への学術指導 (2019〜), <a href="https://www.tosoh.co.jp/">東ソー</a>様MI教育プログラム講師(2022, 2023)6回分, <a href="https://www.h2o-retailing.co.jp/ja/index.html">H2Oリテーリング</a>様との共同研究 2023, <a href="https://www.nalux.co.jp/">ナルックス</a>様への学術指導 2023, <a href="https://www.satokogyo.co.jp/">佐藤工業</a>様への学術指導(2024), <a href="https://toyo-system.co.jp/">東洋システム</a>様への学術指導(2025)</li>
     </ul>
   </div>
