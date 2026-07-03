@@ -171,12 +171,12 @@
     <div class="group" id="paramGroup" style="display:none">
       <h2 data-i18n="g_param">パラメータ</h2>
       <label class="field">
-        <span class="lab"><span data-i18n="p_minbucket">minbucket (葉の最小標本数)</span> <span class="val" id="minbucketVal">5</span></span>
-        <input type="range" id="minbucket" min="1" max="50" value="5" step="1">
+        <span class="lab"><span data-i18n="p_minbucket">minbucket (葉の最小標本数)</span> <span class="val" id="minbucketVal">7</span></span>
+        <input type="range" id="minbucket" min="1" max="50" value="7" step="1">
       </label>
       <label class="field">
-        <span class="lab"><span data-i18n="p_maxdepth">maxdepth (木の最大深さ)</span> <span class="val" id="maxdepthVal">4</span></span>
-        <input type="range" id="maxdepth" min="1" max="10" value="4" step="1">
+        <span class="lab"><span data-i18n="p_maxdepth">maxdepth (木の最大深さ)</span> <span class="val" id="maxdepthVal">2</span></span>
+        <input type="range" id="maxdepth" min="1" max="5" value="2" step="1">
       </label>
       <button class="run" id="run" data-i18n="run">分類木を構築</button>
       <div class="hint" data-i18n="hint">CART（Gini基準）で分類木を構築します。計算はすべてブラウザ内で完結し、データは外部送信されません。</div>
