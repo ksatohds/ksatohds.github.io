@@ -335,7 +335,12 @@ function uniqueVals(col){
 const CAT_MAX_LEVELS=10;
 // categorical if non-numeric, OR numeric but with few distinct values (e.g. 0/1/2, Likert 1-5)
 function isCatCol(col){return !isNumericCol(col)||uniqueVals(col).length<=CAT_MAX_LEVELS;}
-function typeTag(col){return isCatCol(col)?' ·cat('+uniqueVals(col).length+')':' ·num';}
+// tag: ·num = continuous, ·num(k) = numeric treated as categorical, ·cat(k) = string categorical
+function typeTag(col){
+  const u=uniqueVals(col).length;
+  if(isNumericCol(col))return u<=CAT_MAX_LEVELS?' ·num('+u+')':' ·num';
+  return ' ·cat('+u+')';
+}
 
 function buildVarUI(){
   const tsel=$('#target'),fsel=$('#features');
