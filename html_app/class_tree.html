@@ -335,7 +335,9 @@ function buildVarUI(){
   tsel.innerHTML='';fsel.innerHTML='';
   // target candidates: prefer categorical (non-numeric or few unique)
   DATA.cols.forEach(c=>{
-    const o=document.createElement('option');o.value=c;o.textContent=c;tsel.appendChild(o);
+    const o=document.createElement('option');o.value=c;
+    o.textContent=c+(isNumericCol(c)?' ·num':' ·cat('+uniqueVals(c).length+')');
+    tsel.appendChild(o);
   });
   // pick default target: last column that looks categorical
   let defTarget=DATA.cols[DATA.cols.length-1];
