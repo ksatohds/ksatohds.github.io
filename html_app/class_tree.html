@@ -332,6 +332,10 @@ function uniqueVals(col){
   for(const r of DATA.rows){const v=r[col];if(v!=null&&String(v).trim()!=='')s.add(String(v).trim());}
   return [...s];
 }
+const CAT_MAX_LEVELS=10;
+// categorical if non-numeric, OR numeric but with few distinct values (e.g. 0/1/2, Likert 1-5)
+function isCatCol(col){return !isNumericCol(col)||uniqueVals(col).length<=CAT_MAX_LEVELS;}
+function typeTag(col){return isCatCol(col)?' ·cat('+uniqueVals(col).length+')':' ·num';}
 
 function buildVarUI(){
   const tsel=$('#target'),fsel=$('#features');
@@ -339,12 +343,12 @@ function buildVarUI(){
   // target candidates: prefer categorical (non-numeric or few unique)
   DATA.cols.forEach(c=>{
     const o=document.createElement('option');o.value=c;
-    o.textContent=c+(isNumericCol(c)?' ·num':' ·cat('+uniqueVals(c).length+')');
+    o.textContent=c+typeTag(c);
     tsel.appendChild(o);
   });
   // pick default target: last column that looks categorical
   let defTarget=DATA.cols[DATA.cols.length-1];
-  for(let i=DATA.cols.length-1;i>=0;i--){const c=DATA.cols[i];const u=uniqueVals(c).length;if((!isNumericCol(c)||u<=10)&&u>=2&&u<=20){defTarget=c;break;}}
+  for(let i=DATA.cols.length-1;i>=0;i--){const c=DATA.cols[i];const u=uniqueVals(c).length;if(isCatCol(c)&&u>=2&&u<=20){defTarget=c;break;}}
   tsel.value=defTarget;
   rebuildFeatureList();
   tsel.onchange=rebuildFeatureList;
@@ -369,8 +373,7 @@ function rebuildFeatureList(){
   DATA.cols.forEach(c=>{
     if(c===target)return;
     const o=document.createElement('option');o.value=c;
-    const numeric=isNumericCol(c);
-    o.textContent=c+(numeric?' ·num':' ·cat('+uniqueVals(c).length+')');
+    o.textContent=c+typeTag(c);
     o.selected=true;
     fsel.appendChild(o);
   });
@@ -399,9 +402,13 @@ function majorityClass(counts){
 const MISC='misc.';
 function buildTree(rows,target,features,minbucket,maxdepth,classes){
   const y=rows.map(r=>String(r[target]).trim());
-  // precompute feature types
+  // precompute feature types: numeric only if numeric AND many distinct values;
+  // low-cardinality numerics (0/1/2, Likert 1-5, ...) are treated as categorical.
   const ftype={};
-  features.forEach(f=>{ftype[f]=isNumericColRows(rows,f)?'num':'cat';});
+  features.forEach(f=>{
+    const distinct=new Set(rows.map(r=>String(r[f]).trim()).filter(v=>v!=='')).size;
+    ftype[f]=(isNumericColRows(rows,f)&&distinct>CAT_MAX_LEVELS)?'num':'cat';
+  });
   // for categorical features: keep top-5 levels by frequency, lump the rest into "misc."
   const keptLevels={};
   features.forEach(f=>{
