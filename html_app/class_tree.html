@@ -656,7 +656,7 @@ function renderTree(model,classes){
   const root=model.root;
   const nLeaves=layoutTree(root);
   const stats=treeStats(root);
-  const NODE_W=76, NODE_H=62, Y_GAP=92, LEG_H=26;
+  const NODE_W=76, NODE_H=66, Y_GAP=94, LEG_H=26;
   // per-node display: line1 "pred n=total", line2 counts, line3 probabilities(2dp)
   const lineOf=n=>({head:`${n.pred} n=${n.n}`,counts:classCountStr(n,classes),probs:classProbStr(n,classes,2)});
   let maxLen=0;
@@ -717,10 +717,13 @@ function renderTree(model,classes){
     });
     // border box around bar
     g.appendChild(el('rect',{x:bx,y:byTop,width:bw,height:bh,fill:'none',stroke:line,'stroke-width':1}));
-    // line1: pred (hard, colored) + n=total ; line2: counts ; line3: probabilities(2dp)
+    // 3-line info inside a rounded box: line1 "pred n=total", line2 counts, line3 probs(2dp)
     const predIdx=classes.indexOf(n.pred);
     const L=lineOf(n);
-    const y1=byTop+bh+12, y2=y1+11, y3=y2+11;
+    const y1=byTop+bh+14, y2=y1+11, y3=y2+11;
+    const infoChars=Math.max(L.head.length,L.counts.length,L.probs.length);
+    const boxW=Math.max(NODE_W,infoChars*6.3+14),boxTop=byTop+bh+4,boxH=y3+5-boxTop;
+    g.appendChild(el('rect',{x:NODE_W/2-boxW/2,y:boxTop,width:boxW,height:boxH,rx:8,ry:8,fill:panel,stroke:line,'stroke-width':1}));
     const lbl=el('text',{class:'treesub',x:NODE_W/2,y:y1,'text-anchor':'middle'});
     const t1=el('tspan',{});t1.textContent=n.pred+' ';t1.style.fill=clsColor(predIdx);t1.style.fontWeight='700';
     const t2=el('tspan',{});t2.textContent='n='+n.n;t2.style.fill=inkDim;
