@@ -565,13 +565,7 @@ function render(R){
   treeCard.appendChild(renderTree(model,classes));
   box.appendChild(treeCard);
 
-  // === distribution + importance (two cards) ===
-  const distCard=el('div',{class:'card'});
-  distCard.appendChild(el('h3',{text:t('sec_dist')}));
-  distCard.appendChild(el('div',{class:'desc',text:t('sec_dist_d')}));
-  distCard.appendChild(renderDist(dist,classes));
-  box.appendChild(distCard);
-
+  // === variable importance ===
   const impCard=el('div',{class:'card'});
   impCard.appendChild(el('h3',{text:t('sec_imp')}));
   impCard.appendChild(el('div',{class:'desc',text:t('sec_imp_d')}));
@@ -653,21 +647,21 @@ function figure(svgEl,basename){
   return wrap;
 }
 
+/* --- per-node class count / probability strings --- */
+function classCountStr(node,classes){return classes.map(c=>(node.counts[c]||0)).join('/');}
+function classProbStr(node,classes,dp){const d=(dp==null?2:dp);return classes.map(c=>((node.counts[c]||0)/node.n).toFixed(d)).join('/');}
+
 /* --- tree SVG --- */
 function renderTree(model,classes){
   const root=model.root;
   const nLeaves=layoutTree(root);
   const stats=treeStats(root);
-  const NODE_W=76, NODE_H=48, Y_GAP=74, LEG_H=26;
-  // per-node display strings: pred (soft probs) / n=total (per-class counts)
-  const nodeLines=n=>{
-    const probs=classes.map(c=>((n.counts[c]||0)/n.n).toFixed(3)).join('/');
-    const counts=classes.map(c=>(n.counts[c]||0)).join('/');
-    return {probs,counts,predLine:`${n.pred} (${probs})`,nLine:`n=${n.n} (${counts})`};
-  };
+  const NODE_W=76, NODE_H=62, Y_GAP=92, LEG_H=26;
+  // per-node display: line1 "pred n=total", line2 counts, line3 probabilities(2dp)
+  const lineOf=n=>({head:`${n.pred} n=${n.n}`,counts:classCountStr(n,classes),probs:classProbStr(n,classes,2)});
   let maxLen=0;
-  (function scan(n){const L=nodeLines(n);maxLen=Math.max(maxLen,L.predLine.length,L.nLine.length);if(!n.isLeaf){scan(n.left);scan(n.right);}})(root);
-  const colW=Math.max(NODE_W,maxLen*6.0)+22;
+  (function scan(n){const L=lineOf(n);maxLen=Math.max(maxLen,L.head.length,L.counts.length,L.probs.length);if(!n.isLeaf){scan(n.left);scan(n.right);}})(root);
+  const colW=Math.max(NODE_W,maxLen*6.6)+18;
   const treeW=Math.max(nLeaves*colW+40, 360);
   let legW=12;classes.forEach(c=>{legW+=16+String(c).length*7+18;});
   const width=Math.max(treeW,legW);
@@ -723,18 +717,16 @@ function renderTree(model,classes){
     });
     // border box around bar
     g.appendChild(el('rect',{x:bx,y:byTop,width:bw,height:bh,fill:'none',stroke:line,'stroke-width':1}));
-    // predicted class (hard) + soft probabilities
+    // line1: pred (hard, colored) + n=total ; line2: counts ; line3: probabilities(2dp)
     const predIdx=classes.indexOf(n.pred);
-    const L=nodeLines(n);
-    const lbl=el('text',{class:'treesub',x:NODE_W/2,y:byTop+bh+14,'text-anchor':'middle'});
-    const t1=el('tspan',{});t1.textContent=n.pred;t1.style.fill=clsColor(predIdx);t1.style.fontWeight='700';
-    const t2=el('tspan',{});t2.textContent=' ('+L.probs+')';t2.style.fill=inkDim;
-    lbl.appendChild(t1);lbl.appendChild(t2);
-    g.appendChild(lbl);
-    // n total + per-class counts
-    const sub=el('text',{class:'treesub',x:NODE_W/2,y:byTop+bh+26,'text-anchor':'middle'});
-    sub.style.fill=inkDim;sub.textContent=L.nLine;
-    g.appendChild(sub);
+    const L=lineOf(n);
+    const y1=byTop+bh+12, y2=y1+11, y3=y2+11;
+    const lbl=el('text',{class:'treesub',x:NODE_W/2,y:y1,'text-anchor':'middle'});
+    const t1=el('tspan',{});t1.textContent=n.pred+' ';t1.style.fill=clsColor(predIdx);t1.style.fontWeight='700';
+    const t2=el('tspan',{});t2.textContent='n='+n.n;t2.style.fill=inkDim;
+    lbl.appendChild(t1);lbl.appendChild(t2);g.appendChild(lbl);
+    const c2=el('text',{class:'treesub',x:NODE_W/2,y:y2,'text-anchor':'middle'});c2.style.fill=inkDim;c2.textContent=L.counts;g.appendChild(c2);
+    const c3=el('text',{class:'treesub',x:NODE_W/2,y:y3,'text-anchor':'middle'});c3.style.fill=inkFaint;c3.textContent=L.probs;g.appendChild(c3);
     gNodes.appendChild(g);
 
     // split condition label (above children midpoint)
@@ -753,41 +745,6 @@ function fmtNum(x){
   if(Math.abs(x)>=100)return x.toFixed(0);
   if(Math.abs(x)>=1)return x.toFixed(2);
   return x.toPrecision(3);
-}
-
-/* --- target distribution: pie chart with count + % legend --- */
-function renderDist(dist,classes){
-  const total=classes.reduce((s,c)=>s+dist[c],0)||1;
-  const R=68,cx=88,cy=96;
-  const labels=classes.map(c=>`${c}  ${dist[c]} (${(100*dist[c]/total).toFixed(1)}%)`);
-  let legW=0;labels.forEach(l=>legW=Math.max(legW,l.length*6.6+26));
-  const W=cx+R+28+legW, H=Math.max(2*cy, classes.length*22+40);
-  const svg=el('svg',{width:W,height:H,viewBox:`0 0 ${W} ${H}`});
-  const inkDim=getComputedStyle(document.documentElement).getPropertyValue('--ink-dim').trim();
-  const bg=getComputedStyle(document.documentElement).getPropertyValue('--panel').trim()||'#fff';
-  // slices
-  let a0=-Math.PI/2;
-  classes.forEach((c,k)=>{
-    const frac=dist[c]/total;if(frac<=0)return;
-    const a1=a0+frac*2*Math.PI;
-    if(frac>=0.9999){
-      svg.appendChild(el('circle',{cx,cy,r:R,fill:clsColor(k)}));
-    }else{
-      const large=frac>0.5?1:0;
-      const x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0);
-      const x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);
-      svg.appendChild(el('path',{d:`M${cx},${cy} L${x0.toFixed(2)},${y0.toFixed(2)} A${R},${R} 0 ${large},1 ${x1.toFixed(2)},${y1.toFixed(2)} Z`,fill:clsColor(k),stroke:bg,'stroke-width':1.5}));
-    }
-    a0=a1;
-  });
-  // legend (swatch + class + count + %)
-  const lx=cx+R+22;let ly=Math.max(24,(H-classes.length*22)/2+14);
-  classes.forEach((c,k)=>{
-    svg.appendChild(el('rect',{x:lx,y:ly-10,width:12,height:12,rx:2,fill:clsColor(k)}));
-    const tx=el('text',{class:'treesub',x:lx+18,y:ly});tx.style.fill=inkDim;tx.textContent=labels[k];svg.appendChild(tx);
-    ly+=22;
-  });
-  return figure(svg,'target_distribution');
 }
 
 /* --- variable importance --- */
@@ -843,7 +800,7 @@ function renderRules(model,classes){
   function walk(n,conds){
     if(n.isLeaf){
       const path=conds.length?conds.join('  AND  '):'(root)';
-      lines.push({path,pred:n.pred,n:n.n,depth:n.depth});
+      lines.push({path,node:n});
       return;
     }
     const cL=n.splitType==='num'?`${n.feature} < ${fmtNum(n.thr)}`:`${n.feature} = ${n.level}`;
@@ -856,8 +813,8 @@ function renderRules(model,classes){
   lines.forEach(l=>{
     const cond=document.createElement('span');cond.className='cond';cond.textContent=l.path;
     const arrow=document.createTextNode('  →  ');
-    const leaf=document.createElement('span');leaf.className='leaf';leaf.textContent=l.pred;
-    const nn=document.createElement('span');nn.className='n';nn.textContent=`  (n=${l.n})`;
+    const leaf=document.createElement('span');leaf.className='leaf';leaf.textContent=`${l.node.pred} n=${l.node.n}`;
+    const nn=document.createElement('span');nn.className='n';nn.textContent=` (${classCountStr(l.node,classes)}) ${classProbStr(l.node,classes,2)}`;
     pre.appendChild(cond);pre.appendChild(arrow);pre.appendChild(leaf);pre.appendChild(nn);
     pre.appendChild(document.createTextNode('\n'));
   });
@@ -917,7 +874,7 @@ function buildLog(R){
   L.push('');
   L.push('[Decision rules]');
   (function walk(n,conds){
-    if(n.isLeaf){L.push('  '+(conds.length?conds.join(' AND '):'(root)')+' -> '+n.pred+' (n='+n.n+')');return;}
+    if(n.isLeaf){L.push('  '+(conds.length?conds.join(' AND '):'(root)')+' -> '+n.pred+' n='+n.n+' ('+classCountStr(n,classes)+') '+classProbStr(n,classes,2));return;}
     const cL=n.splitType==='num'?`${n.feature} < ${fmtNum(n.thr)}`:`${n.feature} = ${n.level}`;
     const cR=n.splitType==='num'?`${n.feature} >= ${fmtNum(n.thr)}`:`${n.feature} != ${n.level}`;
     walk(n.left,conds.concat(cL));walk(n.right,conds.concat(cR));
