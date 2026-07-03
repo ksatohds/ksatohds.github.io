@@ -202,6 +202,7 @@
 <footer>
   <span class="credit" data-i18n-html="f_model">CART (Gini) · 分類木</span>
   <span class="credit"><b data-i18n="f_org">滋賀大学データサイエンス学系</b> · <span data-i18n="f_name">佐藤健一</span></span>
+  <button class="dl" id="saveApp" style="margin-left:auto" data-i18n="save_app">💾 このHTMLを保存</button>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -232,7 +233,7 @@ const I18N={
     hint:'CART（Gini基準）で分類木を構築します。計算はすべてブラウザ内で完結し、データは外部送信されません。',
     ph_main:'左でCSVを読み込むか、デモデータ (iris) を試してください。',
     ph_sub:'目的変数（カテゴリ）と説明変数を選び、CART分類木を構築します。葉ノードにはクラス別の構成が棒グラフで表示されます。',
-    f_model:'CART (Gini) · 分類木',
+    f_model:'CART (Gini) · 分類木', save_app:'💾 このHTMLを保存',
     f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一',
     m_acc:'正解率', m_nodes:'ノード数', m_leaves:'葉の数', m_depth:'深さ', m_n:'標本数',
     sec_tree:'分類木', sec_tree_d:'各分岐は条件を満たすと左（Yes）へ進みます。葉ノードの棒グラフはクラス構成、下の数字は標本数です。',
@@ -268,7 +269,7 @@ const I18N={
     hint:'Builds a CART classification tree (Gini). Everything runs in your browser; no data is uploaded.',
     ph_main:'Load a CSV on the left, or try the demo data (iris).',
     ph_sub:'Choose a categorical target and features to build a CART tree. Each leaf shows its class composition as a bar chart.',
-    f_model:'CART (Gini) · classification tree',
+    f_model:'CART (Gini) · classification tree', save_app:'💾 Save this HTML',
     f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
     m_acc:'Accuracy', m_nodes:'Nodes', m_leaves:'Leaves', m_depth:'Depth', m_n:'Samples',
     sec_tree:'Classification tree', sec_tree_d:'At each split, samples meeting the condition go left (Yes). Leaf bar charts show class composition; the number below is the sample count.',
@@ -1125,6 +1126,17 @@ $('#run').onclick=run;
 
 $('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
 $('#themetog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.setAttribute('data-theme',b.dataset.theme);$$('#themetog button').forEach(x=>x.classList.toggle('on',x===b));if(LAST)render(LAST);});
+
+// save this self-contained app to a local .html file (fetches its own pristine source)
+async function saveSelf(){
+  try{
+    const res=await fetch(location.href.split('?')[0]);
+    const html=await res.text();
+    const name=(location.pathname.split('/').pop()||'class_tree.html');
+    saveBlob(new Blob([html],{type:'text/html;charset=utf-8'}),name);
+  }catch(e){toast('保存に失敗しました: '+e.message);}
+}
+$('#saveApp').onclick=saveSelf;
 
 // open in a given language via URL, e.g. ?lang=en (default: ja)
 (function(){try{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='ja')LANG=q;}catch(e){}})();
