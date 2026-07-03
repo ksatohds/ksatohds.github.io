@@ -184,7 +184,7 @@
       <button class="dl" id="demo" style="width:100%;margin-top:4px" data-i18n="demo_btn">◇ デモデータを読み込む</button>
     </div>
 
-    <div class="group">
+    <div class="group" id="paramGroup" style="display:none">
       <h2 data-i18n="g_param">パラメータ</h2>
       <label class="field">
         <span class="lab"><span data-i18n="p_rank">階数 Q (基底数=クラスタ数)</span> <span class="val" id="rankVal">2</span></span>
@@ -211,7 +211,7 @@
       </label>
     </div>
 
-    <div class="group">
+    <div class="group" id="constrGroup" style="display:none">
       <h2 data-i18n="g_constr">制約・前処理</h2>
       <div class="checkline">
         <input type="checkbox" id="wnorm" checked>
@@ -225,8 +225,10 @@
       </div>
     </div>
 
-    <button class="run" id="run" disabled>分解を実行</button>
-    <div class="hint" data-i18n-html="hint"></div>
+    <div id="runGroup" style="display:none">
+      <button class="run" id="run" disabled>分解を実行</button>
+      <div class="hint" data-i18n-html="hint"></div>
+    </div>
   </aside>
 
   <main class="stage" id="stage">
@@ -741,6 +743,7 @@ function ingest(text,fname){
     if(d.P<1||d.N<1){toast(t('toast_nonum'));return;}
     if(d.negCount>0)toast(t('toast_neg').replace('{n}',d.negCount));
     d.fname=fname||'demo';DATA=d;refreshMeta();$('#run').disabled=false;
+    $('#paramGroup').style.display='';$('#constrGroup').style.display='';$('#runGroup').style.display='';
   }catch(e){toast(t('toast_parsefail').replace('{m}',e.message));}
 }
 function refreshMeta(){
