@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NMF Explorer — 非負値行列因子分解</title>
+<style>
+  :root{
+    --bg:#0f1417; --panel:#161d21; --panel-2:#1c252a; --line:#2a353b;
+    --ink:#e8eef0; --ink-dim:#8b9ba1; --ink-faint:#5b6a70;
+    --cyan:#4fd6c8; --cyan-deep:#2a9e93; --amber:#e8a54b; --violet:#9d8cf0; --danger:#e06a6a;
+    --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Menlo",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  }
+  html[data-theme="light"]{
+    --bg:#ffffff; --panel:#f6f8f9; --panel-2:#edf1f3; --line:#d8e0e3;
+    --ink:#141c20; --ink-dim:#4e5d63; --ink-faint:#7f8d93;
+    --cyan:#0f9a8d; --cyan-deep:#0b7468; --amber:#b07617; --violet:#6250c8; --danger:#cf4a4a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--cyan)}
+
+  header{border-bottom:1px solid var(--line);padding:22px 28px 20px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+  .langtog{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-family:var(--mono);font-size:11px;align-self:center;flex-shrink:0}
+  .langtog button{background:transparent;color:var(--ink-dim);border:none;padding:5px 11px;cursor:pointer;letter-spacing:.06em;transition:background .12s,color .12s}
+  .langtog button:hover{color:var(--ink)}
+  .langtog button.on{background:var(--cyan);color:#062522;font-weight:700}
+  .brand{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:10px}
+  .brand .glyph{font-size:17px;letter-spacing:0;color:var(--ink)}
+  h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .subtitle{color:var(--ink-dim);font-size:13px;margin-left:auto;font-family:var(--mono)}
+  .eq{font-family:var(--mono);color:var(--ink-dim);font-size:13px;margin-left:auto}
+  .eq b{color:var(--amber);font-weight:600}
+  .eq i{color:var(--violet);font-style:normal;font-weight:600}
+  .eq .y{color:var(--cyan);font-weight:600}
+
+  .wrap{display:grid;grid-template-columns:320px 1fr;gap:0;min-height:calc(100vh - 64px)}
+  .control{border-right:1px solid var(--line);padding:22px;background:var(--panel)}
+  .stage{padding:22px 28px;overflow:auto}
+  @media (max-width:820px){.wrap{grid-template-columns:1fr}.control{border-right:none;border-bottom:1px solid var(--line)}}
+
+  .group{margin-bottom:22px}
+  .group h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 11px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .group h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .dropzone{border:1px dashed var(--line);border-radius:8px;padding:20px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:var(--panel-2)}
+  .dropzone:hover{border-color:var(--cyan-deep)}
+  .dropzone.drag{border-color:var(--cyan);background:#17272a}
+  .dropzone .big{font-size:13px;color:var(--ink);margin-bottom:4px}
+  .dropzone .small{font-size:11.5px;color:var(--ink-faint);font-family:var(--mono)}
+  input[type=file]{display:none}
+
+  .filemeta{margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);line-height:1.7;background:var(--panel-2);border-radius:6px;padding:8px 10px;display:none}
+  .filemeta.show{display:block}
+  .filemeta .k{color:var(--ink-faint)}
+  .filemeta .v{color:var(--cyan)}
+
+  label.field{display:block;margin-bottom:14px}
+  label.field .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--ink-dim);margin-bottom:6px;gap:8px}
+  label.field .lab .val{font-family:var(--mono);color:var(--cyan);font-size:12.5px;flex-shrink:0}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--line);border-radius:2px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--cyan-deep)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg)}
+  select,input[type=number]{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
+  select:focus,input[type=number]:focus{border-color:var(--cyan-deep)}
+  .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.45}
+  .checkline input{accent-color:var(--cyan);margin-top:2px}
+  .checkline .sub{display:block;color:var(--ink-faint);font-size:11px;font-family:var(--mono)}
+
+  .run{width:100%;padding:12px;border:none;border-radius:7px;background:var(--cyan);color:#062522;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--sans);letter-spacing:.02em;transition:filter .15s,transform .05s}
+  .run:hover{filter:brightness(1.08)}
+  .run:active{transform:translateY(1px)}
+  .run:disabled{background:var(--line);color:var(--ink-faint);cursor:not-allowed}
+  .run.busy{background:var(--amber);color:#2a1c05}
+  .hint{font-size:11.5px;color:var(--ink-faint);margin-top:10px;line-height:1.6}
+
+  .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-faint);text-align:center;gap:14px;padding:40px}
+  .placeholder .mark{font-family:var(--mono);font-size:44px;color:var(--line);letter-spacing:.05em}
+  .placeholder .mark .a{color:var(--cyan-deep)}
+  .placeholder .mark .b{color:var(--panel-2)}
+  .placeholder p{max-width:420px;font-size:13.5px;line-height:1.7}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:22px}
+  .metric{background:var(--panel);padding:13px 15px}
+  .metric .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .metric .v{font-family:var(--mono);font-size:20px;color:var(--ink);margin-top:3px;font-weight:600}
+  .metric .v small{font-size:12px;color:var(--ink-dim);font-weight:400}
+
+  .sechead{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 14px;display:flex;align-items:center;gap:10px}
+  .sechead::after{content:"";flex:1;height:1px;background:var(--line)}
+  .sechead .badge{font-size:10px;padding:2px 8px;border-radius:4px;letter-spacing:.06em}
+  .badge.x{background:rgba(232,165,75,.15);color:var(--amber)}
+  .badge.b{background:rgba(157,140,240,.15);color:var(--violet)}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:20px}
+  .card h3{font-size:14px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:9px}
+  .card h3 .tag{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+  .tag.x{background:rgba(232,165,75,.15);color:var(--amber)}
+  .tag.b{background:rgba(157,140,240,.15);color:var(--violet)}
+  .tag.y{background:rgba(79,214,200,.15);color:var(--cyan)}
+  .card .desc{font-size:12px;color:var(--ink-dim);margin:0 0 14px;font-family:var(--mono)}
+
+  canvas{display:block;max-width:100%}
+  .canvas-scroll{overflow-x:auto;border-radius:6px}
+  .legend{display:flex;align-items:center;gap:10px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+  .legend .bar{height:9px;width:120px;border-radius:2px}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:1100px){.twocol{grid-template-columns:1fr}}
+
+  .tablewrap{overflow:auto;max-height:340px;border:1px solid var(--line);border-radius:6px}
+  table{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;width:100%}
+  th,td{padding:5px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{position:sticky;top:0;background:var(--panel-2);color:var(--ink-dim);font-weight:600;z-index:1}
+  td:first-child,th:first-child{text-align:left;color:var(--ink-dim);position:sticky;left:0;background:var(--panel-2)}
+  tbody td{color:var(--ink)}
+  td.hardcell{color:#062522;font-weight:700}
+  tr.sep td{border-top:2px solid var(--line)}
+  tr.prow td{color:#8fb7bd;font-style:italic}
+  tr.prow td:first-child{font-style:normal}
+
+  .clusum{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:16px}
+  .clu{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .clu .sw{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+  .clu b{color:var(--ink);font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;max-height:220px;overflow:auto;padding:2px}
+  .chip{font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:4px;border:1px solid;background:transparent;cursor:default}
+
+  .downloads{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .dl{font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);color:var(--cyan);cursor:pointer;transition:border-color .15s}
+  .dl:hover{border-color:var(--cyan-deep)}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:11px 18px;border-radius:7px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:50;display:none;max-width:90vw}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.25);border-top-color:#2a1c05;border-radius:50%;animation:spin .6s linear infinite;vertical-align:-2px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  footer{border-top:1px solid var(--line);padding:16px 28px;color:var(--ink-faint);font-size:12px;font-family:var(--mono);display:flex;gap:10px 20px;flex-wrap:wrap;align-items:center}
+  footer .credit{color:var(--ink-dim)}
+  footer .credit b{color:var(--ink);font-weight:600}
+  footer .credit .pw{color:var(--cyan-deep)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="langtog" id="langtog">
+    <button data-lang="ja">JA</button>
+    <button data-lang="en" class="on">EN</button>
+  </div>
+  <div class="langtog" id="themetog">
+    <button data-theme="dark" class="on" title="Dark">☾</button>
+    <button data-theme="light" title="Light">☀</button>
+  </div>
+  <div class="brand"><span class="glyph">◧</span>NMF&nbsp;EXPLORER</div>
+  <h1 data-i18n="h1">非負値行列因子分解</h1>
+  <div class="eq" data-i18n-html="eq"></div>
+</header>
+
+<div class="wrap">
+  <aside class="control">
+
+    <div class="group">
+      <h2 data-i18n="g_data">データ</h2>
+      <div class="dropzone" id="drop">
+        <div class="big" data-i18n="drop_big">CSVをドロップ / クリック</div>
+        <div class="small" data-i18n="drop_small">rows = 特徴量(P) · cols = サンプル(N)</div>
+      </div>
+      <input type="file" id="file" accept=".csv,.tsv,.txt">
+      <div class="filemeta" id="meta"></div>
+      <div class="checkline" style="margin-top:12px">
+        <input type="checkbox" id="hasHeader" checked>
+        <label for="hasHeader"><span data-i18n="cb_header">1行目を列名として扱う</span></label>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="hasRowname" checked>
+        <label for="hasRowname"><span data-i18n="cb_rowname">1列目を行名として扱う</span></label>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="transpose">
+        <label for="transpose"><span data-i18n="cb_transpose">行列を転置してから分解</span>
+          <span class="sub" data-i18n="cb_transpose_sub">Y → Yᵀ (行と列を入れ替え)</span></label>
+      </div>
+      <button class="dl" id="demo" style="width:100%;margin-top:4px" data-i18n="demo_btn">◇ デモデータを読み込む</button>
+    </div>
+
+    <div class="group">
+      <h2 data-i18n="g_param">パラメータ</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_rank">階数 Q (基底数=クラスタ数)</span> <span class="val" id="rankVal">2</span></span>
+        <input type="range" id="rank" min="1" max="10" value="2" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_maxit">最大反復回数</span> <span class="val" id="maxitVal">300</span></span>
+        <input type="range" id="maxit" min="50" max="2000" value="300" step="50">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_eps">収束閾値 (相対)</span> <span class="val" id="epsVal">1e-5</span></span>
+        <input type="range" id="eps" min="2" max="7" value="5" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_seed">乱数シード</span></span>
+        <input type="number" id="seed" value="1" min="0" step="1">
+      </label>
+      <label class="field" style="margin-bottom:8px">
+        <span class="lab"><span data-i18n="p_init">Xの初期値</span></span>
+        <select id="init">
+          <option value="kmeans" data-i18n="init_kmeans">k-means (Yの列の重心)</option>
+          <option value="random" data-i18n="init_random">一様乱数</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="group">
+      <h2 data-i18n="g_constr">制約・前処理</h2>
+      <div class="checkline">
+        <input type="checkbox" id="wnorm" checked>
+        <label for="wnorm"><span data-i18n="cb_xnorm">Xの列和を1に制約</span>
+          <span class="sub" data-i18n="cb_xnorm_sub">更新式内で正規化・各基底を確率分布化</span></label>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="normcol">
+        <label for="normcol"><span data-i18n="cb_normcol">前処理: Yの列を合計1に正規化</span>
+          <span class="sub" data-i18n="cb_normcol_sub">転置指定時は転置後の列に適用</span></label>
+      </div>
+    </div>
+
+    <button class="run" id="run" disabled>分解を実行</button>
+    <div class="hint" data-i18n-html="hint"></div>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="placeholder" id="placeholder">
+      <div class="mark"><span class="a">▦</span> = <span class="b">▤</span><span class="a">▨</span></div>
+      <p><span data-i18n="ph_main">左でCSVを読み込むか、デモデータを試してください。</span><br>
+         <span style="color:var(--ink-dim)" data-i18n="ph_sub">行列 Y を Q 個の非負な基底 (X) と、その係数 (B) に分解し、両側からクラスタリングします。</span></p>
+    </div>
+  </main>
+</div>
+
+<footer>
+  <span data-i18n-html="f_model">モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)</span>
+  <span><span data-i18n="f_pkg">関連Rパッケージ: </span><a href="https://ksatohds.github.io/nmfkc/" target="_blank" rel="noopener">nmfkc</a></span>
+  <span class="credit">
+    <span data-i18n="f_org">滋賀大学データサイエンス学部</span> · <b data-i18n="f_name">佐藤健一</b> · <span class="pw">Powered by Claude Artifacts</span>
+  </span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let DATA=null, RESULT=null, LAST=null;
+const CLU=['#4fd6c8','#e8a54b','#9d8cf0','#6fcf6f','#e06a9c','#5ba3e0','#d9d24b','#e07a5a','#4fd6a0','#b08cf0','#8ac6d1','#f0a868'];
+const cluColor=k=>CLU[k%CLU.length];
+
+/* ================= i18n ================= */
+let LANG='en';
+const I18N={
+  ja:{
+    h1:'非負値行列因子分解',
+    subtitle:'',
+    eq:'<span class="y">Y</span> ≈ <b>X</b><i>B</i> &nbsp;<span style="color:var(--ink-faint)">(</span>Y: P×N, <b style="color:var(--amber)">X</b>: P×Q, <i style="color:var(--violet)">B</i>: Q×N &nbsp;→&nbsp; 各列 <span class="y">y</span> ≈ <b>X</b><i>b</i><span style="color:var(--ink-faint)">)</span>',
+    g_data:'データ', g_param:'パラメータ', g_constr:'制約・前処理',
+    drop_big:'CSVをドロップ / クリック', drop_small:'rows = 特徴量(P) · cols = サンプル(N)',
+    cb_header:'1行目を列名として扱う', cb_rowname:'1列目を行名として扱う',
+    cb_transpose:'行列を転置してから分解', cb_transpose_sub:'Y → Yᵀ (行と列を入れ替え)',
+    demo_btn:'◇ デモデータを読み込む',
+    p_rank:'階数 Q (基底数=クラスタ数)', p_maxit:'最大反復回数', p_eps:'収束閾値 (相対)',
+    p_seed:'乱数シード', p_init:'Xの初期値',
+    init_kmeans:'k-means (Yの列の重心)', init_random:'一様乱数',
+    cb_xnorm:'Xの列和を1に制約', cb_xnorm_sub:'更新式内で正規化・各基底を確率分布化',
+    cb_normcol:'前処理: Yの列を合計1に正規化', cb_normcol_sub:'転置指定時は転置後の列に適用',
+    run:'分解を実行', run_busy:'計算中…',
+    hint:'乗法更新則（Lee &amp; Seung, 二乗誤差版）で <span style="color:var(--amber)">X</span>·<span style="color:var(--violet)">B</span> を推定。各列は <span class="y">y</span> ≈ <span style="color:var(--amber)">X</span><span style="color:var(--violet)">b</span> という潜在変数による重回帰とみなせます。<span style="color:var(--amber)">X</span>の行を正規化すれば特徴量の、<span style="color:var(--violet)">B</span>の列を正規化すればサンプルの所属確率になります。計算はすべてブラウザ内で完結し、データは外部送信されません。',
+    ph_main:'左でCSVを読み込むか、デモデータを試してください。',
+    ph_sub:'行列 Y を Q 個の非負な基底 (X) と、その係数 (B) に分解し、両側からクラスタリングします。',
+    f_model:'モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)',
+    f_pkg:'関連Rパッケージ: ', f_org:'滋賀大学データサイエンス学部', f_name:'佐藤健一',
+    m_iters:'反復', m_size:'サイズ',
+    c_conv:'収束曲線', c_conv_d:'反復ごとの残差平方和。単調減少していれば正常に収束しています。',
+    c_X:'基底行列', c_X_d_base:'各列が1つの基底パターン', c_X_d_norm:'（列和=1・確率分布）', c_X_d_end:'。',
+    c_B:'係数行列', c_B_d:'各列（サンプル）が基底をどれだけ混ぜて構成されるか。',
+    c_recon:'再構成', c_recon_d:'左：元データ Y ／ 右：近似 XB。パターンが一致していれば良い分解です。',
+    lab_orig:'Y (元データ)', lab_approx:'XB (近似)',
+    leg_low:'low', leg_high:'high',
+    sec_feat_badge:'基底 X の行', sec_feat:'特徴量のクラスタリング',
+    sec_samp_badge:'係数 B の列', sec_samp:'サンプルのクラスタリング',
+    cc_hard:'ハードクラスタリング', cc_hard_d:'各{n}を、最も所属確率の高い基底に割り当てた結果。',
+    cc_table_tag:'最適値 / 所属確率 / ハード', cc_table_d:'上段=最適値／中段=所属確率(合計1)／最下行=ハード割当。',
+    tbl_X:'X テーブル', tbl_B:'B テーブル',
+    cluster_word:'Cluster', items:'件',
+    tbl_head_feat:'行 \\ 特徴量', tbl_head_samp:'行 \\ サンプル',
+    noun_feat:'特徴量', noun_samp:'サンプル',
+    dl_title:'ダウンロード',
+    dl_log:'.log (設定・計算結果)',
+    dl_X:'X.csv (基底)', dl_B:'B.csv (係数)',
+    dl_Xmem:'X_membership.csv (特徴量所属)', dl_Xhard:'X_hard.csv (特徴量割当)',
+    dl_Bmem:'B_membership.csv (サンプル所属)', dl_Bhard:'B_hard.csv (サンプル割当)',
+    dl_XB:'XB.csv (再構成)',
+    toast_demo:'デモデータを読み込みました (6×6 好み行列)',
+    toast_nonum:'数値データが読み取れませんでした',
+    toast_neg:'負の値が {n} 個あります。NMFは非負データ用です。',
+    toast_parsefail:'CSVの解析に失敗しました: {m}',
+    toast_calcerr:'計算エラー: {m}',
+    meta_file:'file', meta_loaded:'読込', meta_transposed:'転置後',
+    meta_nan:'非数値 {n} 個を 0 に置換'
+  },
+  en:{
+    h1:'Non-negative Matrix Factorization',
+    subtitle:'',
+    eq:'<span class="y">Y</span> ≈ <b>X</b><i>B</i> &nbsp;<span style="color:var(--ink-faint)">(</span>Y: P×N, <b style="color:var(--amber)">X</b>: P×Q, <i style="color:var(--violet)">B</i>: Q×N &nbsp;→&nbsp; each column <span class="y">y</span> ≈ <b>X</b><i>b</i><span style="color:var(--ink-faint)">)</span>',
+    g_data:'Data', g_param:'Parameters', g_constr:'Constraints & preprocessing',
+    drop_big:'Drop or click a CSV', drop_small:'rows = features (P) · cols = samples (N)',
+    cb_header:'Use first row as column names', cb_rowname:'Use first column as row names',
+    cb_transpose:'Transpose before factorization', cb_transpose_sub:'Y → Yᵀ (swap rows and columns)',
+    demo_btn:'◇ Load demo data',
+    p_rank:'Rank Q (bases = clusters)', p_maxit:'Max iterations', p_eps:'Convergence tol. (relative)',
+    p_seed:'Random seed', p_init:'Initial value of X',
+    init_kmeans:'k-means (centroids of Y columns)', init_random:'Uniform random',
+    cb_xnorm:'Constrain columns of X to sum to 1', cb_xnorm_sub:'normalized within updates; each basis becomes a distribution',
+    cb_normcol:'Preprocess: normalize columns of Y to sum 1', cb_normcol_sub:'applied after transpose when enabled',
+    run:'Run factorization', run_busy:'Computing…',
+    hint:'Estimates <span style="color:var(--amber)">X</span>·<span style="color:var(--violet)">B</span> via multiplicative updates (Lee &amp; Seung, squared error). Each column reads as a latent-variable regression <span class="y">y</span> ≈ <span style="color:var(--amber)">X</span><span style="color:var(--violet)">b</span>. Normalizing rows of <span style="color:var(--amber)">X</span> gives feature memberships; normalizing columns of <span style="color:var(--violet)">B</span> gives sample memberships. Everything runs in your browser; no data is uploaded.',
+    ph_main:'Load a CSV on the left, or try the demo data.',
+    ph_sub:'Factorize Y into Q non-negative bases (X) and coefficients (B), then cluster from both sides.',
+    f_model:'model: Y ≈ XB (Lee &amp; Seung multiplicative update)',
+    f_pkg:'related R package: ', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
+    m_iters:'iters', m_size:'size',
+    c_conv:'Convergence curve', c_conv_d:'Residual sum of squares per iteration. A monotone decrease means it is converging.',
+    c_X:'Basis matrix', c_X_d_base:'Each column is one basis pattern', c_X_d_norm:' (columns sum to 1; a distribution)', c_X_d_end:'.',
+    c_B:'Coefficient matrix', c_B_d:'How much each column (sample) mixes the bases.',
+    c_recon:'Reconstruction', c_recon_d:'Left: original Y. Right: approximation XB. Matching patterns indicate a good fit.',
+    lab_orig:'Y (original)', lab_approx:'XB (approx)',
+    leg_low:'low', leg_high:'high',
+    sec_feat_badge:'rows of X', sec_feat:'feature clustering',
+    sec_samp_badge:'columns of B', sec_samp:'sample clustering',
+    cc_hard:'Hard clustering', cc_hard_d:'Each {n} is assigned to the basis with the highest membership.',
+    cc_table_tag:'optimal / membership / hard', cc_table_d:'Top: optimal values. Middle: membership (sums to 1). Bottom: hard assignment.',
+    tbl_X:'X table', tbl_B:'B table',
+    cluster_word:'Cluster', items:'items',
+    tbl_head_feat:'row \\ feature', tbl_head_samp:'row \\ sample',
+    noun_feat:'feature', noun_samp:'sample',
+    dl_title:'Downloads',
+    dl_log:'.log (settings & metrics)',
+    dl_X:'X.csv (basis)', dl_B:'B.csv (coefficients)',
+    dl_Xmem:'X_membership.csv (feature membership)', dl_Xhard:'X_hard.csv (feature assignment)',
+    dl_Bmem:'B_membership.csv (sample membership)', dl_Bhard:'B_hard.csv (sample assignment)',
+    dl_XB:'XB.csv (reconstruction)',
+    toast_demo:'Loaded demo data (6×6 preference matrix)',
+    toast_nonum:'Could not read numeric data',
+    toast_neg:'Found {n} negative values. NMF expects non-negative data.',
+    toast_parsefail:'Failed to parse CSV: {m}',
+    toast_calcerr:'Computation error: {m}',
+    meta_file:'file', meta_loaded:'loaded', meta_transposed:'transposed',
+    meta_nan:'replaced {n} non-numeric values with 0'
+  }
+};
+function t(k){ const d=I18N[LANG]; return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k); }
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  const runBtn=$('#run'); if(runBtn && !runBtn.classList.contains('busy')) runBtn.textContent=t('run');
+  document.querySelectorAll('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  document.documentElement.lang=LANG;
+  if(DATA) refreshMeta();
+  if(LAST) render(LAST.res,LAST.data);
+}
+
+/* ================= math / IO ================= */
+let toastTimer=null;
+function toast(msg){const t2=$('#toast');t2.textContent=msg;t2.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t2.style.display='none',3500);}
+
+function rng(seed){let a=seed>>>0;return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+
+function parseCSV(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim();
+  const firstLine=text.split('\n')[0];
+  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
+  const rows=[];let row=[];let cur='';let q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(r=>r.length&&!(r.length===1&&r[0].trim()===''));
+}
+
+function buildMatrix(rows,hasHeader,hasRowname){
+  let colnames=null,rownames=[];
+  if(hasHeader){const h=rows[0];colnames=hasRowname?h.slice(1):h.slice();rows=rows.slice(1);}
+  const matrix=[];
+  rows.forEach((r,ri)=>{
+    let cells=r;
+    if(hasRowname){rownames.push(r[0]===''?('r'+(ri+1)):r[0]);cells=r.slice(1);}else rownames.push('r'+(ri+1));
+    matrix.push(cells.map(x=>{const v=parseFloat(String(x).trim());return isFinite(v)?v:NaN;}));
+  });
+  const N=Math.max(...matrix.map(r=>r.length));
+  let nanCount=0,negCount=0;
+  for(const r of matrix){while(r.length<N)r.push(NaN);for(let j=0;j<N;j++){if(!isFinite(r[j])){r[j]=0;nanCount++;}else if(r[j]<0)negCount++;}}
+  if(!colnames)colnames=Array.from({length:N},(_,j)=>'c'+(j+1));
+  while(colnames.length<N)colnames.push('c'+(colnames.length+1));
+  return {matrix,rownames,colnames,P:matrix.length,N,nanCount,negCount};
+}
+
+function transposeData(d){
+  const T=Array.from({length:d.N},()=>new Array(d.P));
+  for(let i=0;i<d.P;i++)for(let j=0;j<d.N;j++)T[j][i]=d.matrix[i][j];
+  return {matrix:T,rownames:d.colnames.slice(),colnames:d.rownames.slice(),P:d.N,N:d.P,nanCount:d.nanCount,negCount:d.negCount};
+}
+
+function matmul(A,B,ar,ac,bc){const C=Array.from({length:ar},()=>new Float64Array(bc));for(let i=0;i<ar;i++){const Ai=A[i],Ci=C[i];for(let k=0;k<ac;k++){const a=Ai[k];if(a===0)continue;const Bk=B[k];for(let j=0;j<bc;j++)Ci[j]+=a*Bk[j];}}return C;}
+
+/* k-means (k-means++) over columns of Y; centroids -> initial columns of X */
+function kmeansInitX(Y,P,N,Q,rand){
+  const pts=Array.from({length:N},(_,j)=>Float64Array.from({length:P},(_,i)=>Y[i][j]));
+  const centers=[];const first=Math.floor(rand()*N);centers.push(pts[first].slice());
+  const d2=new Float64Array(N).fill(Infinity);
+  while(centers.length<Q){
+    const c=centers[centers.length-1];let tot=0;
+    for(let j=0;j<N;j++){let s=0;for(let i=0;i<P;i++){const df=pts[j][i]-c[i];s+=df*df;}if(s<d2[j])d2[j]=s;tot+=d2[j];}
+    let r=rand()*tot,acc=0,pick=0;
+    for(let j=0;j<N;j++){acc+=d2[j];if(acc>=r){pick=j;break;}pick=j;}
+    centers.push(pts[pick].slice());
+  }
+  const assign=new Int32Array(N);
+  for(let it=0;it<50;it++){
+    let changed=false;
+    for(let j=0;j<N;j++){let best=0,bd=Infinity;for(let k=0;k<Q;k++){let s=0;const c=centers[k];for(let i=0;i<P;i++){const df=pts[j][i]-c[i];s+=df*df;}if(s<bd){bd=s;best=k;}}if(assign[j]!==best){assign[j]=best;changed=true;}}
+    const sums=Array.from({length:Q},()=>new Float64Array(P)),cnts=new Int32Array(Q);
+    for(let j=0;j<N;j++){const k=assign[j];cnts[k]++;const s=sums[k];for(let i=0;i<P;i++)s[i]+=pts[j][i];}
+    for(let k=0;k<Q;k++){if(cnts[k]===0){centers[k]=pts[Math.floor(rand()*N)].slice();}else{const c=centers[k],s=sums[k];for(let i=0;i<P;i++)c[i]=s[i]/cnts[k];}}
+    if(!changed&&it>0)break;
+  }
+  const X=Array.from({length:P},()=>new Array(Q));
+  for(let k=0;k<Q;k++)for(let i=0;i<P;i++)X[i][k]=Math.max(centers[k][i],0)+1e-4;
+  return X;
+}
+
+/* NMF:  Y (P x N) ≈ X (P x Q) · B (Q x N) */
+function nmf(Y,Q,opts){
+  const {maxit,eps,seed,xColNorm,init}=opts;
+  const P=Y.length,N=Y[0].length;
+  const rand=rng(seed);
+  let sum=0,cnt=0;for(let i=0;i<P;i++)for(let j=0;j<N;j++){sum+=Y[i][j];cnt++;}
+  const mean=sum/cnt||1;const sc=Math.sqrt(mean/Q)||1;
+  const X=(init==='kmeans')?kmeansInitX(Y,P,N,Q,rand):Array.from({length:P},()=>Array.from({length:Q},()=>rand()*sc+1e-4));
+  const B=Array.from({length:Q},()=>Array.from({length:N},()=>rand()*sc+1e-4));
+  const EPS=1e-10;const objHist=[];let prevObj=Infinity;
+
+  for(let it=1;it<=maxit;it++){
+    const XtY=Array.from({length:Q},()=>new Float64Array(N));
+    for(let k=0;k<Q;k++){const r=XtY[k];for(let i=0;i<P;i++){const w=X[i][k];if(w===0)continue;const Yi=Y[i];for(let j=0;j<N;j++)r[j]+=w*Yi[j];}}
+    const XtX=Array.from({length:Q},()=>new Float64Array(Q));
+    for(let a=0;a<Q;a++)for(let b=0;b<Q;b++){let s=0;for(let i=0;i<P;i++)s+=X[i][a]*X[i][b];XtX[a][b]=s;}
+    const XtXB=matmul(XtX,B,Q,Q,N);
+    for(let k=0;k<Q;k++)for(let j=0;j<N;j++)B[k][j]*=XtY[k][j]/(XtXB[k][j]+EPS);
+    const YBt=Array.from({length:P},()=>new Float64Array(Q));
+    for(let i=0;i<P;i++){const r=YBt[i],Yi=Y[i];for(let k=0;k<Q;k++){let s=0;const Bk=B[k];for(let j=0;j<N;j++)s+=Yi[j]*Bk[j];r[k]=s;}}
+    const BBt=Array.from({length:Q},()=>new Float64Array(Q));
+    for(let a=0;a<Q;a++)for(let b=0;b<Q;b++){let s=0;const Ba=B[a],Bb=B[b];for(let j=0;j<N;j++)s+=Ba[j]*Bb[j];BBt[a][b]=s;}
+    const XBBt=matmul(X,BBt,P,Q,Q);
+    for(let i=0;i<P;i++)for(let k=0;k<Q;k++)X[i][k]*=YBt[i][k]/(XBBt[i][k]+EPS);
+    if(xColNorm){
+      for(let k=0;k<Q;k++){let s=0;for(let i=0;i<P;i++)s+=X[i][k];if(s>EPS){for(let i=0;i<P;i++)X[i][k]/=s;for(let j=0;j<N;j++)B[k][j]*=s;}}
+    }
+    if(it%2===0||it===maxit||it===1){
+      const XB=matmul(X,B,P,Q,N);let rss=0;
+      for(let i=0;i<P;i++)for(let j=0;j<N;j++){const d=Y[i][j]-XB[i][j];rss+=d*d;}
+      objHist.push({it,rss});
+      const rel=Math.abs(prevObj-rss)/(prevObj+EPS);prevObj=rss;
+      if(rel<eps&&it>10)return finish(X,B,Y,P,Q,N,objHist,it,true);
+    }
+  }
+  return finish(X,B,Y,P,Q,N,objHist,maxit,false);
+}
+
+function finish(X,B,Y,P,Q,N,objHist,iters,converged){
+  let rss=0,tss=0,sum=0,cnt=0;
+  const XB=matmul(X,B,P,Q,N);
+  for(let i=0;i<P;i++)for(let j=0;j<N;j++){sum+=Y[i][j];cnt++;}
+  const mean=sum/cnt;
+  for(let i=0;i<P;i++)for(let j=0;j<N;j++){const d=Y[i][j]-XB[i][j];rss+=d*d;const dt=Y[i][j]-mean;tss+=dt*dt;}
+  return {X,B,XB,rss,rmse:Math.sqrt(rss/cnt),r2:tss>0?1-rss/tss:0,iters,converged:!!converged,rank:Q,objHist,P,N};
+}
+
+function clusterCols(B,Q,N){
+  const membership=Array.from({length:Q},()=>new Float64Array(N));const hard=new Array(N);
+  for(let j=0;j<N;j++){let s=0;for(let k=0;k<Q;k++)s+=B[k][j];let best=0,bv=-Infinity;
+    for(let k=0;k<Q;k++){membership[k][j]=s>0?B[k][j]/s:1/Q;if(B[k][j]>bv){bv=B[k][j];best=k;}}hard[j]=best;}
+  const sizes=new Array(Q).fill(0);for(let j=0;j<N;j++)sizes[hard[j]]++;
+  return {membership,hard,sizes};
+}
+function clusterRows(X,P,Q){
+  const membership=Array.from({length:Q},()=>new Float64Array(P));const hard=new Array(P);
+  for(let i=0;i<P;i++){let s=0;for(let k=0;k<Q;k++)s+=X[i][k];let best=0,bv=-Infinity;
+    for(let k=0;k<Q;k++){membership[k][i]=s>0?X[i][k]/s:1/Q;if(X[i][k]>bv){bv=X[i][k];best=k;}}hard[i]=best;}
+  const sizes=new Array(Q).fill(0);for(let i=0;i<P;i++)sizes[hard[i]]++;
+  return {membership,hard,sizes};
+}
+
+function heatColor(t){
+  t=Math.max(0,Math.min(1,t));
+  const stops=[[22,30,34],[26,62,72],[30,110,110],[79,214,200],[190,220,150],[232,165,75],[250,230,180]];
+  const x=t*(stops.length-1),i=Math.floor(x),f=x-i;
+  const a=stops[i],b=stops[Math.min(i+1,stops.length-1)];
+  return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;
+}
+
+function drawHeatmap(canvas,M,opts){
+  const {rows,maxCellsW=520,maxCellsH=360}=opts;
+  const nr=M.length,nc=M[0].length;
+  let mx=0;for(const r of M)for(const v of r)if(v>mx)mx=v;mx=mx||1;
+  const cw=Math.max(4,Math.min(46,Math.floor(maxCellsW/nc)));
+  const ch=Math.max(4,Math.min(30,Math.floor(maxCellsH/nr)));
+  const padL=rows?Math.min(120,Math.max(...rows.map(s=>String(s).length))*6+12):8;
+  const padT=4;
+  const W=padL+nc*cw+8,H=padT+nr*ch+8,dpr=window.devicePixelRatio||1;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  for(let i=0;i<nr;i++)for(let j=0;j<nc;j++){ctx.fillStyle=heatColor(M[i][j]/mx);ctx.fillRect(padL+j*cw,padT+i*ch,cw-0.5,ch-0.5);}
+  if(rows&&ch>=9){ctx.fillStyle=cssVar('--ink-dim');ctx.font='10px ui-monospace,monospace';ctx.textBaseline='middle';
+    for(let i=0;i<nr;i++){let lab=String(rows[i]);if(lab.length>18)lab=lab.slice(0,17)+'…';ctx.fillText(lab,4,padT+i*ch+ch/2);}}
+}
+
+function drawConverge(canvas,hist){
+  const W=520,H=180,padL=52,padB=26,padT=12,padR=12,dpr=window.devicePixelRatio||1;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  if(hist.length<2)return;
+  const xs=hist.map(d=>d.it),ys=hist.map(d=>d.rss);
+  const xmin=xs[0],xmax=xs[xs.length-1],ymin=Math.min(...ys),ymax=Math.max(...ys);
+  const px=v=>padL+(v-xmin)/((xmax-xmin)||1)*(W-padL-padR);
+  const py=v=>padT+(1-(v-ymin)/((ymax-ymin)||1))*(H-padT-padB);
+  const gridC=cssVar('--line'),textC=cssVar('--ink-faint'),lineC=cssVar('--cyan');
+  ctx.strokeStyle=gridC;ctx.lineWidth=1;ctx.font='9px ui-monospace,monospace';ctx.fillStyle=textC;
+  for(let g=0;g<=4;g++){const yy=padT+g/4*(H-padT-padB);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(W-padR,yy);ctx.stroke();ctx.fillText((ymax-(g/4)*(ymax-ymin)).toExponential(1),4,yy+3);}
+  ctx.strokeStyle=lineC;ctx.lineWidth=1.8;ctx.beginPath();
+  hist.forEach((d,i)=>{const x=px(d.it),y=py(d.rss);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+  ctx.lineTo(px(xmax),H-padB);ctx.lineTo(px(xmin),H-padB);ctx.closePath();ctx.fillStyle='rgba(79,214,200,.10)';ctx.fill();
+  ctx.fillStyle=textC;ctx.textAlign='center';ctx.fillText(xmin+'',px(xmin),H-8);ctx.fillText(xmax+' iter',px(xmax)-6,H-8);ctx.textAlign='left';
+}
+
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888';}
+
+function clusteringHTML(prefix){
+  const tag=prefix==='feat'?'x':'b';
+  return `
+    <div class="card">
+      <h3>${t('cc_hard')} <span class="tag ${tag}">argmax</span></h3>
+      <p class="desc" id="${prefix}HardDesc"></p>
+      <div class="clusum" id="${prefix}Sum"></div>
+      <div class="chips" id="${prefix}Chips"></div>
+    </div>
+    <div class="card">
+      <h3>${prefix==='feat'?t('tbl_X'):t('tbl_B')} <span class="tag ${tag}">${t('cc_table_tag')}</span></h3>
+      <p class="desc">${t('cc_table_d')}</p>
+      <div class="tablewrap" id="${prefix}Table"></div>
+    </div>`;
+}
+
+function fillClustering(prefix,itemLabels,cl,Q,basisLabels,rawRows,noun,headKey){
+  $('#'+prefix+'HardDesc').textContent=t('cc_hard_d').replace('{n}',noun);
+  const nItems=itemLabels.length;
+  let cs='';
+  for(let k=0;k<Q;k++)cs+=`<div class="clu"><span class="sw" style="background:${cluColor(k)}"></span>${t('cluster_word')} ${k+1} · ${basisLabels[k]} <b>${cl.sizes[k]}</b> ${t('items')}</div>`;
+  $('#'+prefix+'Sum').innerHTML=cs;
+  let ch='';
+  for(let j=0;j<nItems;j++){const k=cl.hard[j],c=cluColor(k),p=cl.membership[k][j].toFixed(2);
+    ch+=`<span class="chip" style="border-color:${c};color:${c}" title="${esc(itemLabels[j])} → ${basisLabels[k]} (p=${p})">${esc(itemLabels[j])}</span>`;}
+  $('#'+prefix+'Chips').innerHTML=ch;
+  let html='<table><thead><tr><th>'+esc(t(headKey))+'</th>'+itemLabels.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr></thead><tbody>';
+  for(let k=0;k<Q;k++)html+=`<tr><td>${basisLabels[k]}</td>`+Array.from(rawRows[k]).map(v=>`<td>${v.toFixed(3)}</td>`).join('')+'</tr>';
+  for(let k=0;k<Q;k++)html+=`<tr class="prow${k===0?' sep':''}"><td>p ${basisLabels[k]}</td>`+Array.from(cl.membership[k]).map(v=>`<td>${v.toFixed(3)}</td>`).join('')+'</tr>';
+  html+='<tr class="sep"><td>hard</td>'+cl.hard.map(k=>`<td class="hardcell" style="background:${cluColor(k)}">${k+1}</td>`).join('')+'</tr>';
+  html+='</tbody></table>';
+  $('#'+prefix+'Table').innerHTML=html;
+}
+
+function render(res,data){
+  const stage=$('#stage');
+  const colLabels=data.colnames,rowLabels=data.rownames;
+  const basisLabels=Array.from({length:res.rank},(_,k)=>'X'+(k+1));
+  const featCl=clusterRows(res.X,res.P,res.rank);
+  const sampCl=clusterCols(res.B,res.rank,res.N);
+  const rawRowsX=Array.from({length:res.rank},(_,k)=>Float64Array.from({length:res.P},(_,i)=>res.X[i][k]));
+  const rawRowsB=res.B;
+  const cxd=t('c_X_d_base')+($('#wnorm').checked?t('c_X_d_norm'):'')+t('c_X_d_end');
+
+  stage.innerHTML=`
+    <div class="metrics">
+      <div class="metric"><div class="k">rank Q</div><div class="v">${res.rank}</div></div>
+      <div class="metric"><div class="k">R²</div><div class="v">${res.r2.toFixed(4)}</div></div>
+      <div class="metric"><div class="k">RMSE</div><div class="v">${res.rmse.toPrecision(4)}</div></div>
+      <div class="metric"><div class="k">RSS</div><div class="v">${res.rss.toPrecision(4)}</div></div>
+      <div class="metric"><div class="k">${t('m_iters')}</div><div class="v">${res.iters}<small> /it</small></div></div>
+      <div class="metric"><div class="k">${t('m_size')}</div><div class="v" style="font-size:15px">${res.P}×${res.N}</div></div>
+    </div>
+
+    <div class="card">
+      <h3>${t('c_conv')} <span class="tag y">RSS</span></h3>
+      <p class="desc">${t('c_conv_d')}</p>
+      <div class="canvas-scroll"><canvas id="cvConv"></canvas></div>
+    </div>
+
+    <div class="twocol">
+      <div class="card">
+        <h3>${t('c_X')} <span class="tag x">X · P×Q</span></h3>
+        <p class="desc">${cxd}</p>
+        <div class="canvas-scroll"><canvas id="cvX"></canvas></div>
+        <div class="legend"><span>${t('leg_low')}</span><div class="bar" id="legX"></div><span>${t('leg_high')}</span></div>
+      </div>
+      <div class="card">
+        <h3>${t('c_B')} <span class="tag b">B · Q×N</span></h3>
+        <p class="desc">${t('c_B_d')}</p>
+        <div class="canvas-scroll"><canvas id="cvB"></canvas></div>
+        <div class="legend"><span>${t('leg_low')}</span><div class="bar" id="legB"></div><span>${t('leg_high')}</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>${t('c_recon')} <span class="tag y">Y ≈ XB</span></h3>
+      <p class="desc">${t('c_recon_d')}</p>
+      <div class="twocol" style="gap:16px">
+        <div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-bottom:6px">${t('lab_orig')}</div><div class="canvas-scroll"><canvas id="cvY"></canvas></div></div>
+        <div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-bottom:6px">${t('lab_approx')}</div><div class="canvas-scroll"><canvas id="cvXB"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="sechead"><span class="badge x">${t('sec_feat_badge')}</span> ${t('sec_feat')}</div>
+    ${clusteringHTML('feat')}
+
+    <div class="sechead"><span class="badge b">${t('sec_samp_badge')}</span> ${t('sec_samp')}</div>
+    ${clusteringHTML('samp')}
+
+    <div class="card">
+      <h3>${t('dl_title')}</h3>
+      <div class="downloads">
+        <button class="dl" data-dl="log">${t('dl_log')}</button>
+        <button class="dl" data-dl="X">${t('dl_X')}</button>
+        <button class="dl" data-dl="B">${t('dl_B')}</button>
+        <button class="dl" data-dl="Xmem">${t('dl_Xmem')}</button>
+        <button class="dl" data-dl="Xhard">${t('dl_Xhard')}</button>
+        <button class="dl" data-dl="Bmem">${t('dl_Bmem')}</button>
+        <button class="dl" data-dl="Bhard">${t('dl_Bhard')}</button>
+        <button class="dl" data-dl="XB">${t('dl_XB')}</button>
+      </div>
+    </div>
+  `;
+
+  drawConverge($('#cvConv'),res.objHist);
+  drawHeatmap($('#cvX'),res.X,{rows:rowLabels,maxCellsW:220,maxCellsH:420});
+  drawHeatmap($('#cvB'),res.B,{rows:basisLabels,maxCellsW:420,maxCellsH:220});
+  drawHeatmap($('#cvY'),data.matrix,{rows:rowLabels,maxCellsW:300,maxCellsH:400});
+  drawHeatmap($('#cvXB'),res.XB.map(r=>Array.from(r)),{rows:rowLabels,maxCellsW:300,maxCellsH:400});
+  const grad='linear-gradient(90deg,'+Array.from({length:9},(_,i)=>heatColor(i/8)).join(',')+')';
+  $('#legX').style.background=grad;$('#legB').style.background=grad;
+
+  fillClustering('feat',rowLabels,featCl,res.rank,basisLabels,rawRowsX,t('noun_feat'),'tbl_head_feat');
+  fillClustering('samp',colLabels,sampCl,res.rank,basisLabels,rawRowsB,t('noun_samp'),'tbl_head_samp');
+
+  stage.querySelectorAll('[data-dl]').forEach(b=>b.onclick=()=>{
+    const w=b.dataset.dl;
+    if(w==='log'){
+      const stem=((res.meta&&res.meta.fname)||'nmf').replace(/\.[^.]+$/,'');
+      const ts=new Date().toISOString().replace(/[:.]/g,'').slice(0,15);
+      saveText(`${stem}_nmf_${ts}.log`, buildLog(res,res.meta), 'text/plain');
+      return;
+    }
+    if(w==='Xhard'){let csv='feature,cluster,cluster_index,probability\n';for(let i=0;i<res.P;i++){const k=featCl.hard[i];csv+=`${rowLabels[i]},${basisLabels[k]},${k+1},${featCl.membership[k][i].toPrecision(6)}\n`;}saveCSV('X_hard.csv',csv);return;}
+    if(w==='Bhard'){let csv='sample,cluster,cluster_index,probability\n';for(let j=0;j<res.N;j++){const k=sampCl.hard[j];csv+=`${colLabels[j]},${basisLabels[k]},${k+1},${sampCl.membership[k][j].toPrecision(6)}\n`;}saveCSV('B_hard.csv',csv);return;}
+    let M,rlab,clab,name;
+    if(w==='X'){M=res.X;rlab=rowLabels;clab=basisLabels;name='X.csv';}
+    else if(w==='B'){M=res.B.map(r=>Array.from(r));rlab=basisLabels;clab=colLabels;name='B.csv';}
+    else if(w==='Xmem'){M=featCl.membership.map(r=>Array.from(r));rlab=basisLabels;clab=rowLabels;name='X_membership.csv';}
+    else if(w==='Bmem'){M=sampCl.membership.map(r=>Array.from(r));rlab=basisLabels;clab=colLabels;name='B_membership.csv';}
+    else {M=res.XB.map(r=>Array.from(r));rlab=rowLabels;clab=colLabels;name='XB.csv';}
+    downloadCSV(name,M,rlab,clab);
+  });
+}
+
+function saveCSV(name,csv){saveText(name,csv,'text/csv');}
+function saveText(name,text,mime){const blob=new Blob([text],{type:mime||'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+function downloadCSV(name,M,rlab,clab){let csv=','+clab.join(',')+'\n';M.forEach((r,i)=>{csv+=rlab[i]+','+Array.from(r).map(v=>(+v).toPrecision(8)).join(',')+'\n';});saveCSV(name,csv);}
+
+/* Reproducibility log: options + metrics only (NO Y/X/B matrices). */
+function buildLog(res,meta){
+  meta=meta||{};
+  const feat=clusterRows(res.X,res.P,res.rank);
+  const samp=clusterCols(res.B,res.rank,res.N);
+  const fSizes=feat.sizes.map((n,k)=>`X${k+1}:${n}`).join(', ');
+  const sSizes=samp.sizes.map((n,k)=>`X${k+1}:${n}`).join(', ');
+  const epsStr=(typeof meta.eps==='number')?meta.eps.toExponential():String(meta.eps);
+  const L=[];
+  L.push('# NMF Explorer -- analysis log');
+  L.push('# model: Y = X B  (Lee & Seung multiplicative update, squared error)');
+  L.push('# generated: '+new Date().toISOString());
+  L.push('# note: decomposition matrices (Y, X, B) are intentionally excluded.');
+  L.push('#       Re-run with the same input file and the [options] below to reproduce [results].');
+  L.push('');
+  L.push('[data]');
+  L.push('file              = '+(meta.fname!=null?meta.fname:''));
+  L.push('original_shape    = '+meta.origP+' x '+meta.origN+'   (P x N)');
+  L.push('transpose         = '+meta.transpose);
+  L.push('effective_shape   = '+meta.effP+' x '+meta.effN);
+  L.push('nonnumeric_to_0   = '+meta.nan);
+  L.push('negative_values   = '+meta.neg);
+  L.push('');
+  L.push('[options]');
+  L.push('rank_Q                  = '+meta.rank);
+  L.push('max_iterations          = '+meta.maxit);
+  L.push('convergence_tol_rel     = '+epsStr);
+  L.push('random_seed             = '+meta.seed);
+  L.push('init_method             = '+meta.init);
+  L.push('X_colsum1_constraint    = '+meta.xnorm);
+  L.push('Y_colnorm_preprocess    = '+meta.normcol);
+  L.push('');
+  L.push('[results]');
+  L.push('R2                      = '+res.r2.toFixed(6));
+  L.push('RMSE                    = '+res.rmse.toPrecision(8));
+  L.push('RSS                     = '+res.rss.toPrecision(8));
+  L.push('iterations_run          = '+res.iters);
+  L.push('converged               = '+res.converged);
+  L.push('final_Q                 = '+res.rank);
+  L.push('');
+  L.push('[clusters]');
+  L.push('feature_cluster_sizes   = '+fSizes);
+  L.push('sample_cluster_sizes    = '+sSizes);
+  L.push('');
+  return L.join('\n');
+}
+
+let lastRaw=null,lastName=null;
+function ingest(text,fname){
+  lastRaw=text;lastName=fname;
+  try{
+    const rows=parseCSV(text);
+    const d=buildMatrix(rows,$('#hasHeader').checked,$('#hasRowname').checked);
+    if(d.P<1||d.N<1){toast(t('toast_nonum'));return;}
+    if(d.negCount>0)toast(t('toast_neg').replace('{n}',d.negCount));
+    d.fname=fname||'demo';DATA=d;refreshMeta();$('#run').disabled=false;
+  }catch(e){toast(t('toast_parsefail').replace('{m}',e.message));}
+}
+function refreshMeta(){
+  const d=DATA;if(!d)return;
+  const tr=$('#transpose').checked;
+  const P=tr?d.N:d.P,N=tr?d.P:d.N;
+  const m=$('#meta');
+  m.innerHTML=`<div><span class="k">${t('meta_file')} </span><span class="v">${esc(d.fname)}</span></div>
+    <div><span class="k">${t('meta_loaded')}</span> <span class="v">${d.P} × ${d.N}</span> <span class="k">(P×N)</span></div>
+    ${tr?`<div><span class="k">→ ${t('meta_transposed')} </span><span class="v">${P} × ${N}</span></div>`:''}
+    ${d.nanCount?`<div><span class="k">→ </span>${t('meta_nan').replace('{n}',d.nanCount)}</div>`:''}`;
+  m.classList.add('show');
+  const rk=$('#rank');rk.max=Math.max(1,Math.min(10,P,N));
+  if(+rk.value>+rk.max){rk.value=rk.max;$('#rankVal').textContent=rk.value;}
+}
+function workingData(){let d=DATA;if($('#transpose').checked)d=transposeData(d);return d;}
+
+function makeDemo(){
+  // Food-preference matrix: rows = people (features P), cols = foods (samples N).
+  // Original Japanese names romanized; use the transpose option to swap orientation.
+  return [
+    'name,Cake,Chocolate,Cookie,Salad,Yogurt,Fruit',
+    'Akiko,1,1,1,0,0,0',
+    'Kenta,0,0,0,1,1,1',
+    'Hanako,1,1,0,0,0,0',
+    'Daisuke,0,0,0,1,0,1',
+    'Misaki,1,0,1,0,1,0',
+    'Taro,0,1,0,1,1,1'
+  ].join('\n');
+}
+
+/* UI wiring */
+document.querySelectorAll('#langtog button').forEach(b=>b.onclick=()=>{LANG=b.dataset.lang;applyI18n();});
+let THEME='dark';
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',THEME);
+  document.querySelectorAll('#themetog button').forEach(b=>b.classList.toggle('on',b.dataset.theme===THEME));
+  if(LAST) render(LAST.res,LAST.data);
+}
+document.querySelectorAll('#themetog button').forEach(b=>b.onclick=()=>{THEME=b.dataset.theme;applyTheme();});
+
+const drop=$('#drop'),fileInput=$('#file');
+drop.onclick=()=>fileInput.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
+fileInput.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
+$('#demo').onclick=()=>{ingest(makeDemo(),'demo_preferences.csv');toast(t('toast_demo'));};
+$('#hasHeader').onchange=()=>{if(lastRaw)ingest(lastRaw,lastName);};
+$('#hasRowname').onchange=()=>{if(lastRaw)ingest(lastRaw,lastName);};
+$('#transpose').onchange=refreshMeta;
+
+const bind=(id,valId,fmt)=>{const el=$('#'+id),v=$('#'+valId);el.oninput=()=>v.textContent=fmt?fmt(el.value):el.value;};
+bind('rank','rankVal');bind('maxit','maxitVal');bind('eps','epsVal',x=>'1e-'+x);
+
+$('#run').onclick=()=>{
+  if(!DATA)return;
+  const btn=$('#run');btn.classList.add('busy');btn.innerHTML='<span class="spinner"></span> '+t('run_busy');btn.disabled=true;
+  const Q=+$('#rank').value,maxit=+$('#maxit').value,eps=Math.pow(10,-(+$('#eps').value)),seed=+$('#seed').value||1;
+  const base=workingData();
+  let Y=base.matrix.map(r=>r.slice());
+  if($('#normcol').checked){
+    const colSum=new Array(base.N).fill(0);
+    for(let i=0;i<base.P;i++)for(let j=0;j<base.N;j++)colSum[j]+=Y[i][j];
+    for(let i=0;i<base.P;i++)for(let j=0;j<base.N;j++)if(colSum[j]>0)Y[i][j]/=colSum[j];
+  }
+  setTimeout(()=>{
+    try{
+      const meta={fname:DATA.fname,origP:DATA.P,origN:DATA.N,transpose:$('#transpose').checked,
+        effP:base.P,effN:base.N,nan:DATA.nanCount,neg:DATA.negCount,
+        rank:Q,maxit,eps,seed,init:$('#init').value,xnorm:$('#wnorm').checked,normcol:$('#normcol').checked};
+      RESULT=nmf(Y,Q,{maxit,eps,seed,xColNorm:$('#wnorm').checked,init:$('#init').value});
+      RESULT.meta=meta;
+      LAST={res:RESULT,data:{...base,matrix:Y}};
+      render(LAST.res,LAST.data);
+    }
+    catch(e){toast(t('toast_calcerr').replace('{m}',e.message));console.error(e);}
+    btn.classList.remove('busy');btn.textContent=t('run');btn.disabled=false;
+  },30);
+};
+
+applyTheme();
+applyI18n();
+</script>
+</body>
+</html>

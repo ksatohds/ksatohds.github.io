@@ -76,6 +76,7 @@ title: 展示
       <div class="gallery-body">
         <h3>■WEBアプリケーション</h3>
         <div class="gallery-links">
+          <a href="{{ '/nmf_app/nmf_app.html' | relative_url }}">NMF Explorer (HTMLアプリ)</a>
           <a href="https://kenichi-satoh.shinyapps.io/CART/">回帰木・分類木 Shiny App</a>
         </div>
       </div>
