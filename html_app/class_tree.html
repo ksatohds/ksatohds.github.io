@@ -171,8 +171,23 @@
     <div class="group" id="paramGroup" style="display:none">
       <h2 data-i18n="g_param">パラメータ</h2>
       <label class="field">
-        <span class="lab"><span data-i18n="p_minbucket">minbucket (葉の最小標本数)</span> <span class="val" id="minbucketVal">7</span></span>
-        <input type="range" id="minbucket" min="1" max="50" value="7" step="1">
+        <span class="lab"><span data-i18n="p_minbucket">minbucket (葉の最小標本数)</span></span>
+        <select id="minbucket" size="1">
+          <option value="7" selected>7 (rpart default)</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+          <option value="50">50</option>
+          <option value="60">60</option>
+          <option value="70">70</option>
+          <option value="80">80</option>
+          <option value="90">90</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+          <option value="300">300</option>
+        </select>
+        <span class="hint" id="minbucketHint" data-i18n="p_minbucket_hint">目安は n/20〜n/10（例: n=200→10〜20, n=1000→50〜100）</span>
       </label>
       <label class="field">
         <span class="lab"><span data-i18n="p_maxdepth">maxdepth (木の最大深さ)</span> <span class="val" id="maxdepthVal">2</span></span>
@@ -221,6 +236,7 @@ const I18N={
     v_target:'目的変数 (カテゴリ)', v_features:'説明変数 (複数選択可)',
     v_hint:'Ctrl/Shift クリックで複数選択。連続・カテゴリの両方を扱えます。',
     p_minbucket:'minbucket (葉の最小標本数)', p_maxdepth:'maxdepth (木の最大深さ)',
+    p_minbucket_hint:'目安は n/20〜n/10（例: n=200→10〜20, n=1000→50〜100）',
     run:'分類木を構築', run_busy:'構築中…',
     hint:'CART（Gini基準）で分類木を構築します。計算はすべてブラウザ内で完結し、データは外部送信されません。',
     ph_main:'左でCSVを読み込むか、デモデータ (iris) を試してください。',
@@ -255,6 +271,7 @@ const I18N={
     v_target:'Target (categorical)', v_features:'Features (multi-select)',
     v_hint:'Ctrl/Shift-click for multiple. Both continuous and categorical are supported.',
     p_minbucket:'minbucket (min samples per leaf)', p_maxdepth:'maxdepth (max tree depth)',
+    p_minbucket_hint:'rule of thumb: n/20–n/10 (e.g. n=200→10–20, n=1000→50–100)',
     run:'Build tree', run_busy:'Building…',
     hint:'Builds a CART classification tree (Gini). Everything runs in your browser; no data is uploaded.',
     ph_main:'Load a CSV on the left, or try the demo data (iris).',
@@ -957,7 +974,6 @@ function readFile(f){
 }
 $('#demo').onclick=()=>{ingestText(irisCSV(),'iris.csv');toast(t('toast_demo'));};
 
-$('#minbucket').oninput=e=>$('#minbucketVal').textContent=e.target.value;
 $('#maxdepth').oninput=e=>$('#maxdepthVal').textContent=e.target.value;
 $('#run').onclick=run;
 
