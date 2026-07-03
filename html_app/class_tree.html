@@ -166,6 +166,11 @@
         <select id="features" multiple size="8"></select>
       </label>
       <div class="hint" data-i18n="v_hint">Ctrl/Shift クリックで複数選択。連続・カテゴリの両方を扱えます。</div>
+      <div class="checkline" style="margin-top:10px">
+        <input type="checkbox" id="numAsCat" checked>
+        <label for="numAsCat"><span data-i18n="cb_numcat">少数水準の数値をカテゴリとして扱う</span>
+          <span class="sub" data-i18n="cb_numcat_sub">OFFで順序数値（しきい値分岐）として扱う</span></label>
+      </div>
     </div>
 
     <div class="group" id="paramGroup" style="display:none">
@@ -221,6 +226,7 @@ const I18N={
     demo_btn:'◇ デモデータ (iris)',
     v_target:'目的変数 (カテゴリ)', v_features:'説明変数 (複数選択可)',
     v_hint:'Ctrl/Shift クリックで複数選択。連続・カテゴリの両方を扱えます。カテゴリは頻度上位5水準＋その他(misc.)として扱います。',
+    cb_numcat:'少数水準の数値をカテゴリとして扱う', cb_numcat_sub:'OFFで順序数値（しきい値分岐）として扱う',
     p_minbucket:'minbucket (葉の最小標本数)', p_maxdepth:'maxdepth (木の最大深さ)',
     p_minbucket_hint:'目安は n/20〜n/10（例: n=200→10〜20, n=1000→50〜100）',
     run:'分類木を構築', run_busy:'構築中…',
@@ -256,6 +262,7 @@ const I18N={
     demo_btn:'◇ Demo data (iris)',
     v_target:'Target (categorical)', v_features:'Features (multi-select)',
     v_hint:'Ctrl/Shift-click for multiple. Both continuous and categorical are supported. Categoricals use the top-5 levels + others (misc.).',
+    cb_numcat:'Treat low-level numerics as categorical', cb_numcat_sub:'OFF = ordered numeric (threshold splits)',
     p_minbucket:'minbucket (min samples per leaf)', p_maxdepth:'maxdepth (max tree depth)',
     p_minbucket_hint:'rule of thumb: n/20–n/10 (e.g. n=200→10–20, n=1000→50–100)',
     run:'Build tree', run_busy:'Building…',
@@ -333,13 +340,17 @@ function uniqueVals(col){
   return [...s];
 }
 const CAT_MAX_LEVELS=10;
-// categorical if non-numeric, OR numeric but with few distinct values (e.g. 0/1/2, Likert 1-5)
+const numAsCatOn=()=>{const el=$('#numAsCat');return el?el.checked:true;};
+// candidate categorical (toggle-independent): non-numeric OR few distinct values — used for default target
 function isCatCol(col){return !isNumericCol(col)||uniqueVals(col).length<=CAT_MAX_LEVELS;}
 // tag: ·num = continuous, ·num(k) = numeric treated as categorical, ·cat(k) = string categorical
 function typeTag(col){
   const u=uniqueVals(col).length;
-  if(isNumericCol(col))return u<=CAT_MAX_LEVELS?' ·num('+u+')':' ·num';
+  if(isNumericCol(col))return (numAsCatOn()&&u<=CAT_MAX_LEVELS)?' ·num('+u+')':' ·num';
   return ' ·cat('+u+')';
+}
+function refreshTypeTags(){
+  ['#target','#features'].forEach(sel=>{const s=$(sel);if(s)[...s.options].forEach(o=>o.textContent=o.value+typeTag(o.value));});
 }
 
 function buildVarUI(){
@@ -405,14 +416,16 @@ function majorityClass(counts){
 }
 
 const MISC='misc.';
-function buildTree(rows,target,features,minbucket,maxdepth,classes){
+function buildTree(rows,target,features,minbucket,maxdepth,classes,numAsCat){
   const y=rows.map(r=>String(r[target]).trim());
-  // precompute feature types: numeric only if numeric AND many distinct values;
-  // low-cardinality numerics (0/1/2, Likert 1-5, ...) are treated as categorical.
+  // feature types. Numeric stays numeric (threshold) unless numAsCat is on and it has
+  // few distinct values (0/1/2, Likert 1-5, ...), in which case it is treated as categorical.
   const ftype={};
   features.forEach(f=>{
+    const num=isNumericColRows(rows,f);
     const distinct=new Set(rows.map(r=>String(r[f]).trim()).filter(v=>v!=='')).size;
-    ftype[f]=(isNumericColRows(rows,f)&&distinct>CAT_MAX_LEVELS)?'num':'cat';
+    const asCat=num&&numAsCat&&distinct<=CAT_MAX_LEVELS;
+    ftype[f]=(num&&!asCat)?'num':'cat';
   });
   // for categorical features: keep top-5 levels by frequency, lump the rest into "misc."
   const keptLevels={};
@@ -529,11 +542,12 @@ function run(){
   const classes=[...new Set(rows.map(r=>String(r[target]).trim()))].sort();
   if(classes.length>20){toast(t('toast_targetnum').replace('{n}',classes.length));return;}
   const minbucket=+$('#minbucket').value, maxdepth=+$('#maxdepth').value;
+  const numAsCat=$('#numAsCat').checked;
 
   const btn=$('#run');btn.dataset.busy='1';btn.textContent=t('run_busy');btn.disabled=true;
   setTimeout(()=>{
     try{
-      const model=buildTree(rows,target,features,minbucket,maxdepth,classes);
+      const model=buildTree(rows,target,features,minbucket,maxdepth,classes,numAsCat);
       const stats=treeStats(model.root);
       const preds=rows.map(r=>predictOne(model.root,r,model.catVal));
       const yTrue=rows.map(r=>String(r[target]).trim());
@@ -1091,6 +1105,7 @@ function readFile(f){
 $('#demo').onclick=()=>{ingestText(irisCSV(),'iris.csv');toast(t('toast_demo'));};
 
 $('#maxdepth').oninput=e=>$('#maxdepthVal').textContent=e.target.value;
+$('#numAsCat').onchange=()=>{if(DATA)refreshTypeTags();};
 $('#run').onclick=run;
 
 $('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
