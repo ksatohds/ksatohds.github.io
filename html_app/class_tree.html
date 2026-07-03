@@ -658,8 +658,16 @@ function renderTree(model,classes){
   const root=model.root;
   const nLeaves=layoutTree(root);
   const stats=treeStats(root);
-  const NODE_W=76, NODE_H=48, X_GAP=20, Y_GAP=74, LEG_H=26;
-  const colW=NODE_W+X_GAP;
+  const NODE_W=76, NODE_H=48, Y_GAP=74, LEG_H=26;
+  // per-node display strings: pred (soft probs) / n=total (per-class counts)
+  const nodeLines=n=>{
+    const probs=classes.map(c=>((n.counts[c]||0)/n.n).toFixed(3)).join('/');
+    const counts=classes.map(c=>(n.counts[c]||0)).join('/');
+    return {probs,counts,predLine:`${n.pred} (${probs})`,nLine:`n=${n.n} (${counts})`};
+  };
+  let maxLen=0;
+  (function scan(n){const L=nodeLines(n);maxLen=Math.max(maxLen,L.predLine.length,L.nLine.length);if(!n.isLeaf){scan(n.left);scan(n.right);}})(root);
+  const colW=Math.max(NODE_W,maxLen*6.0)+22;
   const treeW=Math.max(nLeaves*colW+40, 360);
   let legW=12;classes.forEach(c=>{legW+=16+String(c).length*7+18;});
   const width=Math.max(treeW,legW);
@@ -715,14 +723,17 @@ function renderTree(model,classes){
     });
     // border box around bar
     g.appendChild(el('rect',{x:bx,y:byTop,width:bw,height:bh,fill:'none',stroke:line,'stroke-width':1}));
-    // predicted class label
+    // predicted class (hard) + soft probabilities
     const predIdx=classes.indexOf(n.pred);
-    const lbl=el('text',{class:'treelabel',x:NODE_W/2,y:byTop+bh+14,'text-anchor':'middle'});
-    lbl.style.fill=clsColor(predIdx);lbl.style.fontWeight='700';lbl.textContent=n.pred;
+    const L=nodeLines(n);
+    const lbl=el('text',{class:'treesub',x:NODE_W/2,y:byTop+bh+14,'text-anchor':'middle'});
+    const t1=el('tspan',{});t1.textContent=n.pred;t1.style.fill=clsColor(predIdx);t1.style.fontWeight='700';
+    const t2=el('tspan',{});t2.textContent=' ('+L.probs+')';t2.style.fill=inkDim;
+    lbl.appendChild(t1);lbl.appendChild(t2);
     g.appendChild(lbl);
-    // n count
+    // n total + per-class counts
     const sub=el('text',{class:'treesub',x:NODE_W/2,y:byTop+bh+26,'text-anchor':'middle'});
-    sub.style.fill=inkDim;sub.textContent='n='+n.n;
+    sub.style.fill=inkDim;sub.textContent=L.nLine;
     g.appendChild(sub);
     gNodes.appendChild(g);
 
