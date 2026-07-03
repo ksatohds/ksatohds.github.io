@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Classification Tree — 分類木</title>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
   :root{
     --bg:#0f1417; --panel:#161d21; --panel-2:#1c252a; --line:#2a353b;
@@ -322,10 +321,26 @@ function ingestParsed(res,filename){
   $('#varGroup').style.display='';
   $('#paramGroup').style.display='';
 }
+// self-contained CSV/TSV parser (RFC 4180 quotes, auto delimiter) — no external library
+function parseCSVRows(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(text.endsWith('\n'))text=text.slice(0,-1);
+  const firstLine=text.split('\n')[0]||'';
+  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(r=>!(r.length===1&&r[0].trim()===''));
+}
 function ingestText(text,filename){
-  const res=Papa.parse(text,{header:true,dynamicTyping:false,skipEmptyLines:true});
-  if(!res.meta||!res.meta.fields){toast(t('toast_parsefail'));return;}
-  ingestParsed(res,filename);
+  const rows=parseCSVRows(text);
+  if(!rows.length){toast(t('toast_parsefail'));return;}
+  const fields=rows[0].map(h=>String(h).trim());
+  const data=rows.slice(1).map(r=>{const o={};fields.forEach((f,i)=>o[f]=r[i]!=null?r[i]:'');return o;});
+  ingestParsed({meta:{fields},data},filename);
 }
 
 /* detect if a column is numeric (continuous) */
