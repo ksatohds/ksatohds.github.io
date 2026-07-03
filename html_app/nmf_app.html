@@ -824,6 +824,8 @@ $('#run').onclick=()=>{
 };
 
 applyTheme();
+// open in a given language via URL, e.g. ?lang=en (default: ja)
+(function(){try{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='ja')LANG=q;}catch(e){}})();
 applyI18n();
 </script>
 </body>

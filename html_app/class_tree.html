@@ -1126,6 +1126,8 @@ $('#run').onclick=run;
 $('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
 $('#themetog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.setAttribute('data-theme',b.dataset.theme);$$('#themetog button').forEach(x=>x.classList.toggle('on',x===b));if(LAST)render(LAST);});
 
+// open in a given language via URL, e.g. ?lang=en (default: ja)
+(function(){try{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='ja')LANG=q;}catch(e){}})();
 applyI18n();
 </script>
 </body>
