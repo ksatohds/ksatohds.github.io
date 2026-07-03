@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="ja" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NMF Explorer — 非負値行列因子分解</title>
+<title>nmf_app</title>
 <style>
   :root{
     --bg:#0f1417; --panel:#161d21; --panel-2:#1c252a; --line:#2a353b;
@@ -145,12 +145,12 @@
 
 <header>
   <div class="langtog" id="langtog">
-    <button data-lang="ja">JA</button>
-    <button data-lang="en" class="on">EN</button>
+    <button data-lang="ja" class="on">JA</button>
+    <button data-lang="en">EN</button>
   </div>
   <div class="langtog" id="themetog">
-    <button data-theme="dark" class="on" title="Dark">☾</button>
-    <button data-theme="light" title="Light">☀</button>
+    <button data-theme="dark" title="Dark">☾</button>
+    <button data-theme="light" class="on" title="Light">☀</button>
   </div>
   <div class="brand"><span class="glyph">◧</span>NMF&nbsp;EXPLORER</div>
   <h1 data-i18n="h1">非負値行列因子分解</h1>
@@ -255,7 +255,7 @@ const CLU=['#4fd6c8','#e8a54b','#9d8cf0','#6fcf6f','#e06a9c','#5ba3e0','#d9d24b'
 const cluColor=k=>CLU[k%CLU.length];
 
 /* ================= i18n ================= */
-let LANG='en';
+let LANG='ja';
 const I18N={
   ja:{
     h1:'非負値行列因子分解',
@@ -774,7 +774,7 @@ function makeDemo(){
 
 /* UI wiring */
 document.querySelectorAll('#langtog button').forEach(b=>b.onclick=()=>{LANG=b.dataset.lang;applyI18n();});
-let THEME='dark';
+let THEME='light';
 function applyTheme(){
   document.documentElement.setAttribute('data-theme',THEME);
   document.querySelectorAll('#themetog button').forEach(b=>b.classList.toggle('on',b.dataset.theme===THEME));
