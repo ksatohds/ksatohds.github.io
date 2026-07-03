@@ -220,7 +220,7 @@ const I18N={
     drop_big:'CSVをドロップ / クリック', drop_small:'1行=1標本 · 列=変数',
     demo_btn:'◇ デモデータ (iris)',
     v_target:'目的変数 (カテゴリ)', v_features:'説明変数 (複数選択可)',
-    v_hint:'Ctrl/Shift クリックで複数選択。連続・カテゴリの両方を扱えます。',
+    v_hint:'Ctrl/Shift クリックで複数選択。連続・カテゴリの両方を扱えます。カテゴリは頻度上位5水準＋その他(misc.)として扱います。',
     p_minbucket:'minbucket (葉の最小標本数)', p_maxdepth:'maxdepth (木の最大深さ)',
     p_minbucket_hint:'目安は n/20〜n/10（例: n=200→10〜20, n=1000→50〜100）',
     run:'分類木を構築', run_busy:'構築中…',
@@ -255,7 +255,7 @@ const I18N={
     drop_big:'Drop or click a CSV', drop_small:'1 row = 1 sample · columns = variables',
     demo_btn:'◇ Demo data (iris)',
     v_target:'Target (categorical)', v_features:'Features (multi-select)',
-    v_hint:'Ctrl/Shift-click for multiple. Both continuous and categorical are supported.',
+    v_hint:'Ctrl/Shift-click for multiple. Both continuous and categorical are supported. Categoricals use the top-5 levels + others (misc.).',
     p_minbucket:'minbucket (min samples per leaf)', p_maxdepth:'maxdepth (max tree depth)',
     p_minbucket_hint:'rule of thumb: n/20–n/10 (e.g. n=200→10–20, n=1000→50–100)',
     run:'Build tree', run_busy:'Building…',
@@ -396,11 +396,21 @@ function majorityClass(counts){
   let best=null,bn=-1;for(const k in counts){if(counts[k]>bn){bn=counts[k];best=k;}}return best;
 }
 
+const MISC='misc.';
 function buildTree(rows,target,features,minbucket,maxdepth,classes){
   const y=rows.map(r=>String(r[target]).trim());
   // precompute feature types
   const ftype={};
   features.forEach(f=>{ftype[f]=isNumericColRows(rows,f)?'num':'cat';});
+  // for categorical features: keep top-5 levels by frequency, lump the rest into "misc."
+  const keptLevels={};
+  features.forEach(f=>{
+    if(ftype[f]!=='cat')return;
+    const freq={};rows.forEach(r=>{const v=String(r[f]).trim();freq[v]=(freq[v]||0)+1;});
+    const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1));
+    keptLevels[f]=new Set(sorted.slice(0,5).map(e=>e[0]));
+  });
+  const catVal=(f,raw)=>{const v=String(raw).trim();return keptLevels[f].has(v)?v:MISC;};
   const impDrop={};features.forEach(f=>impDrop[f]=0);
   let nodeId=0;
 
@@ -425,18 +435,29 @@ function buildTree(rows,target,features,minbucket,maxdepth,classes){
           if(!best||drop>best.drop){best={feature:f,type:'num',thr,L,R,drop};}
         }
       }else{
-        // categorical: one-vs-rest per level (binary split)
-        const levels=[...new Set(idx.map(i=>String(rows[i][f]).trim()))];
-        for(const lev of levels){
+        // categorical: enumerate all binary partitions of the (<=6) collapsed levels present.
+        // fix present[0] on the left to visit each partition once (2^(m-1)-1 candidates).
+        const present=[...new Set(idx.map(i=>catVal(f,rows[i][f])))];
+        const m=present.length;if(m<2)continue;
+        const rest=present.slice(1),R2=rest.length;
+        for(let mask=0;mask<(1<<R2);mask++){
+          const leftSet=new Set([present[0]]);
+          for(let b=0;b<R2;b++)if(mask&(1<<b))leftSet.add(rest[b]);
+          if(leftSet.size===m)continue; // right side empty
           const L=[],R=[];
-          for(const i of idx){if(String(rows[i][f]).trim()===lev)L.push(i);else R.push(i);}
+          for(const i of idx){if(leftSet.has(catVal(f,rows[i][f])))L.push(i);else R.push(i);}
           if(L.length<minbucket||R.length<minbucket)continue;
           const gL=gini(classCounts(L,y),L.length),gR=gini(classCounts(R,y),R.length);
           const wg=(L.length*gL+R.length*gR)/n;
           const drop=parentGini-wg;
-          if(!best||drop>best.drop){best={feature:f,type:'cat',level:lev,L,R,drop};}
+          if(!best||drop>best.drop){best={feature:f,type:'cat',levels:[...leftSet],present:[...present],L,R,drop};}
         }
       }
+    }
+    // display the smaller group on the "Yes" (left) side for concise labels
+    if(best&&best.type==='cat'){
+      const comp=best.present.filter(l=>!best.levels.includes(l));
+      if(best.levels.length>comp.length){best.levels=comp;const tmp=best.L;best.L=best.R;best.R=tmp;}
     }
     return {best,parentGini,parentCounts};
   }
@@ -452,14 +473,14 @@ function buildTree(rows,target,features,minbucket,maxdepth,classes){
     impDrop[best.feature]+=best.drop*n; // weighted by node size
     node.isLeaf=false;
     node.feature=best.feature;node.splitType=best.type;
-    if(best.type==='num'){node.thr=best.thr;}else{node.level=best.level;}
+    if(best.type==='num'){node.thr=best.thr;}else{node.levels=best.levels;}
     node.left=recurse(best.L,depth+1);
     node.right=recurse(best.R,depth+1);
     return node;
   }
 
   const root=recurse(rows.map((_,i)=>i),0);
-  return {root,impDrop,classes,ftype};
+  return {root,impDrop,classes,ftype,catVal,keptLevels};
 }
 function isNumericColRows(rows,col){
   let n=0,num=0;
@@ -467,12 +488,12 @@ function isNumericColRows(rows,col){
   return n>0&&num/n>=0.95;
 }
 
-function predictOne(node,row){
+function predictOne(node,row,catVal){
   let cur=node;
   while(!cur.isLeaf){
     let goLeft;
     if(cur.splitType==='num'){const v=parseFloat(row[cur.feature]);goLeft=isFinite(v)&&v<cur.thr;}
-    else{goLeft=String(row[cur.feature]).trim()===cur.level;}
+    else{goLeft=cur.levels.includes(catVal(cur.feature,row[cur.feature]));}
     cur=goLeft?cur.left:cur.right;
   }
   return cur.pred;
@@ -502,7 +523,7 @@ function run(){
     try{
       const model=buildTree(rows,target,features,minbucket,maxdepth,classes);
       const stats=treeStats(model.root);
-      const preds=rows.map(r=>predictOne(model.root,r));
+      const preds=rows.map(r=>predictOne(model.root,r,model.catVal));
       const yTrue=rows.map(r=>String(r[target]).trim());
       let correct=0;for(let i=0;i<rows.length;i++)if(preds[i]===yTrue[i])correct++;
       const acc=correct/rows.length;
@@ -734,7 +755,7 @@ function renderTree(model,classes){
 
     // split condition label (above children midpoint)
     if(!n.isLeaf){
-      const cond=n.splitType==='num'?`${n.feature} < ${fmtNum(n.thr)}`:`${n.feature} = ${n.level}`;
+      const cond=n.splitType==='num'?`${n.feature} < ${fmtNum(n.thr)}`:`${n.feature} = ${n.levels.join('/')}`;
       const txt=el('text',{class:'treesub',x:x,y:y+NODE_H/2+16,'text-anchor':'middle'});
       txt.style.fill=amber;txt.style.fontWeight='700';txt.textContent=cond;
       gLinks.appendChild(txt);
@@ -806,8 +827,8 @@ function renderRules(model,classes){
       lines.push({path,node:n});
       return;
     }
-    const cL=n.splitType==='num'?`${n.feature} < ${fmtNum(n.thr)}`:`${n.feature} = ${n.level}`;
-    const cR=n.splitType==='num'?`${n.feature} ≥ ${fmtNum(n.thr)}`:`${n.feature} ≠ ${n.level}`;
+    const cL=n.splitType==='num'?`${n.feature} < ${fmtNum(n.thr)}`:`${n.feature} = ${n.levels.join('/')}`;
+    const cR=n.splitType==='num'?`${n.feature} ≥ ${fmtNum(n.thr)}`:`${n.feature} ≠ ${n.levels.join('/')}`;
     walk(n.left,conds.concat(cL));
     walk(n.right,conds.concat(cR));
   }
@@ -878,8 +899,8 @@ function buildLog(R){
   L.push('[Decision rules]');
   (function walk(n,conds){
     if(n.isLeaf){L.push('  '+(conds.length?conds.join(' AND '):'(root)')+' -> '+n.pred+' n='+n.n+' ('+classCountStr(n,classes)+') '+classProbStr(n,classes,2));return;}
-    const cL=n.splitType==='num'?`${n.feature} < ${fmtNum(n.thr)}`:`${n.feature} = ${n.level}`;
-    const cR=n.splitType==='num'?`${n.feature} >= ${fmtNum(n.thr)}`:`${n.feature} != ${n.level}`;
+    const cL=n.splitType==='num'?`${n.feature} < ${fmtNum(n.thr)}`:`${n.feature} = ${n.levels.join('/')}`;
+    const cR=n.splitType==='num'?`${n.feature} >= ${fmtNum(n.thr)}`:`${n.feature} != ${n.levels.join('/')}`;
     walk(n.left,conds.concat(cL));walk(n.right,conds.concat(cR));
   })(model.root,[]);
   return L.join('\n')+'\n';
