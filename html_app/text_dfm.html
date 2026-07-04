@@ -183,13 +183,21 @@
         </select>
       </label>
       <label class="field">
+        <span class="lab"><span data-i18n="p_val">値</span></span>
+        <select id="valtype" size="1">
+          <option value="count" data-i18n="val_count">出現回数</option>
+          <option value="binary" data-i18n="val_binary">有無（含むなら1, 含まないなら0）</option>
+        </select>
+      </label>
+      <label class="field">
         <span class="lab"><span data-i18n="p_nchar">最小文字数 (min_nchar)</span> <span class="val" id="ncharVal">2</span></span>
         <input type="range" id="nchar" min="1" max="5" value="2" step="1">
       </label>
-      <label class="field">
-        <span class="lab"><span data-i18n="p_freq">最小出現文書数 (min_termfreq)</span> <span class="val" id="freqVal">2</span></span>
+      <label class="field" style="margin-bottom:8px">
+        <span class="lab"><span data-i18n="p_freq">最小出現回数 (min_termfreq)</span> <span class="val" id="freqVal">2</span></span>
         <input type="range" id="freq" min="1" max="20" value="2" step="1">
       </label>
+      <div class="hint" id="dfmSize" style="margin-top:0;margin-bottom:14px"></div>
       <button class="run" id="run" data-i18n="run">文書単語行列を作成</button>
     </div>
 
@@ -253,6 +261,8 @@ const I18N={
     e_syn_hint:'「置換後<-置換元」をカンマか改行で区切って記入',
     p_orient:'出力の向き', orient_doc:'文書 × 単語（行=文書, 属性付き）', orient_word:'単語 × 文書（行=単語, NMF用）',
     p_nchar:'最小文字数 (min_nchar)', p_freq:'最小出現回数 (min_termfreq)',
+    sz_label:'この設定での行列サイズ', sz_docs:'文書', sz_words:'語',
+    p_val:'値', val_count:'出現回数', val_binary:'有無（含むなら1, 含まないなら0）',
     run:'文書単語行列を作成', run_busy:'処理中…',
     ph_main:'左でCSVを読み込むか、デモデータ（沖縄観光アンケート）を試してください。',
     ph_sub:'テキストを分かち書きし、フィルタ・置換を適用して、文書単語行列(DFM)を作成・ダウンロードします。出力CSVはNMFや分類木アプリでそのまま多変量解析できます。',
@@ -285,6 +295,8 @@ const I18N={
     e_syn_hint:'"new<-old" separated by comma or newline',
     p_orient:'Matrix orientation', orient_doc:'documents × words (rows=docs, +metadata)', orient_word:'words × documents (rows=words, for NMF)',
     p_nchar:'Min characters (min_nchar)', p_freq:'Min term frequency (min_termfreq)',
+    sz_label:'Matrix size with these settings', sz_docs:'docs', sz_words:'words',
+    p_val:'Values', val_count:'occurrence counts', val_binary:'presence (1 if contains, else 0)',
     run:'Build document-term matrix', run_busy:'Processing…',
     ph_main:'Load a CSV on the left, or try the demo (Okinawa tourism survey).',
     ph_sub:'Tokenize text, apply filters/replacements, and build a document-term matrix (DFM). The CSV output feeds directly into the NMF or Classification Tree app.',
@@ -313,6 +325,7 @@ function applyI18n(){
   $$('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
   document.documentElement.lang=LANG;
   buildFilterUI();
+  updateSizeDisplay();
   if(LAST)render(LAST);
 }
 
@@ -405,15 +418,27 @@ function currentOpts(){
     del:parseDelWords(), syn:parseSynonyms(), nchar:+$('#nchar').value
   };
 }
+let _lastTotalCount=null;
 function refreshFreqRange(){
   if(!DATA)return;
   const textcol=$('#textcol').value;if(!textcol)return;
   const opts=currentOpts();const totalCount={};
   DATA.rows.forEach(r=>{pipeline(r[textcol],opts).forEach(w=>{totalCount[w]=(totalCount[w]||0)+1;});});
+  _lastTotalCount=totalCount;
   let maxTF=1;for(const w in totalCount)if(totalCount[w]>maxTF)maxTF=totalCount[w];
   const sl=$('#freq');sl.max=maxTF;
   if(+sl.value>maxTF)sl.value=maxTF;
   $('#freqVal').textContent=sl.value;
+  updateSizeDisplay();
+}
+// live preview of the output matrix size (documents × vocabulary) under current settings
+function updateSizeDisplay(){
+  const box=$('#dfmSize');if(!box)return;
+  if(!DATA||!_lastTotalCount){box.textContent='';return;}
+  const minfreq=+$('#freq').value;
+  let V=0;for(const w in _lastTotalCount)if(_lastTotalCount[w]>=minfreq)V++;
+  const D=DATA.rows.length;
+  box.textContent=t('sz_label')+': '+D+' '+t('sz_docs')+' × '+V+' '+t('sz_words');
 }
 function run(){
   if(!DATA){toast(t('toast_nofile'));return;}
@@ -513,6 +538,8 @@ function renderTop(R){
   });
   const wrap=el('div',{class:'svgscroll'});wrap.appendChild(svg);return wrap;
 }
+// value written to the matrix: raw count, or 1/0 presence when binary is selected
+function cellVal(count){return $('#valtype').value==='binary'?(count>0?1:0):count;}
 function renderPreview(R){
   const nw=Math.min(25,R.V), nd=Math.min(8,R.D);
   const wrap=el('div',{class:'tablewrap'});
@@ -527,8 +554,10 @@ function renderPreview(R){
     const tr=document.createElement('tr');
     const w=R.vocab[i];
     const td0=document.createElement('td');td0.textContent=w;tr.appendChild(td0);
-    for(let j=0;j<nd;j++){const td=document.createElement('td');const v=R.dfm[i][j];td.textContent=v===0?'·':v;tr.appendChild(td);}
-    const tdt=document.createElement('td');tdt.textContent=R.totalCount[w];tdt.style.color='var(--cyan)';tr.appendChild(tdt);
+    let rowSum=0;
+    for(let j=0;j<R.D;j++)rowSum+=cellVal(R.dfm[i][j]);
+    for(let j=0;j<nd;j++){const td=document.createElement('td');const v=cellVal(R.dfm[i][j]);td.textContent=v===0?'·':v;tr.appendChild(td);}
+    const tdt=document.createElement('td');tdt.textContent=rowSum;tdt.style.color='var(--cyan)';tr.appendChild(tdt);
     tbody.appendChild(tr);
   }
   table.appendChild(tbody);wrap.appendChild(table);return wrap;
@@ -538,21 +567,23 @@ function csvCell(v){if(v==null)v='';v=String(v);if(/[",\n]/.test(v))return '"'+v
 function saveText(name,text,mime){const blob=new Blob([text],{type:(mime||'text/plain')+';charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 function downloadDFM(R){
   const orient=$('#orient').value;
+  const bin=$('#valtype').value==='binary';
+  const suffix=bin?'01':'';
   if(orient==='word'){
     // words (rows) × documents (cols) — for the NMF app
     let csv='﻿'+'word,'+Array.from({length:R.D},(_,j)=>'d'+(j+1)).join(',')+'\n';
-    for(let i=0;i<R.V;i++)csv+=csvCell(R.vocab[i])+','+R.dfm[i].join(',')+'\n';
-    saveText('dfm_word_doc.csv',csv,'text/csv');
+    for(let i=0;i<R.V;i++)csv+=csvCell(R.vocab[i])+','+R.dfm[i].map(cellVal).join(',')+'\n';
+    saveText('dfm_word_doc'+suffix+'.csv',csv,'text/csv');
   }else{
     // documents (rows) × words (cols) + metadata — for the classification tree app
     const meta=R.metaCols;
     let csv='﻿'+['doc'].concat(meta.map(csvCell),R.vocab.map(csvCell)).join(',')+'\n';
     for(let j=0;j<R.D;j++){
       const row=['d'+(j+1)].concat(meta.map(c=>csvCell(DATA.rows[j][c])));
-      for(let i=0;i<R.V;i++)row.push(R.dfm[i][j]);
+      for(let i=0;i<R.V;i++)row.push(cellVal(R.dfm[i][j]));
       csv+=row.join(',')+'\n';
     }
-    saveText('dfm_doc_word.csv',csv,'text/csv');
+    saveText('dfm_doc_word'+suffix+'.csv',csv,'text/csv');
   }
 }
 function downloadLog(R){
@@ -607,13 +638,15 @@ $('#demo').onclick=()=>{ingestText(demoCSV(),'okinawa_survey.csv');toast(t('toas
 
 $('#nchar').oninput=e=>$('#ncharVal').textContent=e.target.value;
 $('#nchar').onchange=refreshFreqRange;
-$('#freq').oninput=e=>$('#freqVal').textContent=e.target.value;
+$('#freq').oninput=e=>{$('#freqVal').textContent=e.target.value;updateSizeDisplay();};
 $('#run').onclick=run;
 // recompute the min_termfreq range whenever tokenization settings change
 $('#keepList').addEventListener('change',refreshFreqRange);
 $('#removeList').addEventListener('change',refreshFreqRange);
 $('#delwords').addEventListener('change',refreshFreqRange);
 $('#synonyms').addEventListener('change',refreshFreqRange);
+// value type change only affects the matrix values -> re-render preview
+$('#valtype').addEventListener('change',()=>{if(LAST)render(LAST);});
 
 $('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
 $('#themetog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.setAttribute('data-theme',b.dataset.theme);$$('#themetog button').forEach(x=>x.classList.toggle('on',x===b));if(LAST)render(LAST);});
