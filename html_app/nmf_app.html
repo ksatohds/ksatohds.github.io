@@ -761,16 +761,16 @@ function refreshMeta(){
 function workingData(){let d=DATA;if($('#transpose').checked)d=transposeData(d);return d;}
 
 function makeDemo(){
-  // Food-preference matrix: rows = people (features P), cols = foods (samples N).
-  // Original Japanese names romanized; use the transpose option to swap orientation.
+  // Food-preference matrix: rows = foods (features P), cols = people (samples N).
+  // Use the transpose option to swap orientation.
   return [
-    'name,Cake,Chocolate,Cookie,Salad,Yogurt,Fruit',
-    'Akiko,1,1,1,0,0,0',
-    'Kenta,0,0,0,1,1,1',
-    'Hanako,1,1,0,0,0,0',
-    'Daisuke,0,0,0,1,0,1',
-    'Misaki,1,0,1,0,1,0',
-    'Taro,0,1,0,1,1,1'
+    'food,Akiko,Kenta,Hanako,Daisuke,Misaki,Taro',
+    'Cake,1,0,1,0,1,0',
+    'Chocolate,1,0,1,0,0,1',
+    'Cookie,1,0,0,0,1,0',
+    'Salad,0,1,0,1,0,1',
+    'Yogurt,0,1,0,0,1,1',
+    'Fruit,0,1,0,1,0,1'
   ].join('\n');
 }
 
