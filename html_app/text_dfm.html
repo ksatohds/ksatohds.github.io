@@ -63,10 +63,10 @@
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--cyan-deep)}
   input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg)}
 
-  .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:9px;line-height:1.45;cursor:pointer}
-  .checkline input{accent-color:var(--cyan);margin-top:2px;flex-shrink:0}
-  .checkline .rx{display:block;color:var(--cyan-deep);font-size:11px;font-family:var(--mono);margin-top:1px}
   .hint{font-size:11.5px;color:var(--ink-faint);margin-top:8px;line-height:1.6}
+  .classrow{display:flex;flex-wrap:wrap;gap:7px 16px;margin-top:8px}
+  .classrow label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-dim);cursor:pointer}
+  .classrow input{accent-color:var(--cyan)}
 
   .run{width:100%;padding:12px;border:none;border-radius:7px;background:var(--cyan);color:#062522;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--sans);letter-spacing:.02em;transition:filter .15s,transform .05s}
   .run:hover{filter:brightness(1.08)}
@@ -153,9 +153,11 @@
 
     <div class="group" id="filtGroup" style="display:none">
       <h2 data-i18n="g_keep">抽出フィルタ（残す）</h2>
-      <div id="keepList"></div>
+      <div class="hint" data-i18n="keep_hint">チェックした文字種のみで構成される語を残す</div>
+      <div id="keepList" class="classrow"></div>
       <h2 data-i18n="g_remove" style="margin-top:18px">削除フィルタ（除く）</h2>
-      <div id="removeList"></div>
+      <div class="hint" data-i18n="remove_hint">チェックした文字種のみで構成される語を除く</div>
+      <div id="removeList" class="classrow"></div>
     </div>
 
     <div class="group" id="editGroup" style="display:none">
@@ -208,17 +210,25 @@
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
 
-const KEEP_FILTERS=[
-  {rx:'^[０-９ぁ-んァ-ヶー一-龠]+$', ja:'数字・かな・カナ・漢字のみ（記号/英字を除く）', en:'digits, kana, katakana, kanji only', on:true},
-  {rx:'^[一-龠]+$', ja:'漢字のみ', en:'kanji only'},
-  {rx:'^[ァ-ヶー]+$', ja:'カタカナのみ（外来語・固有名詞）', en:'katakana only'},
-  {rx:'^[一-龠ァ-ヶー]+$', ja:'漢字＋カタカナのみ（内容語向き）', en:'kanji + katakana only'}
+// character classes for keep/remove filters
+const CHAR_CLASSES=[
+  {key:'num',   ja:'数字',     en:'digits'},
+  {key:'hira',  ja:'ひらがな', en:'hiragana'},
+  {key:'kata',  ja:'カタカナ', en:'katakana'},
+  {key:'kanji', ja:'漢字',     en:'kanji'},
+  {key:'other', ja:'記号・英字', en:'symbols/latin'}
 ];
-const REMOVE_FILTERS=[
-  {rx:'^[ぁ-ん]+$', ja:'純ひらがな語（助詞・助動詞など）', en:'hiragana-only words', on:true},
-  {rx:'^[０-９]+$', ja:'数字のみ', en:'digits only'},
-  {rx:'^[ァ-ヶー]+$', ja:'カタカナのみ', en:'katakana only'}
-];
+const KEEP_DEFAULT=new Set(['num','hira','kata','kanji','other']); // all
+const REMOVE_DEFAULT=new Set(['num','hira']);
+function charClass(ch){
+  const c=ch.codePointAt(0);
+  if((c>=0x30&&c<=0x39)||(c>=0xFF10&&c<=0xFF19))return 'num';
+  if(c>=0x3041&&c<=0x309F)return 'hira';
+  if((c>=0x30A0&&c<=0x30FF)||(c>=0x31F0&&c<=0x31FF)||(c>=0xFF66&&c<=0xFF9F))return 'kata';
+  if((c>=0x4E00&&c<=0x9FFF)||(c>=0x3400&&c<=0x4DBF)||c===0x3005||c===0x3006||c===0x3007)return 'kanji';
+  return 'other';
+}
+function tokenInClasses(tok,set){for(const ch of tok){if(!set.has(charClass(ch)))return false;}return tok.length>0;}
 
 let LANG='ja';
 const I18N={
@@ -227,6 +237,7 @@ const I18N={
     eq:'テキスト &rarr; 分かち書き &rarr; フィルタ &rarr; <span style="color:var(--amber)">文書単語行列</span>',
     g_data:'データ', g_col:'テキスト列', g_keep:'抽出フィルタ（残す）', g_remove:'削除フィルタ（除く）',
     g_edit:'単語の削除・置換', g_dfm:'文書単語行列',
+    keep_hint:'チェックした文字種のみで構成される語を残す', remove_hint:'チェックした文字種のみで構成される語を除く',
     drop_big:'CSVをドロップ / クリック', drop_small:'1行=1文書 · テキスト列を含むCSV',
     demo_btn:'◇ デモデータ (沖縄観光アンケート)',
     c_text:'分かち書きする列', c_hint:'日本語は Intl.Segmenter（ブラウザ標準・ICU）で分かち書きします。',
@@ -258,6 +269,7 @@ const I18N={
     eq:'text &rarr; tokenize &rarr; filter &rarr; <span style="color:var(--amber)">document-term matrix</span>',
     g_data:'Data', g_col:'Text column', g_keep:'Keep filters', g_remove:'Remove filters',
     g_edit:'Delete / replace words', g_dfm:'Document-Term Matrix',
+    keep_hint:'Keep words composed only of the checked character types', remove_hint:'Remove words composed only of the checked character types',
     drop_big:'Drop or click a CSV', drop_small:'1 row = 1 document · CSV with a text column',
     demo_btn:'◇ Demo (Okinawa tourism survey)',
     c_text:'Column to tokenize', c_hint:'Japanese is segmented with Intl.Segmenter (built-in ICU).',
@@ -338,21 +350,20 @@ function buildColUI(){
 }
 
 function buildFilterUI(){
-  const mk=(list,cls,box)=>{
+  const mk=(box,cls,defSet)=>{
     const el=$(box);if(!el)return;
-    const prev={};el.querySelectorAll('input').forEach(i=>prev[i.dataset.rx]=i.checked);
+    const prev={};el.querySelectorAll('input').forEach(i=>prev[i.dataset.key]=i.checked);
     el.innerHTML='';
-    list.forEach(f=>{
-      const lab=document.createElement('label');lab.className='checkline';
-      const inp=document.createElement('input');inp.type='checkbox';inp.className=cls;inp.dataset.rx=f.rx;
-      inp.checked=(f.rx in prev)?prev[f.rx]:!!f.on;
-      const span=document.createElement('span');
-      span.innerHTML=(LANG==='ja'?f.ja:f.en)+'<span class="rx">'+f.rx.replace(/</g,'&lt;')+'</span>';
-      lab.appendChild(inp);lab.appendChild(span);el.appendChild(lab);
+    CHAR_CLASSES.forEach(cc=>{
+      const lab=document.createElement('label');
+      const inp=document.createElement('input');inp.type='checkbox';inp.className=cls;inp.dataset.key=cc.key;
+      inp.checked=(cc.key in prev)?prev[cc.key]:defSet.has(cc.key);
+      const sp=document.createElement('span');sp.textContent=(LANG==='ja'?cc.ja:cc.en);
+      lab.appendChild(inp);lab.appendChild(sp);el.appendChild(lab);
     });
   };
-  mk(KEEP_FILTERS,'keepf','#keepList');
-  mk(REMOVE_FILTERS,'removef','#removeList');
+  mk('#keepList','keepf',KEEP_DEFAULT);
+  mk('#removeList','removef',REMOVE_DEFAULT);
 }
 
 const SEG=new Intl.Segmenter('ja',{granularity:'word'});
@@ -368,8 +379,10 @@ function parseSynonyms(){
 }
 function pipeline(text,opts){
   let toks=tokenizeRaw(text);
-  if(opts.keep.length)toks=toks.filter(w=>opts.keep.some(rx=>rx.test(w)));
-  if(opts.remove.length)toks=toks.filter(w=>!opts.remove.some(rx=>rx.test(w)));
+  // keep: token kept if made only of checked character classes
+  toks=toks.filter(w=>tokenInClasses(w,opts.keep));
+  // remove: token dropped if made only of checked character classes
+  if(opts.remove.size)toks=toks.filter(w=>!tokenInClasses(w,opts.remove));
   if(opts.del.size)toks=toks.filter(w=>!opts.del.has(w));
   if(Object.keys(opts.syn).length)toks=toks.map(w=>opts.syn[w]||w);
   toks=toks.filter(w=>[...w].length>=opts.nchar);
@@ -381,8 +394,8 @@ function run(){
   const textcol=$('#textcol').value;
   if(!textcol){toast(t('toast_notext'));return;}
   const opts={
-    keep:[...$$('.keepf')].filter(i=>i.checked).map(i=>new RegExp(i.dataset.rx)),
-    remove:[...$$('.removef')].filter(i=>i.checked).map(i=>new RegExp(i.dataset.rx)),
+    keep:new Set([...$$('.keepf')].filter(i=>i.checked).map(i=>i.dataset.key)),
+    remove:new Set([...$$('.removef')].filter(i=>i.checked).map(i=>i.dataset.key)),
     del:parseDelWords(), syn:parseSynonyms(), nchar:+$('#nchar').value
   };
   const minfreq=+$('#freq').value;
@@ -522,8 +535,8 @@ function downloadLog(R){
   L.push('# text -> document-term matrix — log');L.push('');
   L.push('[Settings]');
   L.push('text_column   : '+R.textcol);
-  L.push('keep_filters  : '+(R.opts.keep.map(r=>r.source).join('  ')||'(none)'));
-  L.push('remove_filters: '+(R.opts.remove.map(r=>r.source).join('  ')||'(none)'));
+  L.push('keep_classes   : '+([...R.opts.keep].join(', ')||'(none)'));
+  L.push('remove_classes : '+([...R.opts.remove].join(', ')||'(none)'));
   L.push('delete_words  : '+([...R.opts.del].join(', ')||'(none)'));
   L.push('synonyms      : '+(Object.entries(R.opts.syn).map(([f,to])=>to+'<-'+f).join(', ')||'(none)'));
   L.push('min_nchar     : '+R.opts.nchar);
