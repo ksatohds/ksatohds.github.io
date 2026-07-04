@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>text_dfm</title>
+<style>
+  :root{
+    --bg:#0f1417; --panel:#161d21; --panel-2:#1c252a; --line:#2a353b;
+    --ink:#e8eef0; --ink-dim:#8b9ba1; --ink-faint:#5b6a70;
+    --cyan:#4fd6c8; --cyan-deep:#2a9e93; --amber:#e8a54b; --violet:#9d8cf0; --danger:#e06a6a;
+    --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Menlo",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  }
+  html[data-theme="light"]{
+    --bg:#ffffff; --panel:#f6f8f9; --panel-2:#edf1f3; --line:#d8e0e3;
+    --ink:#141c20; --ink-dim:#4e5d63; --ink-faint:#7f8d93;
+    --cyan:#0f9a8d; --cyan-deep:#0b7468; --amber:#b07617; --violet:#6250c8; --danger:#cf4a4a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--cyan)}
+
+  header{border-bottom:1px solid var(--line);padding:22px 28px 20px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+  .langtog{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-family:var(--mono);font-size:11px;align-self:center;flex-shrink:0}
+  .langtog button{background:transparent;color:var(--ink-dim);border:none;padding:5px 11px;cursor:pointer;letter-spacing:.06em;transition:background .12s,color .12s}
+  .langtog button:hover{color:var(--ink)}
+  .langtog button.on{background:var(--cyan);color:#062522;font-weight:700}
+  .brand{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:10px}
+  .brand .glyph{font-size:17px;letter-spacing:0;color:var(--ink)}
+  h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .eq{font-family:var(--mono);color:var(--ink-dim);font-size:13px;margin-left:auto}
+
+  .wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:calc(100vh - 64px)}
+  .control{border-right:1px solid var(--line);padding:22px;background:var(--panel)}
+  .stage{padding:22px 28px;overflow:auto}
+  @media (max-width:860px){.wrap{grid-template-columns:1fr}.control{border-right:none;border-bottom:1px solid var(--line)}}
+
+  .group{margin-bottom:22px}
+  .group h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 11px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .group h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .dropzone{border:1px dashed var(--line);border-radius:8px;padding:20px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:var(--panel-2)}
+  .dropzone:hover{border-color:var(--cyan-deep)}
+  .dropzone.drag{border-color:var(--cyan);background:#17272a}
+  .dropzone .big{font-size:13px;color:var(--ink);margin-bottom:4px}
+  .dropzone .small{font-size:11.5px;color:var(--ink-faint);font-family:var(--mono)}
+  input[type=file]{display:none}
+
+  .filemeta{margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);line-height:1.7;background:var(--panel-2);border-radius:6px;padding:8px 10px;display:none}
+  .filemeta.show{display:block}
+  .filemeta .k{color:var(--ink-faint)}
+  .filemeta .v{color:var(--cyan)}
+
+  label.field{display:block;margin-bottom:14px}
+  label.field .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--ink-dim);margin-bottom:6px;gap:8px}
+  label.field .lab .val{font-family:var(--mono);color:var(--cyan);font-size:12.5px;flex-shrink:0}
+  select,input[type=number],textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
+  select:focus,input[type=number]:focus,textarea:focus{border-color:var(--cyan-deep)}
+  textarea{resize:vertical;min-height:52px;line-height:1.5}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--line);border-radius:2px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--cyan-deep)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg)}
+
+  .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:9px;line-height:1.45;cursor:pointer}
+  .checkline input{accent-color:var(--cyan);margin-top:2px;flex-shrink:0}
+  .checkline .rx{display:block;color:var(--cyan-deep);font-size:11px;font-family:var(--mono);margin-top:1px}
+  .hint{font-size:11.5px;color:var(--ink-faint);margin-top:8px;line-height:1.6}
+
+  .run{width:100%;padding:12px;border:none;border-radius:7px;background:var(--cyan);color:#062522;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--sans);letter-spacing:.02em;transition:filter .15s,transform .05s}
+  .run:hover{filter:brightness(1.08)}
+  .run:active{transform:translateY(1px)}
+  .run:disabled{background:var(--line);color:var(--ink-faint);cursor:not-allowed}
+
+  .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-faint);text-align:center;gap:14px;padding:40px}
+  .placeholder .mark{font-family:var(--mono);font-size:40px;color:var(--line)}
+  .placeholder .mark .a{color:var(--cyan-deep)}
+  .placeholder p{max-width:440px;font-size:13.5px;line-height:1.7}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:22px}
+  .metric{background:var(--panel);padding:13px 15px}
+  .metric .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .metric .v{font-family:var(--mono);font-size:20px;color:var(--ink);margin-top:3px;font-weight:600}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:20px}
+  .card h3{font-size:14px;font-weight:600;margin:0 0 3px;}
+  .card .desc{font-size:12px;color:var(--ink-dim);margin:0 0 14px;font-family:var(--mono)}
+
+  .toks{font-family:var(--mono);font-size:12px;line-height:2;color:var(--ink)}
+  .tok{display:inline-block;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:1px 7px;margin:2px 3px 2px 0}
+
+  .svgscroll{overflow:auto;border-radius:6px;background:var(--panel-2);border:1px solid var(--line)}
+  svg{display:block}
+  .lbl{font-family:var(--mono);font-size:11px;fill:var(--ink)}
+  .sub{font-family:var(--mono);font-size:10px;fill:var(--ink-dim)}
+
+  .tablewrap{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:6px}
+  table{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;width:100%}
+  th,td{padding:5px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{position:sticky;top:0;background:var(--panel-2);color:var(--ink-dim);font-weight:600;z-index:1}
+  td:first-child,th:first-child{text-align:left;color:var(--ink-dim);position:sticky;left:0;background:var(--panel-2)}
+  tbody td{color:var(--ink)}
+
+  .downloads{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .dl{font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);color:var(--cyan);cursor:pointer;transition:border-color .15s}
+  .dl:hover{border-color:var(--cyan-deep)}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:11px 18px;border-radius:7px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:50;display:none;max-width:90vw}
+  footer{border-top:1px solid var(--line);padding:16px 28px;color:var(--ink-faint);font-size:12px;font-family:var(--mono);display:flex;gap:10px 20px;flex-wrap:wrap;align-items:center}
+  footer .credit{color:var(--ink-dim)}
+  footer .credit b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="langtog" id="langtog">
+    <button data-lang="ja" class="on">JA</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <div class="langtog" id="themetog">
+    <button data-theme="dark" title="Dark">&#9790;</button>
+    <button data-theme="light" class="on" title="Light">&#9728;</button>
+  </div>
+  <div class="brand"><span class="glyph">&para;</span>TEXT&nbsp;&rarr;&nbsp;DFM</div>
+  <h1 data-i18n="h1">文書単語行列 (DFM)</h1>
+  <div class="eq" data-i18n-html="eq"></div>
+</header>
+
+<div class="wrap">
+  <aside class="control">
+
+    <div class="group">
+      <h2 data-i18n="g_data">データ</h2>
+      <div class="dropzone" id="drop">
+        <div class="big" data-i18n="drop_big">CSVをドロップ / クリック</div>
+        <div class="small" data-i18n="drop_small">1行=1文書 · テキスト列を含むCSV</div>
+      </div>
+      <input type="file" id="file" accept=".csv,.tsv,.txt">
+      <div class="filemeta" id="meta"></div>
+      <button class="dl" id="demo" style="width:100%;margin-top:10px" data-i18n="demo_btn">&#9671; デモデータ (沖縄観光アンケート)</button>
+    </div>
+
+    <div class="group" id="colGroup" style="display:none">
+      <h2 data-i18n="g_col">テキスト列</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_text">分かち書きする列</span></span>
+        <select id="textcol" size="1"></select>
+      </label>
+      <div class="hint" data-i18n="c_hint">日本語は Intl.Segmenter（ブラウザ標準・ICU）で分かち書きします。</div>
+    </div>
+
+    <div class="group" id="filtGroup" style="display:none">
+      <h2 data-i18n="g_keep">抽出フィルタ（残す）</h2>
+      <div id="keepList"></div>
+      <h2 data-i18n="g_remove" style="margin-top:18px">削除フィルタ（除く）</h2>
+      <div id="removeList"></div>
+    </div>
+
+    <div class="group" id="editGroup" style="display:none">
+      <h2 data-i18n="g_edit">単語の削除・置換</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="e_del">指定した単語を削除</span></span>
+        <textarea id="delwords" data-i18n-ph="e_del_ph" placeholder="思い,思う,感じ"></textarea>
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="e_syn">同義語の置換</span></span>
+        <textarea id="synonyms" data-i18n-ph="e_syn_ph" placeholder="沖縄料理<-料理,沖縄料理<-食事"></textarea>
+        <span class="hint" data-i18n="e_syn_hint">「置換後&lt;-置換元」をカンマか改行で区切って記入</span>
+      </label>
+    </div>
+
+    <div class="group" id="paramGroup" style="display:none">
+      <h2 data-i18n="g_dfm">文書単語行列</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_nchar">最小文字数 (min_nchar)</span> <span class="val" id="ncharVal">2</span></span>
+        <input type="range" id="nchar" min="1" max="4" value="2" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_freq">最小出現文書数 (min_termfreq)</span> <span class="val" id="freqVal">2</span></span>
+        <input type="range" id="freq" min="1" max="20" value="2" step="1">
+      </label>
+      <button class="run" id="run" data-i18n="run">文書単語行列を作成</button>
+    </div>
+
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="placeholder" id="placeholder">
+      <div class="mark"><span class="a">&para;</span></div>
+      <p data-i18n="ph_main">左でCSVを読み込むか、デモデータ（沖縄観光アンケート）を試してください。</p>
+      <p data-i18n="ph_sub" style="font-size:12px;color:var(--ink-faint)">テキストを分かち書きし、フィルタ・置換を適用して、文書単語行列(DFM)を作成・ダウンロードします。出力CSVはNMFや分類木アプリでそのまま多変量解析できます。</p>
+    </div>
+    <div id="results" style="display:none"></div>
+  </main>
+</div>
+
+<footer>
+  <span class="credit" data-i18n-html="f_model">Intl.Segmenter (ICU) · Document-Term Matrix</span>
+  <span class="credit"><b data-i18n="f_org">滋賀大学データサイエンス学系</b> · <span data-i18n="f_name">佐藤健一</span></span>
+  <button class="dl" id="saveApp" style="margin-left:auto" data-i18n="save_app">&#128190; GitHubから最新版を保存</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+
+const KEEP_FILTERS=[
+  {rx:'^[０-９ぁ-んァ-ヶー一-龠]+$', ja:'数字・かな・カナ・漢字のみ（記号/英字を除く）', en:'digits, kana, katakana, kanji only', on:true},
+  {rx:'^[一-龠]+$', ja:'漢字のみ', en:'kanji only'},
+  {rx:'^[ァ-ヶー]+$', ja:'カタカナのみ（外来語・固有名詞）', en:'katakana only'},
+  {rx:'^[一-龠ァ-ヶー]+$', ja:'漢字＋カタカナのみ（内容語向き）', en:'kanji + katakana only'}
+];
+const REMOVE_FILTERS=[
+  {rx:'^[ぁ-ん]+$', ja:'純ひらがな語（助詞・助動詞など）', en:'hiragana-only words', on:true},
+  {rx:'^[０-９]+$', ja:'数字のみ', en:'digits only'},
+  {rx:'^[ァ-ヶー]+$', ja:'カタカナのみ', en:'katakana only'}
+];
+
+let LANG='ja';
+const I18N={
+  ja:{
+    h1:'文書単語行列 (DFM)',
+    eq:'テキスト &rarr; 分かち書き &rarr; フィルタ &rarr; <span style="color:var(--amber)">文書単語行列</span>',
+    g_data:'データ', g_col:'テキスト列', g_keep:'抽出フィルタ（残す）', g_remove:'削除フィルタ（除く）',
+    g_edit:'単語の削除・置換', g_dfm:'文書単語行列',
+    drop_big:'CSVをドロップ / クリック', drop_small:'1行=1文書 · テキスト列を含むCSV',
+    demo_btn:'◇ デモデータ (沖縄観光アンケート)',
+    c_text:'分かち書きする列', c_hint:'日本語は Intl.Segmenter（ブラウザ標準・ICU）で分かち書きします。',
+    e_del:'指定した単語を削除', e_del_ph:'思い,思う,感じ',
+    e_syn:'同義語の置換', e_syn_ph:'沖縄料理<-料理,沖縄料理<-食事',
+    e_syn_hint:'「置換後<-置換元」をカンマか改行で区切って記入',
+    p_nchar:'最小文字数 (min_nchar)', p_freq:'最小出現文書数 (min_termfreq)',
+    run:'文書単語行列を作成', run_busy:'処理中…',
+    ph_main:'左でCSVを読み込むか、デモデータ（沖縄観光アンケート）を試してください。',
+    ph_sub:'テキストを分かち書きし、フィルタ・置換を適用して、文書単語行列(DFM)を作成・ダウンロードします。出力CSVはNMFや分類木アプリでそのまま多変量解析できます。',
+    f_model:'Intl.Segmenter (ICU) · 文書単語行列',
+    f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
+    m_docs:'文書数', m_tokens:'総トークン数', m_vocab:'語彙数', m_density:'非ゼロ率',
+    sec_ex:'分かち書きの例', sec_ex_d:'先頭の文書に、フィルタ・置換を適用した結果のトークン。',
+    sec_top:'頻出語', sec_top_d:'出現文書数の多い語（上位）。',
+    sec_dfm:'文書単語行列（プレビュー）', sec_dfm_d:'行=語, 列=文書。値は各文書での出現回数。先頭の一部を表示。',
+    dl_title:'ダウンロード',
+    dl_wd:'dfm_word_doc.csv（語×文書 · NMF用）',
+    dl_dw:'dfm_doc_word.csv（文書×語+属性 · 分類木用）',
+    dl_log:'text_dfm.log（設定・語彙）',
+    word_head:'語 / 文書', total:'計',
+    toast_nofile:'CSVを読み込んでください', toast_notext:'テキスト列を選んでください',
+    toast_empty:'条件に合う語がありません。フィルタや最小出現文書数を緩めてください。',
+    toast_parsefail:'CSVの解析に失敗しました', toast_demo:'デモデータを読み込みました (16件)',
+    meta_file:'file', meta_rows:'文書', meta_cols:'列'
+  },
+  en:{
+    h1:'Document-Term Matrix (DFM)',
+    eq:'text &rarr; tokenize &rarr; filter &rarr; <span style="color:var(--amber)">document-term matrix</span>',
+    g_data:'Data', g_col:'Text column', g_keep:'Keep filters', g_remove:'Remove filters',
+    g_edit:'Delete / replace words', g_dfm:'Document-Term Matrix',
+    drop_big:'Drop or click a CSV', drop_small:'1 row = 1 document · CSV with a text column',
+    demo_btn:'◇ Demo (Okinawa tourism survey)',
+    c_text:'Column to tokenize', c_hint:'Japanese is segmented with Intl.Segmenter (built-in ICU).',
+    e_del:'Delete specified words', e_del_ph:'word1,word2,word3',
+    e_syn:'Replace synonyms', e_syn_ph:'newWord<-oldWord1,newWord<-oldWord2',
+    e_syn_hint:'"new<-old" separated by comma or newline',
+    p_nchar:'Min characters (min_nchar)', p_freq:'Min document frequency (min_termfreq)',
+    run:'Build document-term matrix', run_busy:'Processing…',
+    ph_main:'Load a CSV on the left, or try the demo (Okinawa tourism survey).',
+    ph_sub:'Tokenize text, apply filters/replacements, and build a document-term matrix (DFM). The CSV output feeds directly into the NMF or Classification Tree app.',
+    f_model:'Intl.Segmenter (ICU) · document-term matrix',
+    f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
+    m_docs:'Documents', m_tokens:'Total tokens', m_vocab:'Vocabulary', m_density:'Non-zero',
+    sec_ex:'Tokenization example', sec_ex_d:'Tokens of the first document after filters and replacements.',
+    sec_top:'Frequent words', sec_top_d:'Words appearing in the most documents (top).',
+    sec_dfm:'Document-term matrix (preview)', sec_dfm_d:'rows = words, cols = documents; values are counts. Showing the top-left part.',
+    dl_title:'Downloads',
+    dl_wd:'dfm_word_doc.csv (words × docs · for NMF)',
+    dl_dw:'dfm_doc_word.csv (docs × words + metadata · for tree)',
+    dl_log:'text_dfm.log (settings & vocabulary)',
+    word_head:'word / doc', total:'total',
+    toast_nofile:'Please load a CSV first', toast_notext:'Please choose a text column',
+    toast_empty:'No words matched. Relax the filters or min document frequency.',
+    toast_parsefail:'Failed to parse CSV', toast_demo:'Loaded demo data (16 rows)',
+    meta_file:'file', meta_rows:'documents', meta_cols:'columns'
+  }
+};
+function t(k){const d=I18N[LANG];return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k);}
+function applyI18n(){
+  $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  $$('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  $$('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
+  const runBtn=$('#run');if(runBtn&&!runBtn.dataset.busy)runBtn.textContent=t('run');
+  $$('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  document.documentElement.lang=LANG;
+  buildFilterUI();
+  if(LAST)render(LAST);
+}
+
+let DATA=null, LAST=null, toastTimer=null;
+function toast(msg){const el=$('#toast');el.textContent=msg;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',3800);}
+
+function parseCSVRows(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(text.endsWith('\n'))text=text.slice(0,-1);
+  const firstLine=text.split('\n')[0]||'';
+  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(r=>!(r.length===1&&r[0].trim()===''));
+}
+function ingestText(text,filename){
+  const rows=parseCSVRows(text);
+  if(!rows.length){toast(t('toast_parsefail'));return;}
+  const cols=rows[0].map(h=>String(h).trim());
+  const data=rows.slice(1).map(r=>{const o={};cols.forEach((c,i)=>o[c]=r[i]!=null?r[i]:'');return o;});
+  DATA={rows:data,cols,filename};
+  buildColUI();
+  $('#meta').classList.add('show');
+  $('#meta').innerHTML='<span class="k">'+t('meta_file')+'</span> <span class="v">'+filename+'</span><br>'+
+    '<span class="k">'+t('meta_rows')+'</span> <span class="v">'+data.length+'</span> · '+
+    '<span class="k">'+t('meta_cols')+'</span> <span class="v">'+cols.length+'</span>';
+  ['#colGroup','#filtGroup','#editGroup','#paramGroup'].forEach(s=>$(s).style.display='');
+}
+function buildColUI(){
+  const sel=$('#textcol');sel.innerHTML='';
+  let best=DATA.cols[0],bestLen=-1;
+  DATA.cols.forEach(c=>{
+    const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
+    let s=0,n=0;for(const r of DATA.rows){s+=String(r[c]||'').length;n++;}
+    const avg=n?s/n:0;if(avg>bestLen){bestLen=avg;best=c;}
+  });
+  sel.value=best;
+}
+
+function buildFilterUI(){
+  const mk=(list,cls,box)=>{
+    const el=$(box);if(!el)return;
+    const prev={};el.querySelectorAll('input').forEach(i=>prev[i.dataset.rx]=i.checked);
+    el.innerHTML='';
+    list.forEach(f=>{
+      const lab=document.createElement('label');lab.className='checkline';
+      const inp=document.createElement('input');inp.type='checkbox';inp.className=cls;inp.dataset.rx=f.rx;
+      inp.checked=(f.rx in prev)?prev[f.rx]:!!f.on;
+      const span=document.createElement('span');
+      span.innerHTML=(LANG==='ja'?f.ja:f.en)+'<span class="rx">'+f.rx.replace(/</g,'&lt;')+'</span>';
+      lab.appendChild(inp);lab.appendChild(span);el.appendChild(lab);
+    });
+  };
+  mk(KEEP_FILTERS,'keepf','#keepList');
+  mk(REMOVE_FILTERS,'removef','#removeList');
+}
+
+const SEG=new Intl.Segmenter('ja',{granularity:'word'});
+function tokenizeRaw(text){return [...SEG.segment(String(text||''))].filter(s=>s.isWordLike).map(s=>s.segment);}
+function parseDelWords(){return new Set(($('#delwords').value||'').split(/[,\n]/).map(s=>s.trim()).filter(Boolean));}
+function parseSynonyms(){
+  const map={};
+  ($('#synonyms').value||'').split(/[,\n]/).map(s=>s.trim()).filter(s=>s.includes('<-')).forEach(e=>{
+    const i=e.indexOf('<-');const to=e.slice(0,i).trim();const from=e.slice(i+2).trim();
+    if(to&&from)map[from]=to;
+  });
+  return map;
+}
+function pipeline(text,opts){
+  let toks=tokenizeRaw(text);
+  if(opts.keep.length)toks=toks.filter(w=>opts.keep.some(rx=>rx.test(w)));
+  if(opts.remove.length)toks=toks.filter(w=>!opts.remove.some(rx=>rx.test(w)));
+  if(opts.del.size)toks=toks.filter(w=>!opts.del.has(w));
+  if(Object.keys(opts.syn).length)toks=toks.map(w=>opts.syn[w]||w);
+  toks=toks.filter(w=>[...w].length>=opts.nchar);
+  return toks;
+}
+
+function run(){
+  if(!DATA){toast(t('toast_nofile'));return;}
+  const textcol=$('#textcol').value;
+  if(!textcol){toast(t('toast_notext'));return;}
+  const opts={
+    keep:[...$$('.keepf')].filter(i=>i.checked).map(i=>new RegExp(i.dataset.rx)),
+    remove:[...$$('.removef')].filter(i=>i.checked).map(i=>new RegExp(i.dataset.rx)),
+    del:parseDelWords(), syn:parseSynonyms(), nchar:+$('#nchar').value
+  };
+  const minfreq=+$('#freq').value;
+  const btn=$('#run');btn.dataset.busy='1';btn.textContent=t('run_busy');btn.disabled=true;
+  setTimeout(()=>{
+    try{
+      const docTokens=DATA.rows.map(r=>pipeline(r[textcol],opts));
+      const docFreq={},totalCount={};
+      docTokens.forEach(toks=>{
+        new Set(toks).forEach(w=>docFreq[w]=(docFreq[w]||0)+1);
+        toks.forEach(w=>totalCount[w]=(totalCount[w]||0)+1);
+      });
+      let vocab=Object.keys(docFreq).filter(w=>docFreq[w]>=minfreq);
+      vocab.sort((a,b)=>docFreq[b]-docFreq[a]||totalCount[b]-totalCount[a]||(a<b?-1:1));
+      if(!vocab.length){toast(t('toast_empty'));btn.dataset.busy='';btn.textContent=t('run');btn.disabled=false;return;}
+      const vIndex={};vocab.forEach((w,k)=>vIndex[w]=k);
+      const D=DATA.rows.length,V=vocab.length;
+      const dfm=vocab.map(()=>new Array(D).fill(0));
+      let nonzero=0,totalTok=0;
+      docTokens.forEach((toks,j)=>{toks.forEach(w=>{const i=vIndex[w];if(i!=null){if(dfm[i][j]===0)nonzero++;dfm[i][j]++;totalTok++;}});});
+      LAST={textcol,opts,minfreq,docTokens,vocab,docFreq,totalCount,dfm,D,V,nonzero,totalTok,
+            metaCols:DATA.cols.filter(c=>c!==textcol)};
+      render(LAST);
+    }catch(e){toast('error: '+e.message);console.error(e);}
+    btn.dataset.busy='';btn.textContent=t('run');btn.disabled=false;
+  },30);
+}
+
+function el(tag,attrs,children){
+  const svgTags=['svg','g','rect','line','text','tspan'];
+  const e=document.createElementNS(svgTags.includes(tag)?'http://www.w3.org/2000/svg':'http://www.w3.org/1999/xhtml',tag);
+  if(attrs)for(const k in attrs){if(k==='text')e.textContent=attrs[k];else e.setAttribute(k,attrs[k]);}
+  if(children)children.forEach(c=>e.appendChild(c));
+  return e;
+}
+function render(R){
+  $('#placeholder').style.display='none';
+  const box=$('#results');box.style.display='';box.innerHTML='';
+
+  const met=el('div',{class:'metrics'});
+  const addM=(k,v)=>{const m=el('div',{class:'metric'});m.appendChild(el('div',{class:'k',text:k}));m.appendChild(el('div',{class:'v',text:v}));met.appendChild(m);};
+  addM(t('m_docs'),R.D);
+  addM(t('m_tokens'),R.totalTok);
+  addM(t('m_vocab'),R.V);
+  addM(t('m_density'),(100*R.nonzero/(R.V*R.D)).toFixed(1)+'%');
+  box.appendChild(met);
+
+  const exCard=el('div',{class:'card'});
+  exCard.appendChild(el('h3',{text:t('sec_ex')}));
+  exCard.appendChild(el('div',{class:'desc',text:t('sec_ex_d')}));
+  let exIdx=R.docTokens.findIndex(tk=>tk.length);if(exIdx<0)exIdx=0;
+  const src=el('div',{class:'desc'});src.style.color='var(--ink-faint)';src.textContent='#'+(exIdx+1)+': '+String(DATA.rows[exIdx][R.textcol]||'').slice(0,90);
+  exCard.appendChild(src);
+  const toksDiv=el('div',{class:'toks'});
+  R.docTokens[exIdx].forEach(w=>{const s=el('span',{class:'tok'});s.textContent=w;toksDiv.appendChild(s);});
+  exCard.appendChild(toksDiv);
+  box.appendChild(exCard);
+
+  const topCard=el('div',{class:'card'});
+  topCard.appendChild(el('h3',{text:t('sec_top')}));
+  topCard.appendChild(el('div',{class:'desc',text:t('sec_top_d')}));
+  topCard.appendChild(renderTop(R));
+  box.appendChild(topCard);
+
+  const dfmCard=el('div',{class:'card'});
+  dfmCard.appendChild(el('h3',{text:t('sec_dfm')}));
+  dfmCard.appendChild(el('div',{class:'desc',text:t('sec_dfm_d')}));
+  dfmCard.appendChild(renderPreview(R));
+  box.appendChild(dfmCard);
+
+  const dlCard=el('div',{class:'card'});
+  dlCard.appendChild(el('h3',{text:t('dl_title')}));
+  const dls=el('div',{class:'downloads'});
+  const b1=el('button',{class:'dl',text:t('dl_wd')});b1.onclick=()=>downloadWordDoc(R);
+  const b2=el('button',{class:'dl',text:t('dl_dw')});b2.onclick=()=>downloadDocWord(R);
+  const b3=el('button',{class:'dl',text:t('dl_log')});b3.onclick=()=>downloadLog(R);
+  dls.appendChild(b1);dls.appendChild(b2);dls.appendChild(b3);
+  dlCard.appendChild(dls);box.appendChild(dlCard);
+}
+function renderTop(R){
+  const n=Math.min(20,R.V);
+  const words=R.vocab.slice(0,n);
+  const max=R.docFreq[words[0]]||1;
+  const W=460,rowH=22,pad=8,H=n*rowH+16,labelW=110,barMax=W-labelW-60;
+  const svg=el('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
+  const inkDim=getComputedStyle(document.documentElement).getPropertyValue('--ink-dim').trim();
+  const cyan=getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();
+  words.forEach((w,i)=>{
+    const y=pad+i*rowH;
+    const lt=el('text',{x:labelW-6,y:y+12,'text-anchor':'end',class:'lbl'});lt.style.fill=inkDim;lt.textContent=w.length>8?w.slice(0,8)+'…':w;svg.appendChild(lt);
+    const bw=barMax*R.docFreq[w]/max;
+    svg.appendChild(el('rect',{x:labelW,y:y+2,width:bw,height:rowH-7,fill:cyan,rx:2}));
+    const vt=el('text',{x:labelW+bw+6,y:y+12,class:'sub'});vt.style.fill=inkDim;vt.textContent=R.docFreq[w];svg.appendChild(vt);
+  });
+  const wrap=el('div',{class:'svgscroll'});wrap.appendChild(svg);return wrap;
+}
+function renderPreview(R){
+  const nw=Math.min(25,R.V), nd=Math.min(8,R.D);
+  const wrap=el('div',{class:'tablewrap'});
+  const table=document.createElement('table');
+  const thead=document.createElement('thead');const htr=document.createElement('tr');
+  const th0=document.createElement('th');th0.textContent=t('word_head');htr.appendChild(th0);
+  for(let j=0;j<nd;j++){const th=document.createElement('th');th.textContent='d'+(j+1);htr.appendChild(th);}
+  const tht=document.createElement('th');tht.textContent=t('total');htr.appendChild(tht);
+  thead.appendChild(htr);table.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  for(let i=0;i<nw;i++){
+    const tr=document.createElement('tr');
+    const w=R.vocab[i];
+    const td0=document.createElement('td');td0.textContent=w;tr.appendChild(td0);
+    for(let j=0;j<nd;j++){const td=document.createElement('td');const v=R.dfm[i][j];td.textContent=v===0?'·':v;tr.appendChild(td);}
+    const tdt=document.createElement('td');tdt.textContent=R.totalCount[w];tdt.style.color='var(--cyan)';tr.appendChild(tdt);
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);wrap.appendChild(table);return wrap;
+}
+
+function csvCell(v){if(v==null)v='';v=String(v);if(/[",\n]/.test(v))return '"'+v.replace(/"/g,'""')+'"';return v;}
+function saveText(name,text,mime){const blob=new Blob([text],{type:(mime||'text/plain')+';charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function downloadWordDoc(R){
+  let csv='﻿'+'word,'+Array.from({length:R.D},(_,j)=>'d'+(j+1)).join(',')+'\n';
+  for(let i=0;i<R.V;i++)csv+=csvCell(R.vocab[i])+','+R.dfm[i].join(',')+'\n';
+  saveText('dfm_word_doc.csv',csv,'text/csv');
+}
+function downloadDocWord(R){
+  const meta=R.metaCols;
+  let csv='﻿'+['doc'].concat(meta.map(csvCell),R.vocab.map(csvCell)).join(',')+'\n';
+  for(let j=0;j<R.D;j++){
+    const row=['d'+(j+1)].concat(meta.map(c=>csvCell(DATA.rows[j][c])));
+    for(let i=0;i<R.V;i++)row.push(R.dfm[i][j]);
+    csv+=row.join(',')+'\n';
+  }
+  saveText('dfm_doc_word.csv',csv,'text/csv');
+}
+function downloadLog(R){
+  const L=[];
+  L.push('# text -> document-term matrix — log');L.push('');
+  L.push('[Settings]');
+  L.push('text_column   : '+R.textcol);
+  L.push('keep_filters  : '+(R.opts.keep.map(r=>r.source).join('  ')||'(none)'));
+  L.push('remove_filters: '+(R.opts.remove.map(r=>r.source).join('  ')||'(none)'));
+  L.push('delete_words  : '+([...R.opts.del].join(', ')||'(none)'));
+  L.push('synonyms      : '+(Object.entries(R.opts.syn).map(([f,to])=>to+'<-'+f).join(', ')||'(none)'));
+  L.push('min_nchar     : '+R.opts.nchar);
+  L.push('min_termfreq  : '+R.minfreq);L.push('');
+  L.push('[Results]');
+  L.push('documents     : '+R.D);
+  L.push('total_tokens  : '+R.totalTok);
+  L.push('vocabulary    : '+R.V);L.push('');
+  L.push('[Vocabulary] word / doc_freq / total_count');
+  R.vocab.forEach(w=>L.push('  '+w+'\t'+R.docFreq[w]+'\t'+R.totalCount[w]));
+  saveText('text_dfm.log',L.join('\n')+'\n');
+}
+
+function demoCSV(){
+  return [
+'居住地,性別,年代,満足度,意見・感想',
+'関東,男性,３０代,やや満足,海岸の美化・清掃　航空運賃を安くする　那覇の交通渋滞緩和',
+'中部,男性,７０代,やや満足,２月は雨が多いとは、知りませんでした。残念でした。天気が良かったら素晴らしい海の色が目に見えるでしょう。又行きます。',
+'北海道・東北,女性,５０代,大変満足,路面は車でぎっしりなので電車でも通っていたら、と思いました。',
+'関東,男性,４０代,やや満足,個人的に昔から沖縄音楽が好きで良く聴いていました。「ハイサイオジサン」など。ただ、沖縄料理はあまり口に合わず、ＢＵＴステーキはおいしかった。',
+'九州,男性,７０代,やや満足,ゴルフ旅行であったが出会う人が親切であった。他県では比べようもないほど親切であった。',
+'関東,男性,６０代,大変満足,大変なことかもしれませんができる限り自然を守っていただきたいです。',
+'中国・四国,女性,６０代,やや満足,道路標識、レンタカーの地図がわかりにくかった。レンタカー会社は親切だけど丁寧ではなかった。',
+'関東,男性,７０代,やや満足,島民のドライバーの交通違反が目立つ。ウインカーも出さずに急な右左折が多い',
+'関東,男性,７０代,やや満足,観光付きのパッケージ旅行でももっと景勝地巡りを取り入れて欲しい。',
+'関東,男性,３０代,大変満足,沖縄観光については特に不満等はありません。しいていうならば那覇市内の渋滞くらいです。免税店ショッピングができたことでより楽しみが増えました。',
+'関東,女性,３０代,やや満足,もう少し運転マナーがいいといいなと思いました。（横断歩道を青信号で渡ろうとしたら、右折車が入ってきてびっくりしました。）',
+'関東,女性,３０代,大変満足,思った以上に観光客が多く、観光客のマナーの悪さが目立った。今度は離島に行きたいです。',
+'関東,男性,５０代,大変満足,沖縄は車社会であります。観光もバス、レンタカーが中心と思われます。道路の整備、駐車場の使いやすさだと思います。',
+'中部,女性,６０代,やや満足,那覇市内の交通渋滞がこれ以上悪くなると大きな欠点になると思います。',
+'中部,女性,５０代,大変満足,宮古島は、まだ観光客も少なく、素朴な感じがした。砂浜の美しさ水の美しさはポスターどおりでした。でも夏などは人が多くなるのでしょうね。',
+'中部,女性,２０代,やや満足,海に入れない冬でも離島を満喫できるのか知りたい。雨の日でも楽しめるのか。今度は島巡りをしてみたい。'
+  ].join('\n');
+}
+
+const drop=$('#drop'),fileInput=$('#file');
+drop.onclick=()=>fileInput.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=()=>ingestText(r.result,f.name);r.readAsText(f);}};
+fileInput.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>ingestText(r.result,f.name);r.readAsText(f);}};
+$('#demo').onclick=()=>{ingestText(demoCSV(),'okinawa_survey.csv');toast(t('toast_demo'));};
+
+$('#nchar').oninput=e=>$('#ncharVal').textContent=e.target.value;
+$('#freq').oninput=e=>$('#freqVal').textContent=e.target.value;
+$('#run').onclick=run;
+
+$('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
+$('#themetog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.setAttribute('data-theme',b.dataset.theme);$$('#themetog button').forEach(x=>x.classList.toggle('on',x===b));if(LAST)render(LAST);});
+
+async function saveSelf(){
+  try{const res=await fetch(location.href.split('?')[0]);const html=await res.text();
+    saveText(location.pathname.split('/').pop()||'text_dfm.html',html,'text/html');
+  }catch(e){toast('保存に失敗しました: '+e.message);}
+}
+$('#saveApp').onclick=saveSelf;
+
+buildFilterUI();
+(function(){try{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='ja')LANG=q;}catch(e){}})();
+applyI18n();
+</script>
+</body>
+</html>

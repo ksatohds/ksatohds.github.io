@@ -53,6 +53,7 @@ title: English
     <ul>
       <li>NMF (Non-negative Matrix Factorization): <a href="{{ '/html_app/nmf_app.html' | relative_url }}?lang=en">HTML app</a></li>
       <li>Classification Tree (CART): <a href="{{ '/html_app/class_tree.html' | relative_url }}?lang=en">HTML app</a></li>
+      <li>Text analysis (Document-Term Matrix): <a href="{{ '/html_app/text_dfm.html' | relative_url }}?lang=en">HTML app</a></li>
       <li>Regression &amp; Classification Tree: <a href="https://kenichi-satoh.shinyapps.io/CART/">Shiny App</a></li>
     </ul>
   </div>
