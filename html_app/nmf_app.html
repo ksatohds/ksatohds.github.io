@@ -152,8 +152,8 @@
     <button data-theme="dark" title="Dark">☾</button>
     <button data-theme="light" class="on" title="Light">☀</button>
   </div>
-  <div class="brand"><span class="glyph">◧</span>NMF:&nbsp;Non-negative&nbsp;Matrix&nbsp;Factorization</div>
-  <h1 data-i18n="h1">非負値行列因子分解</h1>
+  <div class="brand"><span class="glyph">◧</span>NMF</div>
+  <h1 data-i18n="h1">NMF 非負値行列因子分解</h1>
   <div class="eq" data-i18n-html="eq"></div>
 </header>
 
@@ -259,7 +259,7 @@ const cluColor=k=>CLU[k%CLU.length];
 let LANG='ja';
 const I18N={
   ja:{
-    h1:'非負値行列因子分解',
+    h1:'NMF 非負値行列因子分解',
     subtitle:'',
     eq:'<span class="y">Y</span> ≈ <b>X</b><i>B</i> &nbsp;<span style="color:var(--ink-faint)">(</span>Y: P×N, <b style="color:var(--amber)">X</b>: P×Q, <i style="color:var(--violet)">B</i>: Q×N &nbsp;→&nbsp; 各列 <span class="y">y</span> ≈ <b>X</b><i>b</i><span style="color:var(--ink-faint)">)</span>',
     g_data:'データ', g_param:'パラメータ', g_constr:'制約・前処理',
@@ -308,7 +308,7 @@ const I18N={
     meta_nan:'非数値 {n} 個を 0 に置換'
   },
   en:{
-    h1:'Non-negative Matrix Factorization',
+    h1:'NMF Non-negative Matrix Factorization',
     subtitle:'',
     eq:'<span class="y">Y</span> ≈ <b>X</b><i>B</i> &nbsp;<span style="color:var(--ink-faint)">(</span>Y: P×N, <b style="color:var(--amber)">X</b>: P×Q, <i style="color:var(--violet)">B</i>: Q×N &nbsp;→&nbsp; each column <span class="y">y</span> ≈ <b>X</b><i>b</i><span style="color:var(--ink-faint)">)</span>',
     g_data:'Data', g_param:'Parameters', g_constr:'Constraints & preprocessing',
