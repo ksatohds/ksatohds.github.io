@@ -176,6 +176,13 @@
     <div class="group" id="paramGroup" style="display:none">
       <h2 data-i18n="g_dfm">文書単語行列</h2>
       <label class="field">
+        <span class="lab"><span data-i18n="p_orient">出力の向き</span></span>
+        <select id="orient" size="1">
+          <option value="doc" data-i18n="orient_doc">文書 × 単語（行=文書, 属性付き）</option>
+          <option value="word" data-i18n="orient_word">単語 × 文書（行=単語, NMF用）</option>
+        </select>
+      </label>
+      <label class="field">
         <span class="lab"><span data-i18n="p_nchar">最小文字数 (min_nchar)</span> <span class="val" id="ncharVal">2</span></span>
         <input type="range" id="nchar" min="1" max="4" value="2" step="1">
       </label>
@@ -244,6 +251,7 @@ const I18N={
     e_del:'指定した単語を削除', e_del_ph:'思い,思う,感じ',
     e_syn:'同義語の置換', e_syn_ph:'沖縄料理<-料理,沖縄料理<-食事',
     e_syn_hint:'「置換後<-置換元」をカンマか改行で区切って記入',
+    p_orient:'出力の向き', orient_doc:'文書 × 単語（行=文書, 属性付き）', orient_word:'単語 × 文書（行=単語, NMF用）',
     p_nchar:'最小文字数 (min_nchar)', p_freq:'最小出現文書数 (min_termfreq)',
     run:'文書単語行列を作成', run_busy:'処理中…',
     ph_main:'左でCSVを読み込むか、デモデータ（沖縄観光アンケート）を試してください。',
@@ -255,8 +263,7 @@ const I18N={
     sec_top:'頻出語', sec_top_d:'出現文書数の多い語（上位）。',
     sec_dfm:'文書単語行列（プレビュー）', sec_dfm_d:'行=語, 列=文書。値は各文書での出現回数。先頭の一部を表示。',
     dl_title:'ダウンロード',
-    dl_wd:'dfm_word_doc.csv（語×文書 · NMF用）',
-    dl_dw:'dfm_doc_word.csv（文書×語+属性 · 分類木用）',
+    dl_dfm:'文書単語行列 CSV（選択した向き）',
     dl_log:'text_dfm.log（設定・語彙）',
     word_head:'語 / 文書', total:'計',
     toast_nofile:'CSVを読み込んでください', toast_notext:'テキスト列を選んでください',
@@ -276,6 +283,7 @@ const I18N={
     e_del:'Delete specified words', e_del_ph:'word1,word2,word3',
     e_syn:'Replace synonyms', e_syn_ph:'newWord<-oldWord1,newWord<-oldWord2',
     e_syn_hint:'"new<-old" separated by comma or newline',
+    p_orient:'Matrix orientation', orient_doc:'documents × words (rows=docs, +metadata)', orient_word:'words × documents (rows=words, for NMF)',
     p_nchar:'Min characters (min_nchar)', p_freq:'Min document frequency (min_termfreq)',
     run:'Build document-term matrix', run_busy:'Processing…',
     ph_main:'Load a CSV on the left, or try the demo (Okinawa tourism survey).',
@@ -287,8 +295,7 @@ const I18N={
     sec_top:'Frequent words', sec_top_d:'Words appearing in the most documents (top).',
     sec_dfm:'Document-term matrix (preview)', sec_dfm_d:'rows = words, cols = documents; values are counts. Showing the top-left part.',
     dl_title:'Downloads',
-    dl_wd:'dfm_word_doc.csv (words × docs · for NMF)',
-    dl_dw:'dfm_doc_word.csv (docs × words + metadata · for tree)',
+    dl_dfm:'Document-term matrix CSV (selected orientation)',
     dl_log:'text_dfm.log (settings & vocabulary)',
     word_head:'word / doc', total:'total',
     toast_nofile:'Please load a CSV first', toast_notext:'Please choose a text column',
@@ -469,10 +476,9 @@ function render(R){
   const dlCard=el('div',{class:'card'});
   dlCard.appendChild(el('h3',{text:t('dl_title')}));
   const dls=el('div',{class:'downloads'});
-  const b1=el('button',{class:'dl',text:t('dl_wd')});b1.onclick=()=>downloadWordDoc(R);
-  const b2=el('button',{class:'dl',text:t('dl_dw')});b2.onclick=()=>downloadDocWord(R);
+  const b1=el('button',{class:'dl',text:t('dl_dfm')});b1.onclick=()=>downloadDFM(R);
   const b3=el('button',{class:'dl',text:t('dl_log')});b3.onclick=()=>downloadLog(R);
-  dls.appendChild(b1);dls.appendChild(b2);dls.appendChild(b3);
+  dls.appendChild(b1);dls.appendChild(b3);
   dlCard.appendChild(dls);box.appendChild(dlCard);
 }
 function renderTop(R){
@@ -515,20 +521,24 @@ function renderPreview(R){
 
 function csvCell(v){if(v==null)v='';v=String(v);if(/[",\n]/.test(v))return '"'+v.replace(/"/g,'""')+'"';return v;}
 function saveText(name,text,mime){const blob=new Blob([text],{type:(mime||'text/plain')+';charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
-function downloadWordDoc(R){
-  let csv='﻿'+'word,'+Array.from({length:R.D},(_,j)=>'d'+(j+1)).join(',')+'\n';
-  for(let i=0;i<R.V;i++)csv+=csvCell(R.vocab[i])+','+R.dfm[i].join(',')+'\n';
-  saveText('dfm_word_doc.csv',csv,'text/csv');
-}
-function downloadDocWord(R){
-  const meta=R.metaCols;
-  let csv='﻿'+['doc'].concat(meta.map(csvCell),R.vocab.map(csvCell)).join(',')+'\n';
-  for(let j=0;j<R.D;j++){
-    const row=['d'+(j+1)].concat(meta.map(c=>csvCell(DATA.rows[j][c])));
-    for(let i=0;i<R.V;i++)row.push(R.dfm[i][j]);
-    csv+=row.join(',')+'\n';
+function downloadDFM(R){
+  const orient=$('#orient').value;
+  if(orient==='word'){
+    // words (rows) × documents (cols) — for the NMF app
+    let csv='﻿'+'word,'+Array.from({length:R.D},(_,j)=>'d'+(j+1)).join(',')+'\n';
+    for(let i=0;i<R.V;i++)csv+=csvCell(R.vocab[i])+','+R.dfm[i].join(',')+'\n';
+    saveText('dfm_word_doc.csv',csv,'text/csv');
+  }else{
+    // documents (rows) × words (cols) + metadata — for the classification tree app
+    const meta=R.metaCols;
+    let csv='﻿'+['doc'].concat(meta.map(csvCell),R.vocab.map(csvCell)).join(',')+'\n';
+    for(let j=0;j<R.D;j++){
+      const row=['d'+(j+1)].concat(meta.map(c=>csvCell(DATA.rows[j][c])));
+      for(let i=0;i<R.V;i++)row.push(R.dfm[i][j]);
+      csv+=row.join(',')+'\n';
+    }
+    saveText('dfm_doc_word.csv',csv,'text/csv');
   }
-  saveText('dfm_doc_word.csv',csv,'text/csv');
 }
 function downloadLog(R){
   const L=[];
