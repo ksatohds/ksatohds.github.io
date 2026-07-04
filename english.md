@@ -47,6 +47,18 @@ title: English
 </div>
 
 <div class="section">
+  <h2 class="section-title">Web Application</h2>
+
+  <div class="card">
+    <ul>
+      <li>NMF (Non-negative Matrix Factorization): <a href="{{ '/html_app/nmf_app.html' | relative_url }}?lang=en">HTML app</a></li>
+      <li>Classification Tree (CART): <a href="{{ '/html_app/class_tree.html' | relative_url }}?lang=en">HTML app</a></li>
+      <li>Regression &amp; Classification Tree: <a href="https://kenichi-satoh.shinyapps.io/CART/">Shiny App</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
   <h2 class="section-title">Work Experience</h2>
 
   <div class="card">
