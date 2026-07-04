@@ -184,7 +184,7 @@
       </label>
       <label class="field">
         <span class="lab"><span data-i18n="p_nchar">最小文字数 (min_nchar)</span> <span class="val" id="ncharVal">2</span></span>
-        <input type="range" id="nchar" min="1" max="4" value="2" step="1">
+        <input type="range" id="nchar" min="1" max="5" value="2" step="1">
       </label>
       <label class="field">
         <span class="lab"><span data-i18n="p_freq">最小出現文書数 (min_termfreq)</span> <span class="val" id="freqVal">2</span></span>
@@ -252,7 +252,7 @@ const I18N={
     e_syn:'同義語の置換', e_syn_ph:'沖縄料理<-料理,沖縄料理<-食事',
     e_syn_hint:'「置換後<-置換元」をカンマか改行で区切って記入',
     p_orient:'出力の向き', orient_doc:'文書 × 単語（行=文書, 属性付き）', orient_word:'単語 × 文書（行=単語, NMF用）',
-    p_nchar:'最小文字数 (min_nchar)', p_freq:'最小出現文書数 (min_termfreq)',
+    p_nchar:'最小文字数 (min_nchar)', p_freq:'最小出現回数 (min_termfreq)',
     run:'文書単語行列を作成', run_busy:'処理中…',
     ph_main:'左でCSVを読み込むか、デモデータ（沖縄観光アンケート）を試してください。',
     ph_sub:'テキストを分かち書きし、フィルタ・置換を適用して、文書単語行列(DFM)を作成・ダウンロードします。出力CSVはNMFや分類木アプリでそのまま多変量解析できます。',
@@ -260,7 +260,7 @@ const I18N={
     f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
     m_docs:'文書数', m_tokens:'総トークン数', m_vocab:'語彙数', m_density:'非ゼロ率',
     sec_ex:'分かち書きの例', sec_ex_d:'先頭の文書に、フィルタ・置換を適用した結果のトークン。',
-    sec_top:'頻出語', sec_top_d:'出現文書数の多い語（上位）。',
+    sec_top:'頻出語', sec_top_d:'のべ出現回数の多い語（上位）。',
     sec_dfm:'文書単語行列（プレビュー）', sec_dfm_d:'行=語, 列=文書。値は各文書での出現回数。先頭の一部を表示。',
     dl_title:'ダウンロード',
     dl_dfm:'文書単語行列 CSV（選択した向き）',
@@ -284,7 +284,7 @@ const I18N={
     e_syn:'Replace synonyms', e_syn_ph:'newWord<-oldWord1,newWord<-oldWord2',
     e_syn_hint:'"new<-old" separated by comma or newline',
     p_orient:'Matrix orientation', orient_doc:'documents × words (rows=docs, +metadata)', orient_word:'words × documents (rows=words, for NMF)',
-    p_nchar:'Min characters (min_nchar)', p_freq:'Min document frequency (min_termfreq)',
+    p_nchar:'Min characters (min_nchar)', p_freq:'Min term frequency (min_termfreq)',
     run:'Build document-term matrix', run_busy:'Processing…',
     ph_main:'Load a CSV on the left, or try the demo (Okinawa tourism survey).',
     ph_sub:'Tokenize text, apply filters/replacements, and build a document-term matrix (DFM). The CSV output feeds directly into the NMF or Classification Tree app.',
@@ -292,7 +292,7 @@ const I18N={
     f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
     m_docs:'Documents', m_tokens:'Total tokens', m_vocab:'Vocabulary', m_density:'Non-zero',
     sec_ex:'Tokenization example', sec_ex_d:'Tokens of the first document after filters and replacements.',
-    sec_top:'Frequent words', sec_top_d:'Words appearing in the most documents (top).',
+    sec_top:'Frequent words', sec_top_d:'Words with the highest total occurrence count (top).',
     sec_dfm:'Document-term matrix (preview)', sec_dfm_d:'rows = words, cols = documents; values are counts. Showing the top-left part.',
     dl_title:'Downloads',
     dl_dfm:'Document-term matrix CSV (selected orientation)',
@@ -415,8 +415,8 @@ function run(){
         new Set(toks).forEach(w=>docFreq[w]=(docFreq[w]||0)+1);
         toks.forEach(w=>totalCount[w]=(totalCount[w]||0)+1);
       });
-      let vocab=Object.keys(docFreq).filter(w=>docFreq[w]>=minfreq);
-      vocab.sort((a,b)=>docFreq[b]-docFreq[a]||totalCount[b]-totalCount[a]||(a<b?-1:1));
+      let vocab=Object.keys(totalCount).filter(w=>totalCount[w]>=minfreq);
+      vocab.sort((a,b)=>totalCount[b]-totalCount[a]||docFreq[b]-docFreq[a]||(a<b?-1:1));
       if(!vocab.length){toast(t('toast_empty'));btn.dataset.busy='';btn.textContent=t('run');btn.disabled=false;return;}
       const vIndex={};vocab.forEach((w,k)=>vIndex[w]=k);
       const D=DATA.rows.length,V=vocab.length;
@@ -484,7 +484,7 @@ function render(R){
 function renderTop(R){
   const n=Math.min(20,R.V);
   const words=R.vocab.slice(0,n);
-  const max=R.docFreq[words[0]]||1;
+  const max=R.totalCount[words[0]]||1;
   const W=460,rowH=22,pad=8,H=n*rowH+16,labelW=110,barMax=W-labelW-60;
   const svg=el('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
   const inkDim=getComputedStyle(document.documentElement).getPropertyValue('--ink-dim').trim();
@@ -492,9 +492,9 @@ function renderTop(R){
   words.forEach((w,i)=>{
     const y=pad+i*rowH;
     const lt=el('text',{x:labelW-6,y:y+12,'text-anchor':'end',class:'lbl'});lt.style.fill=inkDim;lt.textContent=w.length>8?w.slice(0,8)+'…':w;svg.appendChild(lt);
-    const bw=barMax*R.docFreq[w]/max;
+    const bw=barMax*R.totalCount[w]/max;
     svg.appendChild(el('rect',{x:labelW,y:y+2,width:bw,height:rowH-7,fill:cyan,rx:2}));
-    const vt=el('text',{x:labelW+bw+6,y:y+12,class:'sub'});vt.style.fill=inkDim;vt.textContent=R.docFreq[w];svg.appendChild(vt);
+    const vt=el('text',{x:labelW+bw+6,y:y+12,class:'sub'});vt.style.fill=inkDim;vt.textContent=R.totalCount[w];svg.appendChild(vt);
   });
   const wrap=el('div',{class:'svgscroll'});wrap.appendChild(svg);return wrap;
 }
