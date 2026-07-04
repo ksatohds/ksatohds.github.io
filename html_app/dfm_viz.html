@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dfm_viz</title>
+<style>
+  :root{
+    --bg:#0f1417; --panel:#161d21; --panel-2:#1c252a; --line:#2a353b;
+    --ink:#e8eef0; --ink-dim:#8b9ba1; --ink-faint:#5b6a70;
+    --cyan:#4fd6c8; --cyan-deep:#2a9e93; --amber:#e8a54b; --violet:#9d8cf0; --danger:#e06a6a;
+    --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Menlo",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  }
+  html[data-theme="light"]{
+    --bg:#ffffff; --panel:#f6f8f9; --panel-2:#edf1f3; --line:#d8e0e3;
+    --ink:#141c20; --ink-dim:#4e5d63; --ink-faint:#7f8d93;
+    --cyan:#0f9a8d; --cyan-deep:#0b7468; --amber:#b07617; --violet:#6250c8; --danger:#cf4a4a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--cyan)}
+
+  header{border-bottom:1px solid var(--line);padding:22px 28px 20px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+  .langtog{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-family:var(--mono);font-size:11px;align-self:center;flex-shrink:0}
+  .langtog button{background:transparent;color:var(--ink-dim);border:none;padding:5px 11px;cursor:pointer;letter-spacing:.06em;transition:background .12s,color .12s}
+  .langtog button:hover{color:var(--ink)}
+  .langtog button.on{background:var(--cyan);color:#062522;font-weight:700}
+  .brand{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:10px}
+  .brand .glyph{font-size:17px;letter-spacing:0;color:var(--ink)}
+  h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .eq{font-family:var(--mono);color:var(--ink-dim);font-size:13px;margin-left:auto}
+
+  .wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:calc(100vh - 64px)}
+  .control{border-right:1px solid var(--line);padding:22px;background:var(--panel)}
+  .stage{padding:22px 28px;overflow:auto}
+  @media (max-width:860px){.wrap{grid-template-columns:1fr}.control{border-right:none;border-bottom:1px solid var(--line)}}
+
+  .group{margin-bottom:22px}
+  .group h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 11px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .group h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .dropzone{border:1px dashed var(--line);border-radius:8px;padding:20px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:var(--panel-2)}
+  .dropzone:hover{border-color:var(--cyan-deep)}
+  .dropzone.drag{border-color:var(--cyan);background:#17272a}
+  .dropzone .big{font-size:13px;color:var(--ink);margin-bottom:4px}
+  .dropzone .small{font-size:11.5px;color:var(--ink-faint);font-family:var(--mono)}
+  input[type=file]{display:none}
+
+  .filemeta{margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);line-height:1.7;background:var(--panel-2);border-radius:6px;padding:8px 10px;display:none}
+  .filemeta.show{display:block}
+  .filemeta .k{color:var(--ink-faint)}
+  .filemeta .v{color:var(--cyan)}
+
+  label.field{display:block;margin-bottom:14px}
+  label.field .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--ink-dim);margin-bottom:6px;gap:8px}
+  label.field .lab .val{font-family:var(--mono);color:var(--cyan);font-size:12.5px;flex-shrink:0}
+  select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
+  select:focus{border-color:var(--cyan-deep)}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--line);border-radius:2px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--cyan-deep)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg)}
+
+  .hint{font-size:11.5px;color:var(--ink-faint);margin-top:8px;line-height:1.6}
+  .classrow{display:flex;flex-wrap:wrap;gap:7px 16px;margin-top:8px}
+  .classrow label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-dim);cursor:pointer}
+  .classrow input{accent-color:var(--cyan)}
+
+  .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-faint);text-align:center;gap:14px;padding:40px}
+  .placeholder .mark{font-family:var(--mono);font-size:40px;color:var(--line)}
+  .placeholder .mark .a{color:var(--cyan-deep)}
+  .placeholder p{max-width:440px;font-size:13.5px;line-height:1.7}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:22px}
+  .metric{background:var(--panel);padding:13px 15px}
+  .metric .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .metric .v{font-family:var(--mono);font-size:20px;color:var(--ink);margin-top:3px;font-weight:600}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:20px}
+  .card h3{font-size:14px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .card .desc{font-size:12px;color:var(--ink-dim);margin:0 0 14px;font-family:var(--mono)}
+
+  .svgscroll{overflow:auto;border-radius:6px;background:var(--panel-2);border:1px solid var(--line)}
+  svg{display:block}
+  .netnode{cursor:grab}
+  .netnode:active{cursor:grabbing}
+
+  .dl{font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);color:var(--cyan);cursor:pointer;transition:border-color .15s}
+  .dl:hover{border-color:var(--cyan-deep)}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:11px 18px;border-radius:7px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:50;display:none;max-width:90vw}
+  footer{border-top:1px solid var(--line);padding:16px 28px;color:var(--ink-faint);font-size:12px;font-family:var(--mono);display:flex;gap:10px 20px;flex-wrap:wrap;align-items:center}
+  footer .credit{color:var(--ink-dim)}
+  footer .credit b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="langtog" id="langtog">
+    <button data-lang="ja" class="on">JA</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <div class="langtog" id="themetog">
+    <button data-theme="dark" title="Dark">&#9790;</button>
+    <button data-theme="light" class="on" title="Light">&#9728;</button>
+  </div>
+  <div class="brand"><span class="glyph">&#9678;</span>DFM&nbsp;&rarr;&nbsp;VIZ</div>
+  <h1 data-i18n="h1">ワードクラウド・共起ネットワーク</h1>
+  <div class="eq" data-i18n-html="eq"></div>
+</header>
+
+<div class="wrap">
+  <aside class="control">
+
+    <div class="group">
+      <h2 data-i18n="g_data">データ</h2>
+      <div class="dropzone" id="drop">
+        <div class="big" data-i18n="drop_big">文書単語行列CSVをドロップ / クリック</div>
+        <div class="small" data-i18n="drop_small">語×文書 または 文書×語（属性列可）</div>
+      </div>
+      <input type="file" id="file" accept=".csv,.tsv,.txt">
+      <div class="filemeta" id="meta"></div>
+      <button class="dl" id="demo" style="width:100%;margin-top:10px" data-i18n="demo_btn">&#9671; デモ（注文の多い料理店 DFM）</button>
+      <div class="hint" data-i18n-html="demo_credit" style="margin-top:8px;line-height:1.6"></div>
+      <label class="field" style="margin-top:12px">
+        <span class="lab"><span data-i18n="orient">行列の向き</span></span>
+        <select id="orient">
+          <option value="auto" data-i18n="orient_auto">自動判定</option>
+          <option value="word" data-i18n="orient_word">語 × 文書（行=語）</option>
+          <option value="doc" data-i18n="orient_doc">文書 × 語（行=文書, 属性列可）</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="group" id="cloudGroup" style="display:none">
+      <h2 data-i18n="g_cloud">ワードクラウド</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_num">表示語数</span> <span class="val" id="cloudNVal">60</span></span>
+        <input type="range" id="cloudN" min="10" max="120" value="60" step="5">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_metric">大きさの基準</span></span>
+        <select id="cloudMetric">
+          <option value="total" data-i18n="metric_total">のべ出現回数</option>
+          <option value="df" data-i18n="metric_df">出現文書数</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_min">最小サイズ (×12pt)</span> <span class="val" id="cloudMinVal">1.0</span></span>
+        <input type="range" id="cloudMin" min="0.5" max="4" value="1" step="0.5">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_max">最大サイズ (×12pt)</span> <span class="val" id="cloudMaxVal">4.5</span></span>
+        <input type="range" id="cloudMax" min="1.5" max="8" value="4.5" step="0.5">
+      </label>
+    </div>
+
+    <div class="group" id="netGroup" style="display:none">
+      <h2 data-i18n="g_net">共起ネットワーク</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="n_minfreq">語の最小出現文書数</span> <span class="val" id="netMinVal">2</span></span>
+        <input type="range" id="netMin" min="1" max="10" value="2" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="n_measure">共起の尺度</span></span>
+        <select id="netMeasure">
+          <option value="jaccard" data-i18n="meas_jac">Jaccard（有無）</option>
+          <option value="cosine" data-i18n="meas_cos">コサイン類似度（頻度）</option>
+        </select>
+      </label>
+      <label class="field" style="margin-bottom:4px">
+        <span class="lab"><span data-i18n="n_sim">共起のしきい値</span> <span class="val" id="netSimVal">0.20</span></span>
+        <input type="range" id="netSim" min="0.01" max="1" value="0.2" step="0.01">
+      </label>
+      <div class="hint" id="netStat" style="margin-top:0;margin-bottom:12px"></div>
+      <label class="field" style="margin-top:12px">
+        <span class="lab"><span data-i18n="n_spread">ノード間の広がり（力のスケール）</span> <span class="val" id="netSpreadVal">2.0</span></span>
+        <input type="range" id="netSpread" min="0.6" max="3.5" value="2" step="0.1">
+      </label>
+      <div class="classrow">
+        <label><input type="checkbox" id="netComm" checked><span data-i18n="n_comm">コミュニティで色分け</span></label>
+      </div>
+      <label class="field" style="margin-top:8px">
+        <span class="lab"><span data-i18n="n_commmethod">コミュニティ検出法</span></span>
+        <select id="netCommMethod">
+          <option value="louvain" data-i18n="cm_louvain" selected>Louvain法</option>
+          <option value="greedy" data-i18n="cm_greedy">貪欲モジュラリティ最大化 (CNM)</option>
+          <option value="label" data-i18n="cm_label">ラベル伝播法</option>
+        </select>
+      </label>
+      <div class="hint" data-i18n="n_note">Jaccard類似度 = 共起文書数 / いずれかに出現する文書数。しきい値以上の語ペアを線で結びます。広げると重なりが減り、図は大きくなります（スクロール可）。</div>
+      <button class="dl" id="relayout" style="width:100%;margin-top:10px" data-i18n="relayout">&#8635; 再配置</button>
+    </div>
+
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="placeholder" id="placeholder">
+      <div class="mark"><span class="a">&#9678;</span></div>
+      <p data-i18n="ph_main">左で文書単語行列CSVを読み込むか、デモを試してください。</p>
+      <p data-i18n="ph_sub" style="font-size:12px;color:var(--ink-faint)">text_dfm アプリで作成したCSV（語×文書 / 文書×語）を読み込み、ワードクラウドと共起ネットワーク図を作成します。</p>
+    </div>
+    <div id="results" style="display:none"></div>
+  </main>
+</div>
+
+<footer>
+  <span class="credit" data-i18n-html="f_model">Jaccard co-occurrence · Fruchterman-Reingold</span>
+  <span class="credit"><b data-i18n="f_org">滋賀大学データサイエンス学系</b> · <span data-i18n="f_name">佐藤健一</span></span>
+  <button class="dl" id="saveApp" style="margin-left:auto" data-i18n="save_app">&#128190; GitHubから最新版を保存</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+let LANG='ja', toastTimer=null;
+function toast(msg){const el=$('#toast');el.textContent=msg;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',3800);}
+
+const I18N={
+  ja:{
+    h1:'ワードクラウド・共起ネットワーク',
+    eq:'文書単語行列 &rarr; <span style="color:var(--amber)">ワードクラウド</span> &middot; <span style="color:var(--violet)">共起ネットワーク</span>',
+    g_data:'データ', drop_big:'文書単語行列CSVをドロップ / クリック', drop_small:'語×文書 または 文書×語（属性列可）',
+    demo_btn:'◇ デモ（注文の多い料理店 DFM）',
+    demo_credit:'デモは宮沢賢治「注文の多い料理店」（<b>パブリックドメイン</b>・著者1933年没）から作成した文書単語行列です。出典: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">青空文庫</a>。',
+    orient:'行列の向き', orient_auto:'自動判定', orient_word:'語 × 文書（行=語）', orient_doc:'文書 × 語（行=文書, 属性列可）',
+    g_cloud:'ワードクラウド', c_num:'表示語数', c_metric:'大きさの基準', metric_total:'のべ出現回数', metric_df:'出現文書数', c_min:'最小サイズ (×12pt)', c_max:'最大サイズ (×12pt)',
+    g_net:'共起ネットワーク', n_minfreq:'語の最小出現文書数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_spread:'ノード間の広がり（力のスケール）',
+    n_note:'尺度: 有無(0/1)なら Jaccard（共起文書数/いずれかに出現）、頻度ならコサイン類似度（頻度ベクトルの向き）。しきい値以上の語ペアを線で結びます。',
+    n_stat:'この設定: {nodes} 語 / {edges} 本の線', relayout:'↻ 再配置',
+    ph_main:'左で文書単語行列CSVを読み込むか、デモを試してください。',
+    ph_sub:'text_dfm アプリで作成したCSV（語×文書 / 文書×語）を読み込み、ワードクラウドと共起ネットワーク図を作成します。',
+    f_model:'Jaccard 共起 · Fruchterman-Reingold', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
+    m_words:'語数', m_docs:'文書数', m_nodes:'ノード数', m_edges:'エッジ数',
+    sec_cloud:'ワードクラウド', sec_cloud_d:'語の大きさは出現量に比例。色は総頻度の段階（凡例参照）。', cloud_freq:'頻度',
+    sec_net:'共起ネットワーク', sec_net_d:'Jaccard類似度がしきい値以上の語ペアを線で結ぶ。丸の大きさ=つながりの数。',
+    dl_cloud:'ワードクラウド SVG', dl_net:'ネットワーク SVG',
+    toast_demo:'デモDFMを読み込みました（68語×147文書）', toast_parsefail:'CSVの解析に失敗しました',
+    toast_empty:'語が見つかりません。CSVの向きをご確認ください。',
+    meta_file:'file', meta_words:'語', meta_docs:'文書', meta_orient:'向き', meta_vals:'値', val_binary:'2値 (0/1)', val_freq:'頻度', meta_skip:'属性列（除外）',
+    net_none:'条件に合う共起がありません。しきい値を下げるか、最小出現文書数を下げてください。'
+  },
+  en:{
+    h1:'Word Cloud & Co-occurrence Network',
+    eq:'document-feature matrix &rarr; <span style="color:var(--amber)">word cloud</span> &middot; <span style="color:var(--violet)">co-occurrence network</span>',
+    g_data:'Data', drop_big:'Drop or click a DFM CSV', drop_small:'words×docs or docs×words (+attributes)',
+    demo_btn:'◇ Demo (Restaurant of Many Orders DFM)',
+    demo_credit:'Demo: a document-feature matrix built from Kenji Miyazawa, "The Restaurant of Many Orders" (<b>public domain</b>, author d.1933). Source: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">Aozora Bunko</a>.',
+    orient:'Matrix orientation', orient_auto:'Auto-detect', orient_word:'words × docs (rows=words)', orient_doc:'docs × words (rows=docs, +attrs)',
+    g_cloud:'Word cloud', c_num:'Words shown', c_metric:'Size by', metric_total:'total count', metric_df:'document frequency', c_min:'Min size (×12pt)', c_max:'Max size (×12pt)',
+    g_net:'Co-occurrence network', n_minfreq:'Min document frequency', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_spread:'Node spread (force scale)',
+    n_note:'Measure: Jaccard (shared/either docs) for presence (0/1), or cosine similarity for frequency (count-vector angle). Pairs above the threshold are linked.',
+    n_stat:'this setting: {nodes} words / {edges} links', relayout:'↻ Re-layout',
+    ph_main:'Load a DFM CSV on the left, or try the demo.',
+    ph_sub:'Load a CSV built by the text_dfm app (words×docs / docs×words) and draw a word cloud and a co-occurrence network.',
+    f_model:'Jaccard co-occurrence · Fruchterman-Reingold', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
+    m_words:'Words', m_docs:'Documents', m_nodes:'Nodes', m_edges:'Edges',
+    sec_cloud:'Word cloud', sec_cloud_d:'Word size ∝ occurrence; color = total-frequency band (see legend).', cloud_freq:'frequency',
+    sec_net:'Co-occurrence network', sec_net_d:'Word pairs with Jaccard similarity above the threshold are linked. Node size = degree.',
+    dl_cloud:'Word cloud SVG', dl_net:'Network SVG',
+    toast_demo:'Loaded demo DFM (68 words × 147 docs)', toast_parsefail:'Failed to parse CSV',
+    toast_empty:'No words found. Please check the matrix orientation.',
+    meta_file:'file', meta_words:'words', meta_docs:'docs', meta_orient:'orientation', meta_vals:'values', val_binary:'binary (0/1)', val_freq:'frequency', meta_skip:'attribute columns (excluded)',
+    net_none:'No co-occurrences match. Lower the threshold or the min document frequency.'
+  }
+};
+function t(k){const d=I18N[LANG];return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k);}
+function applyI18n(){
+  $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  $$('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  $$('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  document.documentElement.lang=LANG;
+  if(MODEL)renderAll();
+}
+
+// ---------- data model ----------
+// MODEL = {names:[], docs:[Set], total:[], df:[], docN, orient, skipped:[]}
+let MODEL=null;
+const DEMO_DFM={"docN":147,"words":{"二人":[[0,1],[18,1],[27,1],[30,1],[33,1],[35,1],[41,1],[45,1],[57,1],[59,2],[65,1],[70,1],[78,1],[84,2],[95,1],[99,1],[104,1],[126,1],[130,1],[136,1],[141,1],[144,1],[146,1]],"早く":[[1,1],[49,1],[59,1],[89,1],[93,1],[124,1],[128,1],[129,1],[142,1]],"クリーム":[[80,1],[81,1],[82,1],[84,1],[86,1],[87,1],[104,1],[128,1]],"注文":[[42,1],[46,1],[48,1],[101,1],[107,2],[121,1]],"紳士":[[0,1],[5,1],[7,2],[18,1],[47,1],[110,1]],"鉄砲":[[0,1],[3,1],[61,1],[63,1],[65,1]],"香水":[[93,1],[94,1],[95,1],[96,1],[97,1]],"塗り":[[38,1],[73,1],[84,1],[86,2]],"料理":[[44,1],[74,1],[91,1],[108,2]],"立派":[[19,1],[27,1],[73,1],[104,1]],"行き":[[38,1],[59,1],[79,1],[133,1]],"裏側":[[33,1],[45,1],[85,1],[100,1]],"西洋":[[19,1],[108,3]],"お客":[[52,1],[124,1],[129,1]],"二疋":[[0,1],[4,1],[132,1]],"大歓迎":[[34,1],[35,1],[36,1]],"帽子":[[67,1],[70,1],[143,1]],"廊下":[[33,1],[38,1],[89,1]],"料理店":[[31,1],[42,1],[108,1]],"木の葉":[[0,1],[13,1],[137,1]],"東京":[[44,1],[145,1],[146,1]],"泣き":[[118,1],[126,1],[130,1]],"白熊":[[0,1],[4,1],[132,1]],"硝子":[[28,1],[33,1],[79,1]],"見る":[[62,1],[75,1],[137,1]],"鳴り":[[13,1],[135,1],[137,1]],"山奥":[[0,1],[3,2]],"玄関":[[27,2],[55,1]],"カフスボタン":[[71,1],[78,1]],"ナイフ":[[111,1],[129,1]],"ネクタイピン":[[71,1],[137,1]],"ブラシ":[[51,1],[58,1]],"一つ":[[51,1],[79,1]],"一人":[[5,1],[110,1]],"二つ":[[111,1],[115,1]],"二千":[[5,1],[6,1]],"仕方":[[69,1],[89,1]],"偉い":[[56,1],[64,1]],"元気":[[59,1],[141,1]],"入り":[[29,1],[33,1]],"入れ":[[78,1],[98,1]],"分け":[[122,1],[143,1]],"切り":[[10,1],[111,1]],"向う":[[107,1],[134,1]],"多い":[[42,1],[46,1]],"寒い":[[40,1],[83,1]],"専門":[[3,1],[143,1]],"山鳥":[[10,1],[145,1]],"帰り":[[75,1],[145,1]],"振りかけ":[[93,1],[95,1]],"損害":[[5,1],[6,1]],"横っ腹":[[2,1],[14,1]],"気の毒":[[101,1],[121,1]],"決して":[[29,1],[32,1]],"瀬戸":[[27,1],[104,1]],"猟師":[[143,1],[145,1]],"眼玉":[[115,1],[132,1]],"若い":[[0,1],[34,1]],"見合せ":[[104,1],[126,1]],"財布":[[71,1],[137,1]],"遠慮":[[29,1],[32,1]],"金庫":[[73,1],[78,1]],"金文字":[[28,1],[33,1]],"青い":[[104,1],[115,1]],"黄いろ":[[2,1],[41,1]],"黒い":[[62,1],[66,1]],"旦那":[[140,2]],"菜っ葉":[[124,2]]}};
+
+function parseCSVRows(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(text.endsWith('\n'))text=text.slice(0,-1);
+  const firstLine=text.split('\n')[0]||'';
+  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(r=>!(r.length===1&&r[0].trim()===''));
+}
+function isInt(v){return /^-?\d+$/.test(String(v).trim());}
+function detectOrient(rows){
+  const h0=(rows[0][0]||'').trim().toLowerCase();
+  if(h0==='word'||h0==='語'||h0==='term'||h0==='単語')return 'word';
+  if(h0==='doc'||h0==='文書'||h0==='id')return 'doc';
+  const col0=rows.slice(1).map(r=>(r[0]||'').trim());
+  if(col0.length&&col0.every(v=>/^d\d+$/i.test(v)))return 'doc';
+  return 'word';
+}
+function modelFromRows(rows,orient){
+  if(orient==='auto')orient=detectOrient(rows);
+  const names=[],docs=[],vec=[],norm=[],total=[],df=[],skipped=[];
+  let docN=0;
+  if(orient==='word'){
+    // rows = words; header[1..] = documents
+    docN=rows[0].length-1;
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];const nm=(r[0]||'').trim();if(!nm)continue;
+      const s=new Set(),vc=new Map();let tot=0,ss=0;
+      for(let j=1;j<=docN;j++){const v=(r[j]||'').trim();const n=v===''?0:(+v||0);if(n>0){s.add(j-1);vc.set(j-1,n);tot+=n;ss+=n*n;}}
+      names.push(nm);docs.push(s);vec.push(vc);norm.push(Math.sqrt(ss));total.push(tot);df.push(s.size);
+    }
+  }else{
+    // rows = documents; identify word columns (numeric + sparse); skip id / attribute columns
+    const header=rows[0],data=rows.slice(1);docN=data.length;
+    for(let c=1;c<header.length;c++){
+      let numeric=true,hasZero=false,hasPos=false;
+      for(const r of data){
+        const v=(r[c]||'').trim();
+        if(v===''){hasZero=true;continue;}
+        if(!isInt(v)){numeric=false;break;}
+        const n=+v;if(n===0)hasZero=true;else if(n>0)hasPos=true;
+      }
+      if(numeric&&hasZero&&hasPos){
+        const s=new Set(),vc=new Map();let tot=0,ss=0;
+        data.forEach((r,di)=>{const v=(r[c]||'').trim();const n=v===''?0:(+v||0);if(n>0){s.add(di);vc.set(di,n);tot+=n;ss+=n*n;}});
+        names.push((header[c]||'').trim());docs.push(s);vec.push(vc);norm.push(Math.sqrt(ss));total.push(tot);df.push(s.size);
+      }else if((header[c]||'').trim()){
+        skipped.push((header[c]||'').trim());
+      }
+    }
+  }
+  return {names,docs,vec,norm,total,df,docN,orient,skipped};
+}
+
+function setModel(m,filename){
+  if(!m||!m.names.length){toast(t('toast_empty'));return;}
+  MODEL=m;
+  // detect binary (0/1) vs frequency counts: binary iff total==df for every word (each nonzero cell is 1)
+  const isBinary=m.total.every((tt,i)=>tt===m.df[i]);
+  m.binary=isBinary;
+  // adapt defaults to the data: word-cloud size metric + network co-occurrence measure
+  $('#cloudMetric').value=isBinary?'df':'total';
+  $('#netMeasure').value=isBinary?'jaccard':'cosine';
+  $('#meta').classList.add('show');
+  $('#meta').innerHTML='<span class="k">'+t('meta_file')+'</span> <span class="v">'+(filename||'demo')+'</span><br>'+
+    '<span class="k">'+t('meta_orient')+'</span> <span class="v">'+(m.orient==='word'?'word×doc':'doc×word')+'</span> · '+
+    '<span class="k">'+t('meta_words')+'</span> <span class="v">'+m.names.length+'</span> · '+
+    '<span class="k">'+t('meta_docs')+'</span> <span class="v">'+m.docN+'</span><br>'+
+    '<span class="k">'+t('meta_vals')+'</span> <span class="v">'+(isBinary?t('val_binary'):t('val_freq'))+'</span>'+
+    (m.skipped&&m.skipped.length?('<br><span class="k">'+t('meta_skip')+'</span> <span class="v">'+m.skipped.join(', ')+'</span>'):'');
+  ['#cloudGroup','#netGroup'].forEach(s=>$(s).style.display='');
+  // set slider ranges from data
+  const maxdf=Math.max(1,...m.df);
+  $('#netMin').max=Math.min(10,maxdf);
+  $('#cloudN').min=Math.min(10,m.names.length); // keep min <= max for tiny vocabularies
+  $('#cloudN').max=Math.min(150,m.names.length);
+  if(+$('#cloudN').value>m.names.length){$('#cloudN').value=m.names.length;$('#cloudNVal').textContent=m.names.length;}
+  renderAll();
+}
+function modelFromDemo(){
+  const names=Object.keys(DEMO_DFM.words),docs=[],vec=[],norm=[],total=[],df=[];
+  names.forEach(nm=>{const s=new Set(),vc=new Map();let tot=0,ss=0;DEMO_DFM.words[nm].forEach(([d,c])=>{s.add(d);vc.set(d,c);tot+=c;ss+=c*c;});docs.push(s);vec.push(vc);norm.push(Math.sqrt(ss));total.push(tot);df.push(s.size);});
+  return {names,docs,vec,norm,total,df,docN:DEMO_DFM.docN,orient:'word',skipped:[]};
+}
+
+// ---------- svg helpers ----------
+function svgEl(tag,attrs){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function cssv(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+const PALETTE=['#4f9dd6','#e8894b','#5fbf7f','#c86ac8','#e6c34b','#7570d6','#d9646a','#3fb6a8','#b08a4d','#8a9bb0','#d68ab0','#6aa96a'];
+// word-cloud frequency bands (soft/pastel): highest total freq -> red, then orange, green, light blue, blue -> lowest
+const FREQ_COLORS=['#e8736c','#efa159','#7cc47f','#57c0d6','#6d8ad9'];
+
+// ---------- word cloud ----------
+// measure the REAL rendered bounding boxes offscreen so collision matches the SVG exactly
+function cloudMeasure(items){
+  const svg=svgEl('svg',{width:10,height:10});svg.style.position='absolute';svg.style.left='-9999px';svg.style.visibility='hidden';
+  document.body.appendChild(svg);
+  const res=items.map(it=>{
+    const tx=svgEl('text',{x:0,y:0,'font-size':it.fs,'font-family':cssv('--sans'),'font-weight':600,'text-anchor':'middle'});
+    tx.style.dominantBaseline='middle';tx.textContent=it.name;svg.appendChild(tx);
+    const b=tx.getBBox();return {ox:b.x,oy:b.y,bw:b.width,bh:b.height};
+  });
+  document.body.removeChild(svg);
+  return res;
+}
+function buildCloud(){
+  const metric=$('#cloudMetric').value;
+  const key=metric==='df'?MODEL.df:MODEL.total;
+  const idx=MODEL.names.map((_,i)=>i).sort((a,b)=>key[b]-key[a]||(MODEL.names[a]<MODEL.names[b]?-1:1));
+  const N=Math.min(+$('#cloudN').value,idx.length);
+  const sel=idx.slice(0,N);
+  const maxv=key[sel[0]]||1,minv=key[sel[N-1]]||1;
+  const W=760,H=460,cx=W/2,cy=H/2,BASE=12; // font size = multiplier x 12pt (R textplot_wordcloud min_size/max_size style)
+  const sa=BASE*(+$('#cloudMin').value), sb=BASE*(+$('#cloudMax').value);
+  const FMIN=Math.min(sa,sb), FMAX=Math.max(sa,sb);
+  // color band by DISTINCT total-frequency value: same freq -> same color; high freq -> red (up to 5 bands)
+  const distinct=[...new Set(sel.map(i=>MODEL.total[i]))].sort((a,b)=>b-a);
+  const D=distinct.length, K=Math.min(5,D);
+  const valBand={};distinct.forEach((v,r)=>valBand[v]=Math.min(K-1,Math.floor(r*K/D)));
+  const bandRange={};
+  sel.forEach(i=>{const b=valBand[MODEL.total[i]],tv=MODEL.total[i];if(!bandRange[b])bandRange[b]=[tv,tv];else{bandRange[b][0]=Math.min(bandRange[b][0],tv);bandRange[b][1]=Math.max(bandRange[b][1],tv);}});
+  const legend=[];for(let b=0;b<K;b++)if(bandRange[b])legend.push({color:FREQ_COLORS[b],lo:bandRange[b][0],hi:bandRange[b][1]});
+  const items=sel.map((i)=>{
+    const v=key[i];
+    const fs=Math.round(FMIN+(FMAX-FMIN)*Math.sqrt((v-minv)/Math.max(1,maxv-minv)));
+    return {name:MODEL.names[i],fs,color:FREQ_COLORS[valBand[MODEL.total[i]]]};
+  });
+  const dims=cloudMeasure(items);
+  const placed=[],out=[],pad=2;
+  const ov=(a,b)=>!(a.x+a.w<b.x||b.x+b.w<a.x||a.y+a.h<b.y||b.y+b.h<a.y);
+  // legend laid out inside the figure (top-left); reserve its box so no word overlaps it
+  const rangeStr=L=>L.lo===L.hi?String(L.hi):(L.lo+'–'+L.hi);
+  const estW=s=>{let w=0;for(const ch of s){const c=ch.codePointAt(0);w+=((c>=0x3000&&c<=0x9fff)||(c>=0xff00&&c<=0xffef))?11:6.6;}return w;};
+  const lp=8,rowH=17,titleH=16,swW=15,swH=10,LX=12,LY=12,ltitle=t('cloud_freq');
+  const contentW=Math.max(estW(ltitle),...legend.map(L=>swW+6+estW(rangeStr(L))));
+  const boxW=lp*2+contentW, boxH=lp*2+titleH+legend.length*rowH;
+  const legendLayout={box:{x:LX,y:LY,w:boxW,h:boxH},title:{x:LX+lp,y:LY+lp+11,text:ltitle},
+    rows:legend.map((L,i)=>{const ry=LY+lp+titleH+i*rowH;return {sx:LX+lp,sy:ry,sw:swW,sh:swH,color:L.color,tx:LX+lp+swW+6,ty:ry+swH-1,text:rangeStr(L)};})};
+  placed.push({x:LX-3,y:LY-3,w:boxW+6,h:boxH+6});
+  items.forEach((it,ii)=>{
+    const d=dims[ii];
+    let ok=false,bx=0,by=0;
+    for(let s=0;s<6000;s++){
+      const ang=s*0.15, r=6+s*0.16; // Archimedean spiral spanning the whole canvas
+      const px=cx+r*Math.cos(ang), py=cy+r*Math.sin(ang);
+      const box={x:px+d.ox-pad,y:py+d.oy-pad,w:d.bw+2*pad,h:d.bh+2*pad};
+      if(box.x<2||box.y<2||box.x+box.w>W-2||box.y+box.h>H-2)continue;
+      if(!placed.some(p=>ov(p,box))){placed.push(box);bx=px;by=py;ok=true;break;}
+    }
+    if(ok)out.push({name:it.name,x:bx,y:by,fs:it.fs,color:it.color});
+  });
+  return {W,H,items:out,legend,legendLayout};
+}
+function cloudToSvg(c){
+  const svg=svgEl('svg',{width:c.W,height:c.H,viewBox:'0 0 '+c.W+' '+c.H});
+  c.items.forEach(it=>{
+    const tx=svgEl('text',{x:it.x,y:it.y,'font-size':it.fs,'font-family':cssv('--sans'),'font-weight':600,'text-anchor':'middle',fill:it.color});
+    tx.style.dominantBaseline='middle';tx.textContent=it.name;svg.appendChild(tx);
+  });
+  // legend inside the figure (top-left)
+  const L=c.legendLayout,g=svgEl('g',{});
+  g.appendChild(svgEl('rect',{x:L.box.x,y:L.box.y,width:L.box.w,height:L.box.h,rx:6,fill:cssv('--panel'),'fill-opacity':0.9,stroke:cssv('--line'),'stroke-width':1}));
+  const tt=svgEl('text',{x:L.title.x,y:L.title.y,'font-size':11,'font-family':cssv('--mono'),fill:cssv('--ink-dim')});tt.textContent=L.title.text;g.appendChild(tt);
+  L.rows.forEach(row=>{
+    g.appendChild(svgEl('rect',{x:row.sx,y:row.sy,width:row.sw,height:row.sh,rx:2,fill:row.color}));
+    const tx=svgEl('text',{x:row.tx,y:row.ty,'font-size':11,'font-family':cssv('--mono'),fill:cssv('--ink')});tx.textContent=row.text;g.appendChild(tx);
+  });
+  svg.appendChild(g);
+  return svg;
+}
+
+// ---------- co-occurrence network ----------
+// similarity of two words across documents. Jaccard: presence (0/1). Cosine: frequency (count vectors).
+function jaccard(A,B){let inter=0;const[S,L]=A.size<B.size?[A,B]:[B,A];for(const x of S)if(L.has(x))inter++;const uni=A.size+B.size-inter;return uni?inter/uni:0;}
+function cosine(va,na,vb,nb){if(!na||!nb)return 0;let dot=0;const[S,L]=va.size<vb.size?[va,vb]:[vb,va];for(const [k,v] of S){const w=L.get(k);if(w)dot+=v*w;}return dot/(na*nb);}
+let NET=null, NETSEED=1; // NETSEED fixed at 1 on load -> reproducible; "再配置" increments it
+
+function buildNet(){
+  const minf=+$('#netMin').value, sim0=+$('#netSim').value, MAXN=80;
+  const measure=($('#netMeasure')&&$('#netMeasure').value)||'jaccard';
+  let nodesIdx=MODEL.names.map((_,i)=>i).filter(i=>MODEL.df[i]>=minf);
+  nodesIdx.sort((a,b)=>MODEL.total[b]-MODEL.total[a]||(MODEL.names[a]<MODEL.names[b]?-1:1)); // deterministic order (tie-break by name)
+  if(nodesIdx.length>MAXN)nodesIdx=nodesIdx.slice(0,MAXN);
+  let edges=[];
+  for(let a=0;a<nodesIdx.length;a++)for(let b=a+1;b<nodesIdx.length;b++){
+    const ia=nodesIdx[a],ib=nodesIdx[b];
+    const sim=measure==='cosine'?cosine(MODEL.vec[ia],MODEL.norm[ia],MODEL.vec[ib],MODEL.norm[ib]):jaccard(MODEL.docs[ia],MODEL.docs[ib]);
+    if(sim>=sim0&&sim>0)edges.push({a,b,sim});
+  }
+  // drop isolated nodes (no connection) and remap edge indices (R 6.13: distz01 <- distz01[n>0,n>0])
+  const d0=new Array(nodesIdx.length).fill(0);
+  edges.forEach(e=>{d0[e.a]++;d0[e.b]++;});
+  const keep=[],remap={};
+  nodesIdx.forEach((wi,i)=>{if(d0[i]>0){remap[i]=keep.length;keep.push(wi);}});
+  nodesIdx=keep;
+  edges=edges.map(e=>({a:remap[e.a],b:remap[e.b],sim:e.sim}));
+  const n=nodesIdx.length,deg=new Array(n).fill(0);
+  edges.forEach(e=>{deg[e.a]++;deg[e.b]++;});
+  return {nodesIdx,edges,deg,n};
+}
+// deterministic PRNG (mulberry32): a given seed always reproduces the same initial positions -> same layout
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function layoutFR(n,edges,W,H,iters,seed){
+  const rnd=mulberry32((((seed>>>0)||1)*2654435761)>>>0);
+  const rot=rnd()*Math.PI*2,pos=[];
+  for(let i=0;i<n;i++){
+    const a=rot+2*Math.PI*i/Math.max(1,n)+(rnd()-0.5)*0.6;
+    const rr=Math.min(W,H)*0.30*(0.75+rnd()*0.5);
+    pos.push({x:W/2+Math.cos(a)*rr,y:H/2+Math.sin(a)*rr,dx:0,dy:0});
+  }
+  if(n<=1)return pos;
+  const cx=W/2,cy=H/2,k=Math.sqrt((W*H)/n)*0.62,grav=0.09;let temp=W*0.12;
+  for(let it=0;it<iters;it++){
+    for(let i=0;i<n;i++){pos[i].dx=0;pos[i].dy=0;}
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+      let dx=pos[i].x-pos[j].x,dy=pos[i].y-pos[j].y,d=Math.hypot(dx,dy)||0.01;
+      const f=k*k/d,ux=dx/d,uy=dy/d;
+      pos[i].dx+=ux*f;pos[i].dy+=uy*f;pos[j].dx-=ux*f;pos[j].dy-=uy*f;
+    }
+    for(const e of edges){
+      let dx=pos[e.a].x-pos[e.b].x,dy=pos[e.a].y-pos[e.b].y,d=Math.hypot(dx,dy)||0.01;
+      const f=d*d/k,ux=dx/d,uy=dy/d;
+      pos[e.a].dx-=ux*f;pos[e.a].dy-=uy*f;pos[e.b].dx+=ux*f;pos[e.b].dy+=uy*f;
+    }
+    for(let i=0;i<n;i++){
+      pos[i].dx+=(cx-pos[i].x)*grav;pos[i].dy+=(cy-pos[i].y)*grav; // gravity: keep disconnected parts near the centre
+      let d=Math.hypot(pos[i].dx,pos[i].dy)||0.01;
+      pos[i].x+=(pos[i].dx/d)*Math.min(d,temp);pos[i].y+=(pos[i].dy/d)*Math.min(d,temp);
+    }
+    temp*=0.96;
+  }
+  // rescale the whole layout to fill the drawing area (centred, with a margin)
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const p of pos){if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}
+  const bw=maxX-minX||1,bh=maxY-minY||1,margin=44,s=Math.min((W-2*margin)/bw,(H-2*margin)/bh);
+  for(const p of pos){p.x=cx+(p.x-(minX+maxX)/2)*s;p.y=cy+(p.y-(minY+maxY)/2)*s;}
+  return pos;
+}
+// ---- community detection (selectable; all deterministic) ----
+function communityLabelProp(n,edges){ // Raghavan-Albert-Kumara 2007 (lightweight)
+  const adj=Array.from({length:n},()=>[]);edges.forEach(e=>{adj[e.a].push(e.b);adj[e.b].push(e.a);});
+  const label=Array.from({length:n},(_,i)=>i);
+  for(let it=0;it<50;it++){
+    let changed=false;
+    for(let i=0;i<n;i++){
+      if(!adj[i].length)continue;
+      const cnt={};for(const j of adj[i])cnt[label[j]]=(cnt[label[j]]||0)+1;
+      let best=label[i],bc=-1;for(const l in cnt){const lv=+l;if(cnt[l]>bc||(cnt[l]===bc&&lv<best)){bc=cnt[l];best=lv;}}
+      if(best!==label[i]){label[i]=best;changed=true;}
+    }
+    if(!changed)break;
+  }
+  return label;
+}
+function communityGreedy(n,edges){ // Clauset-Newman-Moore: agglomerative greedy modularity maximization
+  const m=edges.length;if(m===0)return Array.from({length:n},(_,i)=>i);
+  const deg=new Array(n).fill(0);edges.forEach(e=>{deg[e.a]++;deg[e.b]++;});
+  const comm=Array.from({length:n},(_,i)=>i),members=Array.from({length:n},(_,i)=>[i]),tot=deg.slice();
+  const ec=Array.from({length:n},()=>new Map());
+  edges.forEach(e=>{if(e.a===e.b)return;ec[e.a].set(e.b,(ec[e.a].get(e.b)||0)+1);ec[e.b].set(e.a,(ec[e.b].get(e.a)||0)+1);});
+  const alive=new Set(Array.from({length:n},(_,i)=>i));
+  while(true){
+    let best=null,bestDQ=1e-12; // merge only while modularity increases
+    for(const c of alive)for(const [d,cnt] of ec[c]){
+      if(d<=c||!alive.has(d))continue;
+      const dq=cnt/m - tot[c]*tot[d]/(2*m*m);
+      if(dq>bestDQ){bestDQ=dq;best=[c,d];}
+    }
+    if(!best)break;
+    const [c,d]=best;tot[c]+=tot[d];
+    for(const o of members[d]){comm[o]=c;members[c].push(o);}members[d]=[];
+    for(const [x,cnt] of ec[d]){if(x===c)continue;ec[c].set(x,(ec[c].get(x)||0)+cnt);ec[x].delete(d);ec[x].set(c,(ec[x].get(c)||0)+cnt);}
+    ec[c].delete(d);ec[d]=new Map();alive.delete(d);
+  }
+  return comm;
+}
+function communityLouvain(n,edges){ // Blondel et al. 2008: multi-level modularity (lightweight, high quality)
+  const m=edges.length;if(m===0)return Array.from({length:n},(_,i)=>i);
+  const m2=2*m;
+  let size=n,nbr=Array.from({length:size},()=>new Map()),self=new Array(size).fill(0);
+  edges.forEach(e=>{if(e.a===e.b){self[e.a]++;return;}nbr[e.a].set(e.b,(nbr[e.a].get(e.b)||0)+1);nbr[e.b].set(e.a,(nbr[e.b].get(e.a)||0)+1);});
+  let members=Array.from({length:size},(_,i)=>[i]);
+  const labels=new Array(n).fill(0);
+  const degOf=i=>{let d=2*self[i];for(const [,w] of nbr[i])d+=w;return d;};
+  while(true){
+    const deg=new Array(size);for(let i=0;i<size;i++)deg[i]=degOf(i);
+    const comm=Array.from({length:size},(_,i)=>i),sigmaTot=deg.slice();
+    let improved=true,pass=0;
+    while(improved&&pass++<100){
+      improved=false;
+      for(let i=0;i<size;i++){
+        const ci=comm[i];sigmaTot[ci]-=deg[i];
+        const wC=new Map();for(const [j,w] of nbr[i]){if(j===i)continue;const cj=comm[j];wC.set(cj,(wC.get(cj)||0)+w);}
+        let bestC=ci,bestGain=(wC.get(ci)||0)-sigmaTot[ci]*deg[i]/m2;
+        for(const [c,wc] of wC){const g=wc-sigmaTot[c]*deg[i]/m2;if(g>bestGain){bestGain=g;bestC=c;}}
+        sigmaTot[bestC]+=deg[i];comm[i]=bestC;if(bestC!==ci)improved=true;
+      }
+    }
+    const remap=new Map();let k=0;const cnew=comm.map(c=>{if(!remap.has(c))remap.set(c,k++);return remap.get(c);});
+    if(k===size){for(let i=0;i<size;i++)for(const o of members[i])labels[o]=i;break;}
+    const nMembers=Array.from({length:k},()=>[]);for(let i=0;i<size;i++)nMembers[cnew[i]].push(...members[i]);
+    const nNbr=Array.from({length:k},()=>new Map()),nSelf=new Array(k).fill(0);
+    for(let i=0;i<size;i++){const ci=cnew[i];nSelf[ci]+=self[i];for(const [j,w] of nbr[i]){const cj=cnew[j];if(ci===cj)nSelf[ci]+=w/2;else nNbr[ci].set(cj,(nNbr[ci].get(cj)||0)+w);}}
+    size=k;nbr=nNbr;self=nSelf;members=nMembers;
+  }
+  return labels;
+}
+function community(n,edges){
+  const method=($('#netCommMethod')&&$('#netCommMethod').value)||'label';
+  if(method==='greedy')return communityGreedy(n,edges);
+  if(method==='louvain')return communityLouvain(n,edges);
+  return communityLabelProp(n,edges);
+}
+function computeNet(relayout){
+  const b=buildNet();
+  const sp=+(($('#netSpread')&&$('#netSpread').value)||1.5)||1.5; // node spread = force scale (bigger k)
+  const W=Math.round(780*sp),H=Math.round(520*sp);
+  const pos=(relayout||!NET||NET.n!==b.n||NET.W!==W)?layoutFR(b.n,b.edges,W,H,400,NETSEED):NET.pos;
+  NET={...b,pos,W,H}; // community computed at paint time (so switching method only repaints)
+  return NET;
+}
+function paintNet(svg){
+  const N=NET;svg.innerHTML='';
+  const useComm=$('#netComm').checked;
+  const lineCol=cssv('--ink-faint'),inkDim=cssv('--ink-dim'),ink=cssv('--ink'),cyan=cssv('--cyan');
+  const maxdeg=Math.max(1,...N.deg);
+  // community colours via the selected method (label prop / greedy modularity / Louvain), computed at paint time
+  const comm=useComm?community(N.n,N.edges):null;
+  const labs=comm?[...new Set(comm)]:[];const colOf=l=>PALETTE[labs.indexOf(l)%PALETTE.length];
+  const gE=svgEl('g',{});
+  N.edges.forEach(e=>{
+    const ln=svgEl('line',{x1:N.pos[e.a].x,y1:N.pos[e.a].y,x2:N.pos[e.b].x,y2:N.pos[e.b].y,stroke:lineCol,'stroke-width':1.6+3.5*e.sim,'stroke-opacity':0.55});
+    ln.dataset.a=e.a;ln.dataset.b=e.b;gE.appendChild(ln);
+  });
+  svg.appendChild(gE);
+  const gN=svgEl('g',{});
+  // draw ALL circles first...
+  N.nodesIdx.forEach((wi,i)=>{
+    const r=6+11*N.deg[i]/maxdeg;
+    const g=svgEl('g',{class:'netnode',transform:'translate('+N.pos[i].x+','+N.pos[i].y+')'});g.dataset.i=i;
+    g.appendChild(svgEl('circle',{r:r,fill:useComm?colOf(comm[i]):cyan,'fill-opacity':0.85,stroke:cssv('--bg'),'stroke-width':1.5}));
+    gN.appendChild(g);
+  });
+  svg.appendChild(gN);
+  // ...then ALL labels on a separate top layer, so no circle can ever cover any text (with a background halo for legibility)
+  const gL=svgEl('g',{});gL.style.pointerEvents='none';
+  N.nodesIdx.forEach((wi,i)=>{
+    const r=6+11*N.deg[i]/maxdeg;
+    const g=svgEl('g',{class:'netlabel',transform:'translate('+N.pos[i].x+','+N.pos[i].y+')'});g.dataset.i=i;
+    const tx=svgEl('text',{x:0,y:-r-4,'text-anchor':'middle','font-size':11,'font-family':cssv('--sans'),fill:ink,'paint-order':'stroke',stroke:cssv('--panel-2'),'stroke-width':3,'stroke-linejoin':'round'});
+    tx.textContent=MODEL.names[wi];g.appendChild(tx);
+    gL.appendChild(g);
+  });
+  svg.appendChild(gL);
+  attachDrag(svg);
+}
+function attachDrag(svg){
+  let drag=null;
+  const toSvg=evt=>{const p=svg.createSVGPoint();p.x=evt.clientX;p.y=evt.clientY;const m=svg.getScreenCTM().inverse();const q=p.matrixTransform(m);return{x:q.x,y:q.y};};
+  svg.addEventListener('mousedown',e=>{const g=e.target.closest('.netnode');if(!g)return;drag=+g.dataset.i;e.preventDefault();});
+  window.addEventListener('mousemove',e=>{
+    if(drag==null)return;const c=toSvg(e);
+    NET.pos[drag].x=Math.max(24,Math.min(NET.W-24,c.x));NET.pos[drag].y=Math.max(24,Math.min(NET.H-24,c.y));
+    const tr='translate('+NET.pos[drag].x+','+NET.pos[drag].y+')';
+    const g=svg.querySelector('.netnode[data-i="'+drag+'"]');if(g)g.setAttribute('transform',tr);
+    const gl=svg.querySelector('.netlabel[data-i="'+drag+'"]');if(gl)gl.setAttribute('transform',tr);
+    svg.querySelectorAll('line').forEach(ln=>{
+      if(+ln.dataset.a===drag){ln.setAttribute('x1',NET.pos[drag].x);ln.setAttribute('y1',NET.pos[drag].y);}
+      if(+ln.dataset.b===drag){ln.setAttribute('x2',NET.pos[drag].x);ln.setAttribute('y2',NET.pos[drag].y);}
+    });
+  });
+  window.addEventListener('mouseup',()=>{drag=null;});
+}
+function updateNetStat(){
+  const box=$('#netStat');if(!box||!MODEL){if(box)box.textContent='';return;}
+  const b=buildNet();
+  box.textContent=t('n_stat').replace('{nodes}',b.n).replace('{edges}',b.edges.length)+' · seed '+NETSEED;
+}
+
+// ---------- render ----------
+function el(tag,attrs,children){const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==='text')e.textContent=attrs[k];else e.setAttribute(k,attrs[k]);}if(children)children.forEach(c=>e.appendChild(c));return e;}
+function renderAll(relayout){
+  if(!MODEL)return;
+  $('#placeholder').style.display='none';
+  const box=$('#results');box.style.display='';box.innerHTML='';
+  // metrics
+  const met=el('div',{class:'metrics'});
+  const addM=(k,v)=>{const m=el('div',{class:'metric'});m.appendChild(el('div',{class:'k',text:k}));m.appendChild(el('div',{class:'v',text:v}));met.appendChild(m);};
+  const net=computeNet(relayout);
+  addM(t('m_words'),MODEL.names.length);addM(t('m_docs'),MODEL.docN);addM(t('m_nodes'),net.n);addM(t('m_edges'),net.edges.length);
+  box.appendChild(met);
+  // word cloud card
+  const cc=el('div',{class:'card'});
+  const h3c=el('h3');h3c.appendChild(el('span',{text:t('sec_cloud')}));
+  const dlc=el('button',{class:'dl',text:t('dl_cloud')});cc.dataset.k='cloud';
+  h3c.appendChild(dlc);cc.appendChild(h3c);
+  cc.appendChild(el('div',{class:'desc',text:t('sec_cloud_d')}));
+  const cloud=buildCloud();
+  const cw=el('div',{class:'svgscroll'});const cloudSvg=cloudToSvg(cloud);cw.appendChild(cloudSvg);cc.appendChild(cw);
+  dlc.onclick=()=>downloadSvg(cloudSvg,'wordcloud.svg');
+  box.appendChild(cc);
+  // network card
+  const nc=el('div',{class:'card'});
+  const h3n=el('h3');h3n.appendChild(el('span',{text:t('sec_net')}));
+  const dln=el('button',{class:'dl',text:t('dl_net')});h3n.appendChild(dln);nc.appendChild(h3n);
+  nc.appendChild(el('div',{class:'desc',text:t('sec_net_d')}));
+  const nw=el('div',{class:'svgscroll'});
+  const netSvg=svgEl('svg',{width:net.W,height:net.H,viewBox:'0 0 '+net.W+' '+net.H});
+  nw.appendChild(netSvg);nc.appendChild(nw);box.appendChild(nc);
+  if(net.edges.length===0){const p=el('div',{class:'desc'});p.style.color='var(--ink-faint)';p.textContent=t('net_none');nc.appendChild(p);}
+  paintNet(netSvg);
+  dln.onclick=()=>downloadSvg(netSvg,'network.svg');
+  updateNetStat();
+}
+function downloadSvg(svg,name){
+  const clone=svg.cloneNode(true);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  const bg=cssv('--panel-2');
+  const rect='<rect width="100%" height="100%" fill="'+bg+'"/>';
+  const s='<?xml version="1.0" encoding="UTF-8"?>\n'+clone.outerHTML.replace('>',' >').replace(/^(<svg[^>]*>)/,'$1'+rect);
+  const blob=new Blob([s],{type:'image/svg+xml;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+// ---------- events ----------
+function ingest(text,filename){
+  const rows=parseCSVRows(text);
+  if(!rows.length){toast(t('toast_parsefail'));return;}
+  setModel(modelFromRows(rows,$('#orient').value),filename);
+}
+const drop=$('#drop'),fileInput=$('#file');
+drop.onclick=()=>fileInput.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
+fileInput.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
+$('#demo').onclick=()=>{setModel(modelFromDemo(),'chumonno_dfm.csv');toast(t('toast_demo'));};
+$('#orient').onchange=()=>{if(MODEL&&$('#meta').classList.contains('show')){/* re-parse only on new load */}};
+
+$('#cloudN').oninput=e=>$('#cloudNVal').textContent=e.target.value;
+$('#cloudN').onchange=()=>renderAll();
+$('#cloudMetric').onchange=()=>renderAll();
+$('#cloudMin').oninput=e=>$('#cloudMinVal').textContent=(+e.target.value).toFixed(1);
+$('#cloudMin').onchange=()=>renderAll();
+$('#cloudMax').oninput=e=>$('#cloudMaxVal').textContent=(+e.target.value).toFixed(1);
+$('#cloudMax').onchange=()=>renderAll();
+$('#netMin').oninput=e=>{$('#netMinVal').textContent=e.target.value;renderAll(true);}; // live update (integer steps -> cheap)
+$('#netSim').oninput=e=>{$('#netSimVal').textContent=(+e.target.value).toFixed(2);updateNetStat();};
+$('#netSim').onchange=()=>renderAll(true);
+$('#netMeasure').onchange=()=>renderAll(true);
+$('#netSpread').oninput=e=>$('#netSpreadVal').textContent=(+e.target.value).toFixed(1);
+$('#netSpread').onchange=()=>renderAll(true);
+$('#netComm').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
+$('#netCommMethod').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
+$('#relayout').onclick=()=>{NETSEED++;renderAll(true);};
+
+$('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
+$('#themetog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.setAttribute('data-theme',b.dataset.theme);$$('#themetog button').forEach(x=>x.classList.toggle('on',x===b));if(MODEL)renderAll();});
+
+async function saveSelf(){
+  try{const res=await fetch(location.href.split('?')[0]);const html=await res.text();
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=location.pathname.split('/').pop()||'dfm_viz.html';a.click();
+  }catch(e){toast('保存に失敗しました: '+e.message);}
+}
+$('#saveApp').onclick=saveSelf;
+
+(function(){try{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='ja')LANG=q;}catch(e){}})();
+applyI18n();
+</script>
+</body>
+</html>

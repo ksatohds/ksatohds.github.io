@@ -14,3 +14,6 @@ _site/
 # OS files
 Thumbs.db
 .DS_Store
+
+# Claude Code local settings/session
+.claude/
