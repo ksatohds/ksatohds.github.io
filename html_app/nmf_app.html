@@ -219,9 +219,9 @@
           <span class="sub" data-i18n="cb_xnorm_sub">更新式内で正規化・各基底を確率分布化</span></label>
       </div>
       <div class="checkline">
-        <input type="checkbox" id="normcol">
-        <label for="normcol"><span data-i18n="cb_normcol">前処理: Yの列を合計1に正規化</span>
-          <span class="sub" data-i18n="cb_normcol_sub">転置指定時は転置後の列に適用</span></label>
+        <input type="checkbox" id="normrow">
+        <label for="normrow"><span data-i18n="cb_normcol">前処理: 変数ごと(行)に[0,1]正規化</span>
+          <span class="sub" data-i18n="cb_normcol_sub">各行を (x−min)/(max−min) で0〜1に（転置後に適用）</span></label>
       </div>
     </div>
 
@@ -271,7 +271,7 @@ const I18N={
     p_seed:'乱数シード', p_init:'Xの初期値',
     init_kmeans:'k-means (Yの列の重心)', init_random:'一様乱数',
     cb_xnorm:'Xの列和を1に制約', cb_xnorm_sub:'更新式内で正規化・各基底を確率分布化',
-    cb_normcol:'前処理: Yの列を合計1に正規化', cb_normcol_sub:'転置指定時は転置後の列に適用',
+    cb_normcol:'前処理: 変数ごと(行)に[0,1]正規化', cb_normcol_sub:'各行を (x−min)/(max−min) で0〜1に（転置後に適用）',
     run:'分解を実行', run_busy:'計算中…',
     hint:'乗法更新則（Lee &amp; Seung, 二乗誤差版）で <span style="color:var(--amber)">X</span>·<span style="color:var(--violet)">B</span> を推定。各列は <span class="y">y</span> ≈ <span style="color:var(--amber)">X</span><span style="color:var(--violet)">b</span> という潜在変数による重回帰とみなせます。<span style="color:var(--amber)">X</span>の行を正規化すれば特徴量の、<span style="color:var(--violet)">B</span>の列を正規化すればサンプルの所属確率になります。計算はすべてブラウザ内で完結し、データは外部送信されません。',
     ph_main:'左でCSVを読み込むか、デモデータを試してください。',
@@ -320,7 +320,7 @@ const I18N={
     p_seed:'Random seed', p_init:'Initial value of X',
     init_kmeans:'k-means (centroids of Y columns)', init_random:'Uniform random',
     cb_xnorm:'Constrain columns of X to sum to 1', cb_xnorm_sub:'normalized within updates; each basis becomes a distribution',
-    cb_normcol:'Preprocess: normalize columns of Y to sum 1', cb_normcol_sub:'applied after transpose when enabled',
+    cb_normcol:'Preprocess: min-max scale each variable (row) to [0,1]', cb_normcol_sub:'(x−min)/(max−min) per row (applied after transpose)',
     run:'Run factorization', run_busy:'Computing…',
     hint:'Estimates <span style="color:var(--amber)">X</span>·<span style="color:var(--violet)">B</span> via multiplicative updates (Lee &amp; Seung, squared error). Each column reads as a latent-variable regression <span class="y">y</span> ≈ <span style="color:var(--amber)">X</span><span style="color:var(--violet)">b</span>. Normalizing rows of <span style="color:var(--amber)">X</span> gives feature memberships; normalizing columns of <span style="color:var(--violet)">B</span> gives sample memberships. Everything runs in your browser; no data is uploaded.',
     ph_main:'Load a CSV on the left, or try the demo data.',
@@ -716,7 +716,7 @@ function buildLog(res,meta){
   L.push('random_seed             = '+meta.seed);
   L.push('init_method             = '+meta.init);
   L.push('X_colsum1_constraint    = '+meta.xnorm);
-  L.push('Y_colnorm_preprocess    = '+meta.normcol);
+  L.push('Y_rowminmax_preprocess  = '+meta.normrow);
   L.push('');
   L.push('[results]');
   L.push('R2                      = '+res.r2.toFixed(6));
@@ -804,16 +804,20 @@ $('#run').onclick=()=>{
   const Q=+$('#rank').value,maxit=+$('#maxit').value,eps=Math.pow(10,-(+$('#eps').value)),seed=+$('#seed').value||1;
   const base=workingData();
   let Y=base.matrix.map(r=>r.slice());
-  if($('#normcol').checked){
-    const colSum=new Array(base.N).fill(0);
-    for(let i=0;i<base.P;i++)for(let j=0;j<base.N;j++)colSum[j]+=Y[i][j];
-    for(let i=0;i<base.P;i++)for(let j=0;j<base.N;j++)if(colSum[j]>0)Y[i][j]/=colSum[j];
+  if($('#normrow').checked){
+    // per-variable (row) min-max scaling to [0,1]: x -> (x-min)/(max-min)
+    for(let i=0;i<base.P;i++){
+      let a=Infinity,b=-Infinity;
+      for(let j=0;j<base.N;j++){const v=Y[i][j];if(v<a)a=v;if(v>b)b=v;}
+      const d=b-a;
+      for(let j=0;j<base.N;j++)Y[i][j]=d>0?(Y[i][j]-a)/d:0;
+    }
   }
   setTimeout(()=>{
     try{
       const meta={fname:DATA.fname,origP:DATA.P,origN:DATA.N,transpose:$('#transpose').checked,
         effP:base.P,effN:base.N,nan:DATA.nanCount,neg:DATA.negCount,
-        rank:Q,maxit,eps,seed,init:$('#init').value,xnorm:$('#wnorm').checked,normcol:$('#normcol').checked};
+        rank:Q,maxit,eps,seed,init:$('#init').value,xnorm:$('#wnorm').checked,normrow:$('#normrow').checked};
       RESULT=nmf(Y,Q,{maxit,eps,seed,xColNorm:$('#wnorm').checked,init:$('#init').value});
       RESULT.meta=meta;
       LAST={res:RESULT,data:{...base,matrix:Y}};
