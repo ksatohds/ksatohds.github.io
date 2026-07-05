@@ -4,7 +4,7 @@ title: Software
 ---
 
 <style>
-  .lang-toggle-wrap { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+  .lang-toggle-wrap { display: flex; justify-content: flex-start; margin-bottom: 10px; }
   .lang-toggle { display: inline-flex; border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; font-size: 0.72rem; font-family: var(--font-sans); letter-spacing: 0.04em; }
   .lang-toggle button { background: transparent; border: none; padding: 5px 13px; cursor: pointer; color: var(--color-text-light); font-weight: 500; transition: background 0.15s, color 0.15s; }
   .lang-toggle button:hover { color: var(--color-primary); }

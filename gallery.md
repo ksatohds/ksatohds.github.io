@@ -43,12 +43,7 @@ title: 展示
       <div class="gallery-body">
         <h3>■WEBアプリケーション</h3>
         <div class="gallery-links">
-          <a href="{{ '/html_app/text_dfm.html' | relative_url }}">テキスト解析 文書単語行列 DFM（HTMLアプリ）</a>
-          <a href="{{ '/html_app/dfm_viz.html' | relative_url }}">DFMの可視化 ワードクラウド・共起ネットワーク（HTMLアプリ）</a>
-          <a href="{{ '/html_app/dfm_ca.html' | relative_url }}">対応分析 コレスポンデンス分析（HTMLアプリ）</a>
-          <a href="{{ '/html_app/nmf_app.html' | relative_url }}">非負値行列因子分解 NMF・トピックモデル（HTMLアプリ）</a>
-          <a href="{{ '/html_app/class_tree.html' | relative_url }}">分類木 CART（HTMLアプリ）</a>
-          <a href="https://kenichi-satoh.shinyapps.io/CART/">回帰木・分類木 CART（Shinyアプリ）</a>
+          <a href="{{ '/software.html' | relative_url }}">Software</a>
         </div>
       </div>
     </div>
