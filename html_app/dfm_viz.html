@@ -177,6 +177,13 @@
         <input type="range" id="netSim" min="0.01" max="1" value="0.2" step="0.01">
       </label>
       <div class="hint" id="netStat" style="margin-top:0;margin-bottom:12px"></div>
+      <label class="field">
+        <span class="lab"><span data-i18n="n_layout">配置（レイアウト）</span></span>
+        <select id="netLayout">
+          <option value="fr" data-i18n="lay_fr" selected>力学モデル (Fruchterman-Reingold)</option>
+          <option value="spectral" data-i18n="lay_spectral">スペクトル配置 (Laplacian)</option>
+        </select>
+      </label>
       <label class="field" style="margin-top:12px">
         <span class="lab"><span data-i18n="n_spread">ノード間の広がり（力のスケール）</span> <span class="val" id="netSpreadVal">1.1</span></span>
         <input type="range" id="netSpread" min="0.6" max="3.5" value="1.1" step="0.1">
@@ -232,7 +239,7 @@ const I18N={
     demo_credit:'デモは宮沢賢治「注文の多い料理店」（<b>パブリックドメイン</b>・著者1933年没）から作成した文書単語行列です。出典: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">青空文庫</a>。',
     attr:'属性の列（除外）', attr_empty:'ファイルを読み込むと列名が一覧表示されます。', attr_hint:'チェックした列は属性として除外し、それ以外を単語とみなします（1列目は文書ID）。',
     g_cloud:'ワードクラウド', c_num:'表示語数', c_metric:'大きさの基準', metric_total:'のべ出現回数', metric_df:'出現文書数', c_min:'最小サイズ (×12pt)', c_max:'最大サイズ (×12pt)',
-    g_net:'共起ネットワーク', n_minfreq:'語の最小出現文書数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_spread:'ノード間の広がり（力のスケール）',
+    g_net:'共起ネットワーク', n_minfreq:'語の最小出現文書数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_layout:'配置（レイアウト）', lay_fr:'力学モデル (Fruchterman-Reingold)', lay_spectral:'スペクトル配置 (Laplacian)', n_spread:'ノード間の広がり（力のスケール）',
     n_note:'尺度: 有無(0/1)なら Jaccard（共起文書数/いずれかに出現）、頻度ならコサイン類似度（頻度ベクトルの向き）。しきい値以上の語ペアを線で結びます。',
     n_stat:'この設定: {nodes} 語 / {edges} 本の線', relayout:'↻ 再配置', dl_log:'📋 設定・結果ログ (.txt)',
     ph_main:'左で文書単語行列CSVを読み込むか、デモを試してください。',
@@ -255,7 +262,7 @@ const I18N={
     demo_credit:'Demo: a document-feature matrix built from Kenji Miyazawa, "The Restaurant of Many Orders" (<b>public domain</b>, author d.1933). Source: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">Aozora Bunko</a>.',
     attr:'Attribute columns (excluded)', attr_empty:'Column names appear here after a file is loaded.', attr_hint:'Checked columns are excluded as attributes; every other column is treated as a word (column 1 is the document id).',
     g_cloud:'Word cloud', c_num:'Words shown', c_metric:'Size by', metric_total:'total count', metric_df:'document frequency', c_min:'Min size (×12pt)', c_max:'Max size (×12pt)',
-    g_net:'Co-occurrence network', n_minfreq:'Min document frequency', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_spread:'Node spread (force scale)',
+    g_net:'Co-occurrence network', n_minfreq:'Min document frequency', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_layout:'Layout', lay_fr:'Force-directed (Fruchterman-Reingold)', lay_spectral:'Spectral (Laplacian)', n_spread:'Node spread (force scale)',
     n_note:'Measure: Jaccard (shared/either docs) for presence (0/1), or cosine similarity for frequency (count-vector angle). Pairs above the threshold are linked.',
     n_stat:'this setting: {nodes} words / {edges} links', relayout:'↻ Re-layout', dl_log:'📋 Settings & results log (.txt)',
     ph_main:'Load a DFM CSV on the left, or try the demo.',
@@ -508,6 +515,72 @@ function layoutFR(n,edges,W,H,iters,seed){
   for(const p of pos){p.x=cx+(p.x-(minX+maxX)/2)*s;p.y=cy+(p.y-(minY+maxY)/2)*s;}
   return pos;
 }
+// ---- spectral (graph-Laplacian) layout: deterministic, edge-driven; positions from Fiedler eigenvectors ----
+// symmetric eigensolver (cyclic Jacobi rotations); vecs[i][j] = component i of the j-th eigenvector
+function jacobiEigen(A0,n){
+  const a=A0.map(r=>Float64Array.from(r));
+  const v=Array.from({length:n},(_,i)=>Float64Array.from({length:n},(_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<60;sweep++){
+    let off=0;for(let p=0;p<n;p++)for(let q=p+1;q<n;q++)off+=Math.abs(a[p][q]);
+    if(off<1e-9)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){
+      const apq=a[p][q];if(Math.abs(apq)<1e-13)continue;
+      const theta=(a[q][q]-a[p][p])/(2*apq);
+      const tt=(theta>=0?1:-1)/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+      const c=1/Math.sqrt(tt*tt+1),s=tt*c;
+      for(let i=0;i<n;i++){const aip=a[i][p],aiq=a[i][q];a[i][p]=c*aip-s*aiq;a[i][q]=s*aip+c*aiq;}
+      for(let i=0;i<n;i++){const api=a[p][i],aqi=a[q][i];a[p][i]=c*api-s*aqi;a[q][i]=s*api+c*aqi;}
+      for(let i=0;i<n;i++){const vip=v[i][p],viq=v[i][q];v[i][p]=c*vip-s*viq;v[i][q]=s*vip+c*viq;}
+    }
+  }
+  const vals=new Float64Array(n);for(let i=0;i<n;i++)vals[i]=a[i][i];
+  return {vals,vecs:v};
+}
+function frRescale(pos,W,H,margin){
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const p of pos){if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}
+  const bw=maxX-minX||1,bh=maxY-minY||1,s=Math.min((W-2*margin)/bw,(H-2*margin)/bh);
+  for(const p of pos){p.x=W/2+(p.x-(minX+maxX)/2)*s;p.y=H/2+(p.y-(minY+maxY)/2)*s;}
+}
+// short force refinement from given positions: separates overlaps / disconnected parts, keeps the structure
+function frRefine(pos,edges,W,H,iters){
+  const n=pos.length;if(n<=1)return;
+  const cx=W/2,cy=H/2,k=Math.sqrt((W*H)/n)*0.62,grav=0.09;let temp=W*0.05;
+  for(let it=0;it<iters;it++){
+    for(let i=0;i<n;i++){pos[i].dx=0;pos[i].dy=0;}
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+      let dx=pos[i].x-pos[j].x,dy=pos[i].y-pos[j].y,d=Math.hypot(dx,dy)||0.01;
+      const f=k*k/d,ux=dx/d,uy=dy/d;pos[i].dx+=ux*f;pos[i].dy+=uy*f;pos[j].dx-=ux*f;pos[j].dy-=uy*f;
+    }
+    for(const e of edges){
+      let dx=pos[e.a].x-pos[e.b].x,dy=pos[e.a].y-pos[e.b].y,d=Math.hypot(dx,dy)||0.01;
+      const f=d*d/k,ux=dx/d,uy=dy/d;pos[e.a].dx-=ux*f;pos[e.a].dy-=uy*f;pos[e.b].dx+=ux*f;pos[e.b].dy+=uy*f;
+    }
+    for(let i=0;i<n;i++){
+      pos[i].dx+=(cx-pos[i].x)*grav;pos[i].dy+=(cy-pos[i].y)*grav;
+      let d=Math.hypot(pos[i].dx,pos[i].dy)||0.01;pos[i].x+=(pos[i].dx/d)*Math.min(d,temp);pos[i].y+=(pos[i].dy/d)*Math.min(d,temp);
+    }
+    temp*=0.97;
+  }
+}
+// spectral layout: weighted Laplacian L=D-A (edge weight = similarity; works for Jaccard OR cosine),
+// x,y = the 2nd & 3rd smallest eigenvectors (Fiedler), then a light force refinement for readability
+function layoutSpectral(n,edges,W,H,seed){
+  if(n<=2){const p=[];for(let i=0;i<n;i++)p.push({x:W/2+(i-(n-1)/2)*90,y:H/2,dx:0,dy:0});return p;}
+  const A=Array.from({length:n},()=>new Float64Array(n));
+  for(const e of edges){const w=Math.max(1e-6,e.sim||1);A[e.a][e.b]+=w;A[e.b][e.a]+=w;}
+  const L=Array.from({length:n},()=>new Float64Array(n));
+  for(let i=0;i<n;i++){let d=0;for(let j=0;j<n;j++)d+=A[i][j];for(let j=0;j<n;j++)L[i][j]=(i===j?d:0)-A[i][j];}
+  const {vals,vecs}=jacobiEigen(L,n);
+  const order=[...Array(n).keys()].sort((p,q)=>vals[p]-vals[q]);
+  const ex=order[1],ey=order[Math.min(2,n-1)];
+  const rnd=mulberry32((((seed>>>0)||1)*2654435761)>>>0);
+  const pos=[];for(let i=0;i<n;i++)pos.push({x:vecs[i][ex]+(rnd()-0.5)*1e-3,y:vecs[i][ey]+(rnd()-0.5)*1e-3,dx:0,dy:0});
+  frRescale(pos,W,H,44);
+  frRefine(pos,edges,W,H,80);
+  frRescale(pos,W,H,44);
+  return pos;
+}
 // ---- community detection (selectable; all deterministic) ----
 function communityLabelProp(n,edges){ // Raghavan-Albert-Kumara 2007 (lightweight)
   const adj=Array.from({length:n},()=>[]);edges.forEach(e=>{adj[e.a].push(e.b);adj[e.b].push(e.a);});
@@ -587,7 +660,10 @@ function computeNet(relayout){
   const b=buildNet();
   const sp=+(($('#netSpread')&&$('#netSpread').value)||1.1)||1.1; // node spread = force scale (bigger k)
   const W=Math.round(780*sp),H=Math.round(520*sp);
-  const pos=(relayout||!NET||NET.n!==b.n||NET.W!==W)?layoutFR(b.n,b.edges,W,H,400,NETSEED):NET.pos;
+  const method=($('#netLayout')&&$('#netLayout').value)||'fr';
+  const pos=(relayout||!NET||NET.n!==b.n||NET.W!==W)
+    ?(method==='spectral'?layoutSpectral(b.n,b.edges,W,H,NETSEED):layoutFR(b.n,b.edges,W,H,400,NETSEED))
+    :NET.pos;
   NET={...b,pos,W,H}; // community computed at paint time (so switching method only repaints)
   return NET;
 }
@@ -696,7 +772,7 @@ function downloadText(text,name){
 }
 // build a plain-text log of all user settings + the main computed results (no per-node coords / edge list / freq table)
 function buildLog(){
-  const lbl=k=>({total:'total count / のべ出現回数',df:'document frequency / 出現文書数',jaccard:'Jaccard (presence)',cosine:'Cosine (frequency)',louvain:'Louvain',greedy:'Greedy modularity (CNM)',label:'Label propagation'}[k]||k);
+  const lbl=k=>({total:'total count / のべ出現回数',df:'document frequency / 出現文書数',jaccard:'Jaccard (presence)',cosine:'Cosine (frequency)',louvain:'Louvain',greedy:'Greedy modularity (CNM)',label:'Label propagation',fr:'Fruchterman-Reingold',spectral:'Spectral (Laplacian)'}[k]||k);
   const net=NET||computeNet(false);
   // count of isolated nodes removed = nodes passing the min-doc-freq filter (capped at 80) minus nodes kept after removal
   const minf=+$('#netMin').value,MAXN=80;
@@ -720,6 +796,7 @@ function buildLog(){
   L.push('  min doc freq / 最小文書数 : '+$('#netMin').value);
   L.push('  measure / 尺度            : '+lbl($('#netMeasure').value));
   L.push('  threshold / しきい値      : '+(+$('#netSim').value).toFixed(2));
+  L.push('  layout / 配置             : '+lbl($('#netLayout').value));
   L.push('  node spread / 広がり      : '+(+$('#netSpread').value).toFixed(1));
   L.push('  color by community / 色分け: '+($('#netComm').checked?'on':'off'));
   L.push('  community method / 検出法 : '+lbl($('#netCommMethod').value));
@@ -780,6 +857,7 @@ $('#netSim').onchange=()=>renderAll(true);
 $('#netMeasure').onchange=()=>renderAll(true);
 $('#netSpread').oninput=e=>$('#netSpreadVal').textContent=(+e.target.value).toFixed(1);
 $('#netSpread').onchange=()=>renderAll(true);
+$('#netLayout').onchange=()=>renderAll(true);
 $('#netComm').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#netCommMethod').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#relayout').onclick=()=>{NETSEED++;renderAll(true);};

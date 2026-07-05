@@ -172,7 +172,12 @@
 
     <div class="group" id="collocGroup" style="display:none">
       <h2 data-i18n="g_colloc">複合語検出</h2>
-      <div class="hint" data-i18n="colloc_hint">隣接2語の連接強度(z)で複合語を自動抽出し、1語に連結します（size=2）。</div>
+      <div class="hint" data-i18n="colloc_hint">隣接2語の連接強度(z)で複合語を自動抽出し、1語に連結します（size=2）。複合語になった語は単独ではカウントされません。</div>
+      <label class="field" style="margin:10px 0 4px">
+        <span class="lab"><span data-i18n="colloc_min">最小共起回数 (min_count)</span> <span class="val" id="collocMinVal">5</span></span>
+        <input type="range" id="collocMin" min="2" max="20" value="5" step="1">
+      </label>
+      <div class="hint" data-i18n="colloc_min_note">この回数以上の隣接2語だけを複合語の候補にします。小さくすると候補が増え、主要語の頻度が複合語に吸収されて下がります。</div>
       <label class="field" style="margin:10px 0 4px">
         <span class="lab"><span data-i18n="colloc_z">連接強度のしきい値 (z)</span> <span class="val" id="collocZVal">3</span></span>
         <input type="range" id="collocZ" min="0" max="5" value="3" step="0.5">
@@ -271,9 +276,11 @@ const I18N={
     e_syn:'置換ルール', e_syn_ph:'紳士<-お客',
     e_syn_hint:'「置換後<-置換元」をカンマか改行で区切って記入',
     g_colloc:'複合語検出',
-    colloc_hint:'隣接2語の連接強度(z)で複合語を自動抽出し、1語に連結します（size=2）。',
+    colloc_hint:'隣接2語の連接強度(z)で複合語を自動抽出し、1語に連結します（size=2）。複合語になった語は単独ではカウントされません。',
+    colloc_min:'最小共起回数 (min_count)',
+    colloc_min_note:'この回数以上の隣接2語だけを複合語の候補にします。小さくすると候補が増え、主要語の頻度が複合語に吸収されて下がります。',
     colloc_z:'連接強度のしきい値 (z)', col_stat:'この z で採用: {n} 語 / 候補 {m} 語',
-    colloc_note:'z が大きいほど厳しく選択。教科書の既定は z>3（片側 p≈0.13%）。',
+    colloc_note:'z が大きいほど厳しく選択。教科書の既定は min_count=5, z>3（片側 p≈0.13%）。',
     sec_col:'複合語候補', sec_col_d:'隣接2語の連接強度。z がしきい値を超えた候補（✓）を1語に連結。z=λ/SE（対数オッズ比の検定統計量, Blaheta & Johnson 2001）、p は片側検定の参考値。',
     col_ref:'Blaheta, D., & Johnson, M. (2001). Unsupervised learning of multi-word verbs. Proc. 39th ACL, 54–60.',
     col_word:'複合語', col_use:'採用', col_none:'候補がありません。min_count を下げてください。',
@@ -314,9 +321,11 @@ const I18N={
     e_syn:'Replacement rules', e_syn_ph:'紳士<-お客',
     e_syn_hint:'"new<-old" separated by comma or newline',
     g_colloc:'Compound detection',
-    colloc_hint:'Detect compounds from adjacent word pairs by association strength (z) and join them (size=2).',
+    colloc_hint:'Detect compounds from adjacent word pairs by association strength (z) and join them (size=2). Words merged into a compound are no longer counted on their own.',
+    colloc_min:'Min co-occurrence (min_count)',
+    colloc_min_note:'Only adjacent pairs occurring at least this many times become compound candidates. Lower it and more pairs merge, so frequent single words lose count to compounds.',
     colloc_z:'Strength threshold (z)', col_stat:'adopted at this z: {n} / {m} candidates',
-    colloc_note:'Larger z = stricter. Textbook default is z>3 (one-sided p≈0.13%).',
+    colloc_note:'Larger z = stricter. Textbook default is min_count=5, z>3 (one-sided p≈0.13%).',
     sec_col:'Compound candidates', sec_col_d:'Association strength of adjacent pairs. Candidates above the z threshold (✓) are joined. z=λ/SE (z-score of the log-odds ratio; Blaheta & Johnson, 2001); p is a one-sided reference.',
     col_ref:'Blaheta, D., & Johnson, M. (2001). Unsupervised learning of multi-word verbs. Proc. 39th ACL, 54–60.',
     col_word:'compound', col_use:'use', col_none:'No candidates. Lower min_count.',
@@ -511,8 +520,8 @@ function finalizeFromBase(base,opts,sig){
   return toks;
 }
 function collocOpts(){
-  // collocation detection is always on; min_count fixed at 2 (min_termfreq does the real trimming)
-  return {enabled:true, minCount:2, z:+$('#collocZ').value};
+  // collocation detection is always on; min_count = min adjacent-pair co-occurrence to be a candidate
+  return {enabled:true, minCount:+$('#collocMin').value, z:+$('#collocZ').value};
 }
 // full corpus pass: raw -> base tokens -> optional collocation -> final tokens per document
 function computeAll(){
@@ -971,6 +980,9 @@ $('#keepList').addEventListener('change',refreshFreqRange);
 $('#removeList').addEventListener('change',refreshFreqRange);
 $('#delwords').addEventListener('change',refreshFreqRange);
 $('#synonyms').addEventListener('change',refreshFreqRange);
+// min_count changes which adjacent pairs are candidates -> recompute candidate set + size range
+$('#collocMin').oninput=e=>$('#collocMinVal').textContent=e.target.value;
+$('#collocMin').onchange=refreshFreqRange;
 // collocation z threshold changes which candidates are adopted -> recompute size range
 $('#collocZ').oninput=e=>{$('#collocZVal').textContent=e.target.value;updateCollocCount();};
 $('#collocZ').onchange=refreshFreqRange;
