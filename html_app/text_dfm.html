@@ -58,6 +58,7 @@
   label.field .lab .val{font-family:var(--mono);color:var(--cyan);font-size:12.5px;flex-shrink:0}
   select,input[type=number],textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
   select:focus,input[type=number]:focus,textarea:focus{border-color:var(--cyan-deep)}
+  textarea[readonly]{background:var(--panel);color:var(--ink-dim);cursor:default}
   textarea{resize:vertical;min-height:52px;line-height:1.5}
   input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--line);border-radius:2px;outline:none;margin:6px 0}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--cyan-deep)}
@@ -164,6 +165,21 @@
     <div class="group" id="editGroup" style="display:none">
       <h2 data-i18n="g_edit">単語の削除</h2>
       <label class="field">
+        <span class="lab"><span data-i18n="e_stop">ストップワード（機能語の一括除外）</span></span>
+        <select id="stopword" size="1">
+          <option value="none" data-i18n="stop_none">なし</option>
+          <option value="en" data-i18n="stop_en">英語（English）</option>
+          <option value="ja" data-i18n="stop_ja">日本語</option>
+          <option value="both" data-i18n="stop_both">英語＋日本語</option>
+        </select>
+        <span class="hint" data-i18n="e_stop_hint">the, and, of / これ, こと 等のよく使う語を一括除外します（大文字小文字は区別しません）。</span>
+        <span class="hint" data-i18n-html="stop_credit" style="margin-top:2px"></span>
+      </label>
+      <div id="stopviewWrap" style="display:none;margin-bottom:14px">
+        <div class="hint" id="stopviewLab" style="margin-bottom:4px"></div>
+        <textarea id="stopview" readonly rows="5" style="font-size:11.5px;line-height:1.6;resize:vertical"></textarea>
+      </div>
+      <label class="field">
         <span class="lab"><span data-i18n="e_del">指定した単語を削除</span></span>
         <textarea id="delwords" data-i18n-ph="e_del_ph" placeholder="多く,大きな"></textarea>
         <span class="hint" data-i18n="e_del_hint">複合語検出の前にノイズ語を除きます。</span>
@@ -205,7 +221,7 @@
         </select>
       </label>
       <label class="field">
-        <span class="lab"><span style="flex:1;min-width:0"><span data-i18n="p_nchar">最小文字数 (min_nchar)</span><span style="color:var(--ink-faint);font-weight:400;margin-left:6px" data-i18n="p_nchar_ex">例: 扉は1、注文は2</span></span> <span class="val" id="ncharVal">2</span></span>
+        <span class="lab"><span style="flex:1;min-width:0"><span data-i18n="p_nchar">最小文字数 (min_nchar)</span><span style="color:var(--ink-faint);font-weight:400;margin-left:6px" data-i18n="p_nchar_ex">例: 扉は1、注文は2、canは3</span></span> <span class="val" id="ncharVal">2</span></span>
         <input type="range" id="nchar" min="1" max="5" value="2" step="1">
       </label>
       <label class="field" style="margin-bottom:8px">
@@ -272,6 +288,10 @@ const I18N={
     demo_btn:'◇ デモデータ (注文の多い料理店)',
     demo_credit:'デモ本文: 宮沢賢治「注文の多い料理店」（全147段落, 1段落=1文書）。著者は1933年没で著作権保護期間が満了した<b>パブリックドメイン</b>作品で、改変・再配布・商用利用が自由です。出典: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">青空文庫 図書カード</a>。底本: 『注文の多い料理店』新潮文庫（新潮社, 1990年第1刷／1997年17刷）、入力: 土屋隆、校正: noriko saito。',
     c_text:'分かち書きする列', c_hint:'日本語は Intl.Segmenter（ブラウザ標準・ICU）で分かち書きします。',
+    e_stop:'ストップワード（機能語の一括除外）', stop_none:'なし', stop_en:'英語（English）', stop_ja:'日本語', stop_both:'英語＋日本語',
+    e_stop_hint:'the, and, of / これ, こと 等のよく使う語を一括除外します（大文字小文字は区別しません）。',
+    stop_credit:'英語: <a href="https://snowballstem.org/" target="_blank" rel="noopener">Snowball</a>（BSD 3-Clause）／日本語: SlothLib（大島ら, 京都大学, DEWS2007）',
+    stop_view_lab:'除外される語（確認用・編集不可）',
     e_del:'指定した単語を削除', e_del_ph:'多く,大きな', e_del_hint:'複合語検出の前にノイズ語を除きます。',
     e_syn:'置換ルール', e_syn_ph:'紳士<-お客',
     e_syn_hint:'「置換後<-置換元」をカンマか改行で区切って記入',
@@ -285,7 +305,7 @@ const I18N={
     col_ref:'Blaheta, D., & Johnson, M. (2001). Unsupervised learning of multi-word verbs. Proc. 39th ACL, 54–60.',
     col_word:'複合語', col_use:'採用', col_none:'候補がありません。min_count を下げてください。',
     dl_colloc:'複合語候補 CSV（複合語・count・z・p）',
-    p_nchar:'最小文字数 (min_nchar)', p_nchar_ex:'例: 扉は1、注文は2', p_freq:'最小出現回数 (min_termfreq)',
+    p_nchar:'最小文字数 (min_nchar)', p_nchar_ex:'例: 扉は1、注文は2、canは3', p_freq:'最小出現回数 (min_termfreq)',
     sz_label:'この設定での行列サイズ', sz_docs:'文書', sz_words:'語',
     p_val:'値', val_count:'出現回数', val_binary:'有無（含むなら1, 含まないなら0）',
     run:'文書単語行列を作成', run_busy:'処理中…',
@@ -317,6 +337,10 @@ const I18N={
     demo_btn:'◇ Demo (Miyazawa, "The Restaurant of Many Orders")',
     demo_credit:'Demo text: Kenji Miyazawa, "The Restaurant of Many Orders" (147 paragraphs, 1 = 1 document). The author died in 1933, so the work is in the <b>public domain</b> — free to modify, redistribute and use commercially. Source: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">Aozora Bunko</a>. Base text: Shinchō Bunko (Shinchōsha, 1990/1997); input: Takashi Tsuchiya; proofreading: noriko saito.',
     c_text:'Column to tokenize', c_hint:'Japanese is segmented with Intl.Segmenter (built-in ICU).',
+    e_stop:'Stopwords (remove function words)', stop_none:'None', stop_en:'English', stop_ja:'Japanese', stop_both:'English + Japanese',
+    e_stop_hint:'Remove common words like the, and, of / これ, こと in one click (case-insensitive).',
+    stop_credit:'English: <a href="https://snowballstem.org/" target="_blank" rel="noopener">Snowball</a> (BSD 3-Clause) / Japanese: SlothLib (Ohshima et al., Kyoto Univ., DEWS2007)',
+    stop_view_lab:'Words to be removed (read-only)',
     e_del:'Delete specified words', e_del_ph:'多く,大きな', e_del_hint:'Removes noise words before compound detection.',
     e_syn:'Replacement rules', e_syn_ph:'紳士<-お客',
     e_syn_hint:'"new<-old" separated by comma or newline',
@@ -330,7 +354,7 @@ const I18N={
     col_ref:'Blaheta, D., & Johnson, M. (2001). Unsupervised learning of multi-word verbs. Proc. 39th ACL, 54–60.',
     col_word:'compound', col_use:'use', col_none:'No candidates. Lower min_count.',
     dl_colloc:'Compound candidates CSV (compound, count, z, p)',
-    p_nchar:'Min characters (min_nchar)', p_nchar_ex:'e.g. 扉=1, 注文=2', p_freq:'Min term frequency (min_termfreq)',
+    p_nchar:'Min characters (min_nchar)', p_nchar_ex:'e.g. 扉=1, 注文=2, can=3', p_freq:'Min term frequency (min_termfreq)',
     sz_label:'Matrix size with these settings', sz_docs:'docs', sz_words:'words',
     p_val:'Values', val_count:'occurrence counts', val_binary:'presence (1 if contains, else 0)',
     run:'Build document-feature matrix', run_busy:'Processing…',
@@ -364,6 +388,7 @@ function applyI18n(){
   buildFilterUI();
   updateSizeDisplay();
   updateCollocCount();
+  updateStopView();
   if(LAST)render(LAST);
 }
 
@@ -431,6 +456,74 @@ const SEG=new Intl.Segmenter('ja',{granularity:'word'});
 function tokenizeRaw(text){return [...SEG.segment(String(text||''))].filter(s=>s.isWordLike).map(s=>s.segment);}
 // separators tolerated: half/full-width comma, Japanese comma (、), and any whitespace (incl. full-width space & newline)
 function parseDelWords(){return new Set(($('#delwords').value||'').split(/[,，、\s]+/).map(s=>s.trim()).filter(Boolean));}
+// ---- built-in stopword lists (removed at the delete stage, case-insensitive) ----
+// English stopwords below are the Snowball project's english/stop.txt, used UNMODIFIED.
+// (Identical to the "snowball" list used by quanteda / tm / NLTK stopwords("en"); 174 words.)
+// Snowball is covered by the 3-clause BSD License — https://snowballstem.org/license.html
+//
+//   Copyright (c) 2001, Dr Martin Porter,
+//   Copyright (c) 2002, Richard Boulton.
+//   All rights reserved.
+//
+//   Redistribution and use in source and binary forms, with or without modification,
+//   are permitted provided that the following conditions are met:
+//
+//   1. Redistributions of source code must retain the above copyright notice, this
+//      list of conditions and the following disclaimer.
+//
+//   2. Redistributions in binary form must reproduce the above copyright notice, this
+//      list of conditions and the following disclaimer in the documentation and/or
+//      other materials provided with the distribution.
+//
+//   3. Neither the name of the copyright holder nor the names of its contributors may
+//      be used to endorse or promote products derived from this software without
+//      specific prior written permission.
+//
+//   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+//   EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+//   OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+//   SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+//   TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+//   BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+//   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+//   ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+//   DAMAGE.
+const STOP_EN_RAW="i me my myself we our ours ourselves you your yours yourself yourselves he him his himself she her hers herself it its itself they them their theirs themselves what which who whom this that these those am is are was were be been being have has had having do does did doing would should could ought i'm you're he's she's it's we're they're i've you've we've they've i'd you'd he'd she'd we'd they'd i'll you'll he'll she'll we'll they'll isn't aren't wasn't weren't hasn't haven't hadn't doesn't don't didn't won't wouldn't shan't shouldn't can't cannot couldn't mustn't let's that's who's what's here's there's when's where's why's how's a an the and but if or because as until while of at by for with about against between into through during before after above below to from up down in out on off over under again further then once here there when where why how all any both each few more most other some such no nor not only own same so than too very";
+// Japanese stopwords: the widely-used "SlothLib" Japanese stop-word list (310 words), used UNCHANGED.
+//   Source: SlothLib, NLP/Filter/StopWord/word/Japanese.txt — from
+//   Hiroaki Ohshima, Satoshi Nakamura, Katsumi Tanaka, "SlothLib: A Programming Library for
+//   Researches on the Web," DEWS2007, paper C7-10 (Graduate School of Informatics, Kyoto University, 2007).
+//   The original host (SourceForge.jp / OSDN) is now defunct; this is the de-facto community-standard
+//   list. No explicit license was attached; it is a list of common function words (thin copyrightability),
+//   reproduced here unchanged with attribution to the authors above.
+//   (Many entries are 1-char or hiragana-only and are already dropped by min_nchar>=2 / the hiragana filter.)
+const STOP_JA_RAW="あそこ あたり あちら あっち あと あな あなた あれ いくつ いつ いま いや いろいろ うち おおまか おまえ おれ がい かく かたち かやの から がら きた くせ ここ こっち こと ごと こちら ごっちゃ これ これら ごろ さまざま さらい さん しかた しよう すか ずつ すね すべて ぜんぶ そう そこ そちら そっち そで それ それぞれ それなり たくさん たち たび ため だめ ちゃ ちゃん てん とおり とき どこ どこか ところ どちら どっか どっち どれ なか なかば なに など なん はじめ はず はるか ひと ひとつ ふく ぶり べつ へん ぺん ほう ほか まさ まし まとも まま みたい みつ みなさん みんな もと もの もん やつ よう よそ わけ わたし ハイ 上 中 下 字 年 月 日 時 分 秒 週 火 水 木 金 土 国 都 道 府 県 市 区 町 村 各 第 方 何 的 度 文 者 性 体 人 他 今 部 課 係 外 類 達 気 室 口 誰 用 界 会 首 男 女 別 話 私 屋 店 家 場 等 見 際 観 段 略 例 系 論 形 間 地 員 線 点 書 品 力 法 感 作 元 手 数 彼 彼女 子 内 楽 喜 怒 哀 輪 頃 化 境 俺 奴 高 校 婦 伸 紀 誌 レ 行 列 事 士 台 集 様 所 歴 器 名 情 連 毎 式 簿 回 匹 個 席 束 歳 目 通 面 円 玉 枚 前 後 左 右 次 先 春 夏 秋 冬 一 二 三 四 五 六 七 八 九 十 百 千 万 億 兆 下記 上記 時間 今回 前回 場合 一つ 年生 自分 ヶ所 ヵ所 カ所 箇所 ヶ月 ヵ月 カ月 箇月 名前 本当 確か 時点 全部 関係 近く 方法 我々 違い 多く 扱い 新た その後 半ば 結局 様々 以前 以後 以降 未満 以上 以下 幾つ 毎日 自体 向こう 何人 手段 同じ 感じ";
+function toStopSet(raw){const s=new Set();raw.split(/\s+/).forEach(w=>{w=w.trim();if(w)s.add(w.toLowerCase());});return s;}
+const STOP_EN=toStopSet(STOP_EN_RAW), STOP_JA=toStopSet(STOP_JA_RAW);
+function getStopSet(){
+  const v=$('#stopword')?$('#stopword').value:'none';
+  const s=new Set();
+  if(v==='en'||v==='both')STOP_EN.forEach(w=>s.add(w));
+  if(v==='ja'||v==='both')STOP_JA.forEach(w=>s.add(w));
+  return s;
+}
+// words for the read-only viewer (original casing/order from the raw lists, deduped)
+function getStopWordsArr(v){
+  const s=new Set();
+  if(v==='en'||v==='both')STOP_EN_RAW.split(/\s+/).forEach(w=>{if(w)s.add(w);});
+  if(v==='ja'||v==='both')STOP_JA_RAW.split(/\s+/).forEach(w=>{if(w)s.add(w);});
+  return [...s];
+}
+function updateStopView(){
+  const wrap=$('#stopviewWrap');if(!wrap)return;
+  const v=$('#stopword')?$('#stopword').value:'none';
+  if(v==='none'){wrap.style.display='none';return;}
+  const words=getStopWordsArr(v);
+  $('#stopview').value=words.join(', ');
+  $('#stopviewLab').textContent=t('stop_view_lab')+' — '+words.length+(LANG==='ja'?'語':' words');
+  wrap.style.display='';
+}
 function parseSynonyms(){
   const map={};
   // entries separated by comma (half/full-width), Japanese comma, or newline
@@ -461,6 +554,7 @@ function baseTokensFromRaw(raw,opts){
     let keep=tokenInClasses(w,opts.keep);
     if(keep&&opts.remove.size&&tokenInClasses(w,opts.remove))keep=false;
     if(keep&&opts.del.size&&opts.del.has(w))keep=false;
+    if(keep&&opts.stop.size&&opts.stop.has(w.toLowerCase()))keep=false; // built-in stopwords (case-insensitive)
     out[i]=keep?w:null;
   }
   return out;
@@ -543,7 +637,8 @@ function currentOpts(){
   return {
     keep:new Set([...$$('.keepf')].filter(i=>i.checked).map(i=>i.dataset.key)),
     remove:new Set([...$$('.removef')].filter(i=>i.checked).map(i=>i.dataset.key)),
-    del:parseDelWords(), syn:parseSynonyms(), nchar:+$('#nchar').value
+    del:parseDelWords(), stop:getStopSet(), stopSel:($('#stopword')?$('#stopword').value:'none'),
+    syn:parseSynonyms(), nchar:+$('#nchar').value
   };
 }
 let _lastTotalCount=null,_lastColloc=[];
@@ -768,6 +863,11 @@ function downloadLog(R){
   L.push('keep_classes   : '+([...R.opts.keep].join(', ')||'(none)'));
   L.push('remove_classes : '+([...R.opts.remove].join(', ')||'(none)'));
   L.push('delete_words   : '+([...R.opts.del].join(', ')||'(none)'));
+  L.push('stopwords      : '+(R.opts.stopSel||'none')+(R.opts.stop&&R.opts.stop.size?(' ('+R.opts.stop.size+' words removed)'):''));
+  if(R.opts.stopSel==='en'||R.opts.stopSel==='both')
+    L.push('                 English stopwords: Snowball stop.txt, BSD 3-Clause (c) Porter/Boulton, https://snowballstem.org/');
+  if(R.opts.stopSel==='ja'||R.opts.stopSel==='both')
+    L.push('                 Japanese stopwords: SlothLib (Ohshima, Nakamura, Tanaka; DEWS2007 C7-10, Kyoto Univ.)');
   L.push('collocation    : size=2, min_count='+R.co.minCount+', z>'+R.co.z);
   L.push('compounds      : '+((R.adopted&&R.adopted.length)?R.adopted.join(', '):'(none)'));
   L.push('synonyms       : '+(Object.entries(R.opts.syn).map(([f,to])=>to+'<-'+f).join(', ')||'(none)'));
@@ -979,6 +1079,8 @@ $('#run').onclick=run;
 $('#keepList').addEventListener('change',refreshFreqRange);
 $('#removeList').addEventListener('change',refreshFreqRange);
 $('#delwords').addEventListener('change',refreshFreqRange);
+$('#stopword').addEventListener('change',refreshFreqRange);
+$('#stopword').addEventListener('change',updateStopView);
 $('#synonyms').addEventListener('change',refreshFreqRange);
 // min_count changes which adjacent pairs are candidates -> recompute candidate set + size range
 $('#collocMin').oninput=e=>$('#collocMinVal').textContent=e.target.value;
