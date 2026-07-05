@@ -184,6 +184,13 @@
           <option value="spectral" data-i18n="lay_spectral">スペクトル配置 (Laplacian)</option>
         </select>
       </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="n_sizeby">ノードの大きさ</span></span>
+        <select id="netSizeBy">
+          <option value="degree" data-i18n="size_deg" selected>次数（つながりの数）</option>
+          <option value="freq" data-i18n="size_freq">出現頻度（のべ出現回数）</option>
+        </select>
+      </label>
       <label class="field" style="margin-top:12px">
         <span class="lab"><span data-i18n="n_spread">ノード間の広がり（力のスケール）</span> <span class="val" id="netSpreadVal">1.1</span></span>
         <input type="range" id="netSpread" min="0.6" max="3.5" value="1.1" step="0.1">
@@ -239,7 +246,7 @@ const I18N={
     demo_credit:'デモは宮沢賢治「注文の多い料理店」（<b>パブリックドメイン</b>・著者1933年没）から作成した文書単語行列です。出典: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">青空文庫</a>。',
     attr:'属性の列（除外）', attr_empty:'ファイルを読み込むと列名が一覧表示されます。', attr_hint:'チェックした列は属性として除外し、それ以外を単語とみなします（1列目は文書ID）。',
     g_cloud:'ワードクラウド', c_num:'表示語数', c_metric:'大きさの基準', metric_total:'のべ出現回数', metric_df:'出現文書数', c_min:'最小サイズ (×12pt)', c_max:'最大サイズ (×12pt)',
-    g_net:'共起ネットワーク', n_minfreq:'語の最小出現文書数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_layout:'配置（レイアウト）', lay_fr:'力学モデル (Fruchterman-Reingold)', lay_spectral:'スペクトル配置 (Laplacian)', n_spread:'ノード間の広がり（力のスケール）',
+    g_net:'共起ネットワーク', n_minfreq:'語の最小出現文書数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_layout:'配置（レイアウト）', lay_fr:'力学モデル (Fruchterman-Reingold)', lay_spectral:'スペクトル配置 (Laplacian)', n_sizeby:'ノードの大きさ', size_deg:'次数（つながりの数）', size_freq:'出現頻度（のべ出現回数）', n_spread:'ノード間の広がり（力のスケール）',
     n_note:'尺度: 有無(0/1)なら Jaccard（共起文書数/いずれかに出現）、頻度ならコサイン類似度（頻度ベクトルの向き）。しきい値以上の語ペアを線で結びます。',
     n_stat:'この設定: {nodes} 語 / {edges} 本の線', relayout:'↻ 再配置', dl_log:'📋 設定・結果ログ (.txt)',
     ph_main:'左で文書単語行列CSVを読み込むか、デモを試してください。',
@@ -247,7 +254,7 @@ const I18N={
     f_model:'Jaccard 共起 · Fruchterman-Reingold', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
     m_words:'語数', m_docs:'文書数', m_nodes:'ノード数', m_edges:'エッジ数',
     sec_cloud:'ワードクラウド', sec_cloud_d:'語の大きさは出現量に比例。色は総頻度の段階（凡例参照）。', cloud_freq:'頻度',
-    sec_net:'共起ネットワーク', sec_net_d:'Jaccard類似度がしきい値以上の語ペアを線で結ぶ。丸の大きさ=つながりの数。',
+    sec_net:'共起ネットワーク', sec_net_d:'類似度がしきい値以上の語ペアを線で結ぶ。丸の大きさは次数または出現頻度（左で選択、面積が量に比例）。',
     dl_cloud:'ワードクラウド SVG', dl_net:'ネットワーク SVG',
     toast_demo:'デモDFMを読み込みました（68語×147文書）', toast_parsefail:'CSVの解析に失敗しました',
     toast_empty:'語が見つかりません。属性の列の指定をご確認ください。',
@@ -262,7 +269,7 @@ const I18N={
     demo_credit:'Demo: a document-feature matrix built from Kenji Miyazawa, "The Restaurant of Many Orders" (<b>public domain</b>, author d.1933). Source: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">Aozora Bunko</a>.',
     attr:'Attribute columns (excluded)', attr_empty:'Column names appear here after a file is loaded.', attr_hint:'Checked columns are excluded as attributes; every other column is treated as a word (column 1 is the document id).',
     g_cloud:'Word cloud', c_num:'Words shown', c_metric:'Size by', metric_total:'total count', metric_df:'document frequency', c_min:'Min size (×12pt)', c_max:'Max size (×12pt)',
-    g_net:'Co-occurrence network', n_minfreq:'Min document frequency', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_layout:'Layout', lay_fr:'Force-directed (Fruchterman-Reingold)', lay_spectral:'Spectral (Laplacian)', n_spread:'Node spread (force scale)',
+    g_net:'Co-occurrence network', n_minfreq:'Min document frequency', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_layout:'Layout', lay_fr:'Force-directed (Fruchterman-Reingold)', lay_spectral:'Spectral (Laplacian)', n_sizeby:'Node size', size_deg:'Degree (number of links)', size_freq:'Occurrence frequency (total count)', n_spread:'Node spread (force scale)',
     n_note:'Measure: Jaccard (shared/either docs) for presence (0/1), or cosine similarity for frequency (count-vector angle). Pairs above the threshold are linked.',
     n_stat:'this setting: {nodes} words / {edges} links', relayout:'↻ Re-layout', dl_log:'📋 Settings & results log (.txt)',
     ph_main:'Load a DFM CSV on the left, or try the demo.',
@@ -270,7 +277,7 @@ const I18N={
     f_model:'Jaccard co-occurrence · Fruchterman-Reingold', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
     m_words:'Words', m_docs:'Documents', m_nodes:'Nodes', m_edges:'Edges',
     sec_cloud:'Word cloud', sec_cloud_d:'Word size ∝ occurrence; color = total-frequency band (see legend).', cloud_freq:'frequency',
-    sec_net:'Co-occurrence network', sec_net_d:'Word pairs with Jaccard similarity above the threshold are linked. Node size = degree.',
+    sec_net:'Co-occurrence network', sec_net_d:'Word pairs with similarity above the threshold are linked. Node size = degree or occurrence frequency (selectable; area ∝ quantity).',
     dl_cloud:'Word cloud SVG', dl_net:'Network SVG',
     toast_demo:'Loaded demo DFM (68 words × 147 docs)', toast_parsefail:'Failed to parse CSV',
     toast_empty:'No words found. Please check the attribute-column list.',
@@ -671,7 +678,11 @@ function paintNet(svg){
   const N=NET;svg.innerHTML='';
   const useComm=$('#netComm').checked;
   const lineCol=cssv('--ink-faint'),inkDim=cssv('--ink-dim'),ink=cssv('--ink'),cyan=cssv('--cyan');
-  const maxdeg=Math.max(1,...N.deg);
+  // node radius: sqrt-scaled so the perceived AREA (not the radius) reflects the chosen quantity
+  const sizeBy=($('#netSizeBy')&&$('#netSizeBy').value)||'degree';
+  const sizeVal=N.nodesIdx.map((wi,i)=>sizeBy==='freq'?(MODEL.total[wi]||0):N.deg[i]);
+  const sizeMax=Math.max(1,...sizeVal);
+  const radiusOf=i=>6+11*Math.sqrt((sizeVal[i]||0)/sizeMax);
   // community colours via the selected method (label prop / greedy modularity / Louvain), computed at paint time
   const comm=useComm?community(N.n,N.edges):null;
   const labs=comm?[...new Set(comm)]:[];const colOf=l=>PALETTE[labs.indexOf(l)%PALETTE.length];
@@ -684,7 +695,7 @@ function paintNet(svg){
   const gN=svgEl('g',{});
   // draw ALL circles first...
   N.nodesIdx.forEach((wi,i)=>{
-    const r=6+11*N.deg[i]/maxdeg;
+    const r=radiusOf(i);
     const g=svgEl('g',{class:'netnode',transform:'translate('+N.pos[i].x+','+N.pos[i].y+')'});g.dataset.i=i;
     g.appendChild(svgEl('circle',{r:r,fill:useComm?colOf(comm[i]):cyan,'fill-opacity':0.85,stroke:cssv('--bg'),'stroke-width':1.5}));
     gN.appendChild(g);
@@ -693,7 +704,7 @@ function paintNet(svg){
   // ...then ALL labels on a separate top layer, so no circle can ever cover any text (with a background halo for legibility)
   const gL=svgEl('g',{});gL.style.pointerEvents='none';
   N.nodesIdx.forEach((wi,i)=>{
-    const r=6+11*N.deg[i]/maxdeg;
+    const r=radiusOf(i);
     const g=svgEl('g',{class:'netlabel',transform:'translate('+N.pos[i].x+','+N.pos[i].y+')'});g.dataset.i=i;
     const tx=svgEl('text',{x:0,y:-r-4,'text-anchor':'middle','font-size':11,'font-family':cssv('--sans'),fill:'#000'});
     tx.textContent=MODEL.names[wi];g.appendChild(tx);
@@ -772,7 +783,7 @@ function downloadText(text,name){
 }
 // build a plain-text log of all user settings + the main computed results (no per-node coords / edge list / freq table)
 function buildLog(){
-  const lbl=k=>({total:'total count / のべ出現回数',df:'document frequency / 出現文書数',jaccard:'Jaccard (presence)',cosine:'Cosine (frequency)',louvain:'Louvain',greedy:'Greedy modularity (CNM)',label:'Label propagation',fr:'Fruchterman-Reingold',spectral:'Spectral (Laplacian)'}[k]||k);
+  const lbl=k=>({total:'total count / のべ出現回数',df:'document frequency / 出現文書数',jaccard:'Jaccard (presence)',cosine:'Cosine (frequency)',louvain:'Louvain',greedy:'Greedy modularity (CNM)',label:'Label propagation',fr:'Fruchterman-Reingold',spectral:'Spectral (Laplacian)',degree:'degree / 次数',freq:'frequency / 頻度'}[k]||k);
   const net=NET||computeNet(false);
   // count of isolated nodes removed = nodes passing the min-doc-freq filter (capped at 80) minus nodes kept after removal
   const minf=+$('#netMin').value,MAXN=80;
@@ -797,6 +808,7 @@ function buildLog(){
   L.push('  measure / 尺度            : '+lbl($('#netMeasure').value));
   L.push('  threshold / しきい値      : '+(+$('#netSim').value).toFixed(2));
   L.push('  layout / 配置             : '+lbl($('#netLayout').value));
+  L.push('  node size by / サイズ基準 : '+lbl($('#netSizeBy').value)+' (area-proportional)');
   L.push('  node spread / 広がり      : '+(+$('#netSpread').value).toFixed(1));
   L.push('  color by community / 色分け: '+($('#netComm').checked?'on':'off'));
   L.push('  community method / 検出法 : '+lbl($('#netCommMethod').value));
@@ -858,6 +870,7 @@ $('#netMeasure').onchange=()=>renderAll(true);
 $('#netSpread').oninput=e=>$('#netSpreadVal').textContent=(+e.target.value).toFixed(1);
 $('#netSpread').onchange=()=>renderAll(true);
 $('#netLayout').onchange=()=>renderAll(true);
+$('#netSizeBy').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#netComm').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#netCommMethod').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#relayout').onclick=()=>{NETSEED++;renderAll(true);};
