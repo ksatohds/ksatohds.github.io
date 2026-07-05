@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nmf_app</title>
+<title>NMF</title>
 <style>
   :root{
     --bg:#0f1417; --panel:#161d21; --panel-2:#1c252a; --line:#2a353b;
@@ -36,10 +36,17 @@
   .eq i{color:var(--violet);font-style:normal;font-weight:600}
   .eq .y{color:var(--cyan);font-weight:600}
 
-  .wrap{display:grid;grid-template-columns:320px 1fr;gap:0;min-height:calc(100vh - 64px)}
+  .tabbar{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--panel);padding:0 22px;flex-wrap:wrap}
+  .tabbar button{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink-dim);font-family:var(--sans);font-size:13.5px;font-weight:600;padding:12px 18px;cursor:pointer;transition:color .12s,border-color .12s;margin-bottom:-1px;display:flex;align-items:center;gap:8px}
+  .tabbar button:hover{color:var(--ink)}
+  .tabbar button.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+  .tabbar button .glyph{font-family:var(--mono);font-size:14px}
+  .tabpanel[hidden]{display:none}
+
+  .wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:calc(100vh - 112px)}
   .control{border-right:1px solid var(--line);padding:22px;background:var(--panel)}
   .stage{padding:22px 28px;overflow:auto}
-  @media (max-width:820px){.wrap{grid-template-columns:1fr}.control{border-right:none;border-bottom:1px solid var(--line)}}
+  @media (max-width:860px){.wrap{grid-template-columns:1fr}.control{border-right:none;border-bottom:1px solid var(--line)}}
 
   .group{margin-bottom:22px}
   .group h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 11px;font-weight:600;display:flex;align-items:center;gap:8px}
@@ -65,6 +72,11 @@
   input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg)}
   select,input[type=number]{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
   select:focus,input[type=number]:focus{border-color:var(--cyan-deep)}
+  .checklist{max-height:184px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+  .checklist label{display:flex;align-items:center;gap:7px;padding:3px 2px;margin:0;font-family:var(--mono);font-size:12.5px;color:var(--ink);cursor:pointer}
+  .checklist label:hover{color:var(--cyan)}
+  .checklist input[type=checkbox]{width:auto;margin:0;flex-shrink:0;accent-color:var(--cyan-deep);cursor:pointer}
+  .checklist .empty{display:block;color:var(--ink-faint);font-size:11.5px;padding:4px 2px}
   .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.45}
   .checkline input{accent-color:var(--cyan);margin-top:2px}
   .checkline .sub{display:block;color:var(--ink-faint);font-size:11px;font-family:var(--mono)}
@@ -80,7 +92,7 @@
   .placeholder .mark{font-family:var(--mono);font-size:44px;color:var(--line);letter-spacing:.05em}
   .placeholder .mark .a{color:var(--cyan-deep)}
   .placeholder .mark .b{color:var(--panel-2)}
-  .placeholder p{max-width:420px;font-size:13.5px;line-height:1.7}
+  .placeholder p{max-width:440px;font-size:13.5px;line-height:1.7}
 
   .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:22px}
   .metric{background:var(--panel);padding:13px 15px}
@@ -104,11 +116,18 @@
 
   canvas{display:block;max-width:100%}
   .canvas-scroll{overflow-x:auto;border-radius:6px}
+  .svgscroll{overflow:auto;border-radius:6px;background:transparent;border:1px solid var(--line)}
+  svg{display:block}
   .legend{display:flex;align-items:center;gap:10px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
   .legend .bar{height:9px;width:120px;border-radius:2px}
 
   .twocol{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   @media(max-width:1100px){.twocol{grid-template-columns:1fr}}
+
+  .topicwords{display:flex;flex-direction:column;gap:10px}
+  .topicwords .twrow{display:flex;align-items:baseline;gap:11px;font-size:13px}
+  .topicwords .tbadge{color:#062522;font-weight:700;font-size:11px;padding:2px 9px;border-radius:11px;font-family:var(--mono);flex-shrink:0;white-space:nowrap}
+  .topicwords .twlist{color:var(--ink);line-height:1.7}
 
   .tablewrap{overflow:auto;max-height:340px;border:1px solid var(--line);border-radius:6px}
   table{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;width:100%}
@@ -149,14 +168,108 @@
     <button data-lang="en">EN</button>
   </div>
   <div class="langtog" id="themetog">
-    <button data-theme="dark" title="Dark">☾</button>
-    <button data-theme="light" class="on" title="Light">☀</button>
+    <button data-theme="dark" title="Dark">&#9790;</button>
+    <button data-theme="light" class="on" title="Light">&#9728;</button>
   </div>
-  <div class="brand"><span class="glyph">◧</span>NMF</div>
-  <h1 data-i18n="h1">非負値行列因子分解</h1>
-  <div class="eq" data-i18n-html="eq"></div>
+  <div class="brand"><span class="glyph">&#9639;</span>NMF</div>
+  <h1 id="appTitle"></h1>
+  <div class="eq" id="appEq"></div>
 </header>
 
+<div class="tabbar" id="tabbar">
+  <button data-tab="topic" class="on"><span class="glyph">&#9635;</span><span data-ci18n="tab_topic"></span></button>
+  <button data-tab="matrix"><span class="glyph">&#9638;</span><span data-ci18n="tab_matrix"></span></button>
+</div>
+
+<!-- ===================== TOPIC TAB ===================== -->
+<div class="tabpanel" data-tab="topic" id="panel-topic">
+<div class="wrap">
+  <aside class="control">
+
+    <div class="group">
+      <h2 data-i18n="g_data">データ</h2>
+      <div class="dropzone" id="drop">
+        <div class="big" data-i18n="drop_big">文書単語行列CSVをドロップ / クリック</div>
+        <div class="small" data-i18n="drop_small">文書 × 語（属性列を含む）</div>
+      </div>
+      <input type="file" id="file" accept=".csv,.tsv,.txt">
+      <div class="filemeta" id="meta"></div>
+      <button class="dl" id="demo" style="width:100%;margin-top:10px" data-i18n="demo_btn">&#9671; デモ（沖縄観光アンケート DFM）</button>
+      <div class="hint" data-i18n-html="demo_credit" style="margin-top:8px;line-height:1.6"></div>
+    </div>
+
+    <div class="group" id="groupGroup" style="display:none">
+      <h2 data-i18n="g_group">グループ変数（カテゴリ）</h2>
+      <div class="checklist" id="groupList"><span class="empty" data-i18n="group_empty">ファイルを読み込むと候補が表示されます。</span></div>
+      <div class="hint" data-i18n="group_hint">カテゴリ属性（水準数 2〜20）を最大2つ選べます。2つ選ぶと交互作用（例: 男性_20代）を内部で作成します。</div>
+    </div>
+
+    <div class="group" id="topicGroup" style="display:none">
+      <h2 data-i18n="g_topic">トピック</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_ntopic">トピック数</span> <span class="val" id="kVal">2</span></span>
+        <input type="range" id="kTopic" min="2" max="10" value="2" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_topwords">各トピックの上位語数</span> <span class="val" id="twVal">10</span></span>
+        <input type="range" id="topWords" min="3" max="30" value="10" step="1">
+      </label>
+    </div>
+
+    <div class="group" id="nmfGroup" style="display:none">
+      <h2 data-i18n="g_nmf">NMF設定</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_init">Xの初期値</span></span>
+        <select id="init">
+          <option value="kmeans" data-i18n="init_kmeans" selected>k-means++</option>
+          <option value="random" data-i18n="init_random">ランダム</option>
+        </select>
+        <span class="hint" data-i18n-html="init_ref"></span>
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_seed">乱数シード</span> <span class="val" id="seedVal">1</span></span>
+        <input type="range" id="seed" min="1" max="50" value="1" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_nstart">再スタート回数 (nstart)</span> <span class="val" id="nstartVal">5</span></span>
+        <input type="range" id="nstart" min="1" max="10" value="5" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_maxit">最大反復回数</span></span>
+        <select id="maxit">
+          <option value="500" selected>500</option>
+          <option value="1000">1000</option>
+          <option value="10000">10000</option>
+          <option value="20000">20000</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_eps">収束閾値（相対）</span></span>
+        <select id="eps">
+          <option value="1e-3">1e-3</option>
+          <option value="1e-4">1e-4</option>
+          <option value="1e-5" selected>1e-5</option>
+          <option value="1e-6">1e-6</option>
+        </select>
+      </label>
+      <button class="dl" id="recalc" style="width:100%;margin-top:4px" data-i18n="recalc">&#8635; 再計算</button>
+    </div>
+
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="placeholder" id="placeholder">
+      <div class="mark"><span class="a">&#9635;</span></div>
+      <p data-i18n="ph_main">左で属性列付きの文書単語行列CSVを読み込むか、デモを試してください。</p>
+      <p data-i18n="ph_sub" style="font-size:12px;color:var(--ink-faint)">語×文書行列にNMFを適用してトピックを抽出し、グループ変数ごとに文書のトピック所属確率の平均を比較します。</p>
+    </div>
+    <div id="results" style="display:none"></div>
+  </main>
+</div>
+</div>
+
+<!-- ===================== MATRIX TAB ===================== -->
+<div class="tabpanel" data-tab="matrix" id="panel-matrix" hidden>
 <div class="wrap">
   <aside class="control">
 
@@ -168,6 +281,7 @@
       </div>
       <input type="file" id="file" accept=".csv,.tsv,.txt">
       <div class="filemeta" id="meta"></div>
+      <button class="dl" id="demo" style="width:100%;margin-top:10px" data-i18n="demo_btn">◇ デモデータを読み込む</button>
       <div class="checkline" style="margin-top:12px">
         <input type="checkbox" id="hasHeader" checked>
         <label for="hasHeader"><span data-i18n="cb_header">1行目を列名として扱う</span></label>
@@ -181,47 +295,15 @@
         <label for="transpose"><span data-i18n="cb_transpose">行列を転置してから分解</span>
           <span class="sub" data-i18n="cb_transpose_sub">Y → Yᵀ (行と列を入れ替え)</span></label>
       </div>
-      <button class="dl" id="demo" style="width:100%;margin-top:4px" data-i18n="demo_btn">◇ デモデータを読み込む</button>
-    </div>
-
-    <div class="group" id="paramGroup" style="display:none">
-      <h2 data-i18n="g_param">パラメータ</h2>
-      <label class="field">
-        <span class="lab"><span data-i18n="p_rank">階数 Q (基底数=クラスタ数)</span> <span class="val" id="rankVal">2</span></span>
-        <input type="range" id="rank" min="1" max="10" value="2" step="1">
-      </label>
-      <label class="field">
-        <span class="lab"><span data-i18n="p_maxit">最大反復回数</span> <span class="val" id="maxitVal">300</span></span>
-        <input type="range" id="maxit" min="50" max="2000" value="300" step="50">
-      </label>
-      <label class="field">
-        <span class="lab"><span data-i18n="p_eps">収束閾値 (相対)</span> <span class="val" id="epsVal">1e-5</span></span>
-        <input type="range" id="eps" min="2" max="7" value="5" step="1">
-      </label>
-      <label class="field">
-        <span class="lab"><span data-i18n="p_seed">乱数シード</span></span>
-        <input type="number" id="seed" value="1" min="0" step="1">
-      </label>
-      <label class="field">
-        <span class="lab"><span data-i18n="p_nstart">再スタート回数 (nstart)</span></span>
-        <input type="number" id="nstart" value="5" min="1" max="20" step="1">
-      </label>
-      <label class="field" style="margin-bottom:8px">
-        <span class="lab"><span data-i18n="p_init">Xの初期値</span></span>
-        <select id="init">
-          <option value="kmeans" data-i18n="init_kmeans">k-means++ (Yの列の重心)</option>
-          <option value="random" data-i18n="init_random">一様乱数</option>
-        </select>
-        <span class="hint" data-i18n-html="init_ref"></span>
-      </label>
-    </div>
-
-    <div class="group" id="constrGroup" style="display:none">
-      <h2 data-i18n="g_constr">制約・前処理</h2>
       <div class="checkline">
-        <input type="checkbox" id="wnorm" checked>
-        <label for="wnorm"><span data-i18n="cb_xnorm">Xの列和を1に制約</span>
-          <span class="sub" data-i18n="cb_xnorm_sub">更新式内で正規化・各基底を確率分布化</span></label>
+        <input type="checkbox" id="shiftY">
+        <label for="shiftY"><span data-i18n="cb_shifty">前処理: Y − min(Y)（非負化）</span>
+          <span class="sub" data-i18n="cb_shifty_sub">全体の最小値を引いて非負に（負データ対応・対数変換より前）</span></label>
+      </div>
+      <div class="checkline">
+        <input type="checkbox" id="logY">
+        <label for="logY"><span data-i18n="cb_logy">前処理: log(1+Y) 変換</span>
+          <span class="sub" data-i18n="cb_logy_sub">各要素を log(1+Y) に（[0,1]正規化より先に適用）</span></label>
       </div>
       <div class="checkline">
         <input type="checkbox" id="normrow">
@@ -230,9 +312,57 @@
       </div>
     </div>
 
-    <div id="runGroup" style="display:none">
-      <button class="run" id="run" disabled>分解を実行</button>
-      <div class="hint" data-i18n-html="hint"></div>
+    <div class="group" id="exclGroup" style="display:none">
+      <h2 data-i18n="g_excl">対象外の特徴量</h2>
+      <div class="checklist" id="exclList"></div>
+      <div class="hint" data-i18n="excl_hint">チェックした特徴量（行）は分解から除外されます。</div>
+    </div>
+
+    <div class="group" id="paramGroup" style="display:none">
+      <h2 data-i18n="g_param">階数</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_rank">階数 Q (基底数=クラスタ数)</span> <span class="val" id="rankVal">2</span></span>
+        <input type="range" id="rank" min="1" max="10" value="2" step="1">
+      </label>
+    </div>
+
+    <div class="group" id="nmfGroup" style="display:none">
+      <h2 data-i18n="g_nmf">NMF設定</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_init">Xの初期値</span></span>
+        <select id="init">
+          <option value="kmeans" data-i18n="init_kmeans">k-means++ (Yの列の重心)</option>
+          <option value="random" data-i18n="init_random">一様乱数</option>
+        </select>
+        <span class="hint" data-i18n-html="init_ref"></span>
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_seed">乱数シード</span> <span class="val" id="seedVal">1</span></span>
+        <input type="range" id="seed" min="1" max="50" value="1" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_nstart">再スタート回数 (nstart)</span> <span class="val" id="nstartVal">5</span></span>
+        <input type="range" id="nstart" min="1" max="20" value="5" step="1">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_maxit">最大反復回数</span></span>
+        <select id="maxit">
+          <option value="500" selected>500</option>
+          <option value="1000">1000</option>
+          <option value="10000">10000</option>
+          <option value="20000">20000</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_eps">収束閾値 (相対)</span></span>
+        <select id="eps">
+          <option value="1e-3">1e-3</option>
+          <option value="1e-4">1e-4</option>
+          <option value="1e-5" selected>1e-5</option>
+          <option value="1e-6">1e-6</option>
+        </select>
+      </label>
+      <button class="dl" id="recalc" style="width:100%;margin-top:4px" data-i18n="recalc">↻ 再計算</button>
     </div>
   </aside>
 
@@ -244,183 +374,36 @@
     </div>
   </main>
 </div>
+</div>
 
 <footer>
-  <span data-i18n-html="f_model">モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)</span>
-  <span><span data-i18n="f_pkg">関連Rパッケージ: </span><a href="https://ksatohds.github.io/nmfkc/" target="_blank" rel="noopener">nmfkc</a></span>
-  <span class="credit"><b data-i18n="f_org">滋賀大学データサイエンス学系</b> · <span data-i18n="f_name">佐藤健一</span></span>
-  <button class="dl" id="saveApp" style="margin-left:auto" data-i18n="save_app">💾 GitHubから最新版を保存</button>
+  <span data-ci18n-html="f_model">モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)</span>
+  <span><span data-ci18n="f_pkg">関連Rパッケージ: </span><a href="https://ksatohds.github.io/nmfkc/" target="_blank" rel="noopener">nmfkc</a></span>
+  <span class="credit"><b data-ci18n="f_org">滋賀大学データサイエンス学系</b> · <span data-ci18n="f_name">佐藤健一</span></span>
+  <button class="dl" id="saveApp" style="margin-left:auto" data-ci18n="save_app">💾 GitHubから最新版を保存</button>
 </footer>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const $ = s => document.querySelector(s);
-let DATA=null, RESULT=null, LAST=null;
-const CLU=['#4fd6c8','#e8a54b','#9d8cf0','#6fcf6f','#e06a9c','#5ba3e0','#d9d24b','#e07a5a','#4fd6a0','#b08cf0','#8ac6d1','#f0a868'];
-const cluColor=k=>CLU[k%CLU.length];
+/* ============================================================
+   SHARED CHROME + NMF CORE  (used by both tabs)
+   ============================================================ */
+const $doc=s=>document.querySelector(s), $$doc=s=>document.querySelectorAll(s);
+let LANG='ja', THEME='light', ACTIVE='topic';
+const MODULES=[]; // each: {applyI18n}
 
-/* ================= i18n ================= */
-let LANG='ja';
-const I18N={
-  ja:{
-    h1:'非負値行列因子分解',
-    subtitle:'',
-    eq:'<span class="y">Y</span> ≈ <b>X</b><i>B</i> &nbsp;<span style="color:var(--ink-faint)">(</span>Y: P×N, <b style="color:var(--amber)">X</b>: P×Q, <i style="color:var(--violet)">B</i>: Q×N &nbsp;→&nbsp; 各列 <span class="y">y</span> ≈ <b>X</b><i>b</i><span style="color:var(--ink-faint)">)</span>',
-    g_data:'データ', g_param:'パラメータ', g_constr:'制約・前処理',
-    drop_big:'CSVをドロップ / クリック', drop_small:'rows = 特徴量(P) · cols = サンプル(N)',
-    cb_header:'1行目を列名として扱う', cb_rowname:'1列目を行名として扱う',
-    cb_transpose:'行列を転置してから分解', cb_transpose_sub:'Y → Yᵀ (行と列を入れ替え)',
-    demo_btn:'◇ デモデータを読み込む',
-    p_rank:'階数 Q (基底数=クラスタ数)', p_maxit:'最大反復回数', p_eps:'収束閾値 (相対)',
-    p_seed:'乱数シード', p_nstart:'再スタート回数 (nstart)', p_init:'Xの初期値',
-    init_kmeans:'k-means++ (Yの列の重心)', init_random:'一様乱数',
-    init_ref:'k-means++ は <a href="https://dl.acm.org/doi/10.5555/1283383.1283494" target="_blank" rel="noopener">Arthur &amp; Vassilvitskii (2007), SODA</a> による初期化。初期中心を距離²に比例した確率で選び、安定した開始点を得る。',
-    cb_xnorm:'Xの列和を1に制約', cb_xnorm_sub:'更新式内で正規化・各基底を確率分布化',
-    cb_normcol:'前処理: 変数ごと(行)に[0,1]正規化', cb_normcol_sub:'各行を (x−min)/(max−min) で0〜1に（転置後に適用）',
-    run:'分解を実行', run_busy:'計算中…',
-    hint:'乗法更新則（Lee &amp; Seung, 二乗誤差版）で <span style="color:var(--amber)">X</span>·<span style="color:var(--violet)">B</span> を推定。各列は <span class="y">y</span> ≈ <span style="color:var(--amber)">X</span><span style="color:var(--violet)">b</span> という潜在変数による重回帰とみなせます。<span style="color:var(--amber)">X</span>の行を正規化すれば特徴量の、<span style="color:var(--violet)">B</span>の列を正規化すればサンプルの所属確率になります。計算はすべてブラウザ内で完結し、データは外部送信されません。',
-    ph_main:'左でCSVを読み込むか、デモデータを試してください。',
-    ph_sub:'行列 Y を Q 個の非負な基底 (X) と、その係数 (B) に分解し、両側からクラスタリングします。',
-    f_model:'モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)',
-    f_pkg:'関連Rパッケージ: ', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
-    m_iters:'反復', m_size:'サイズ',
-    c_conv:'収束曲線', c_conv_d:'反復ごとの残差平方和。単調減少していれば正常に収束しています。',
-    c_X:'基底行列', c_X_d_base:'各列が1つの基底パターン', c_X_d_norm:'（列和=1・確率分布）', c_X_d_end:'。',
-    c_B:'係数行列', c_B_d:'各列（サンプル）が基底をどれだけ混ぜて構成されるか。',
-    c_recon:'再構成', c_recon_d:'左：元データ Y ／ 右：近似 XB。パターンが一致していれば良い分解です。',
-    lab_orig:'Y (元データ)', lab_approx:'XB (近似)',
-    leg_low:'low', leg_high:'high',
-    sec_feat_badge:'基底 X の行', sec_feat:'特徴量のクラスタリング',
-    sec_samp_badge:'係数 B の列', sec_samp:'サンプルのクラスタリング',
-    cc_hard:'ハードクラスタリング', cc_hard_d:'各{n}を、最も所属確率の高い基底に割り当てた結果。',
-    cc_table_tag:'最適値 / 所属確率 / ハード', cc_table_d:'上段=最適値／中段=所属確率(合計1)／最下行=ハード割当。',
-    tbl_X:'X テーブル', tbl_B:'B テーブル',
-    cluster_word:'Cluster', items:'件',
-    tbl_head_feat:'行 \\ 特徴量', tbl_head_samp:'行 \\ サンプル',
-    noun_feat:'特徴量', noun_samp:'サンプル',
-    dl_title:'ダウンロード',
-    dl_log:'.log (設定・計算結果)',
-    dl_X:'X.csv (基底)', dl_B:'B.csv (係数)',
-    dl_Xmem:'X_membership.csv (特徴量所属)', dl_Xhard:'X_hard.csv (特徴量割当)',
-    dl_Bmem:'B_membership.csv (サンプル所属)', dl_Bhard:'B_hard.csv (サンプル割当)',
-    dl_XB:'XB.csv (再構成)',
-    toast_demo:'デモデータを読み込みました (6×6 好み行列)',
-    toast_nonum:'数値データが読み取れませんでした',
-    toast_neg:'負の値が {n} 個あります。NMFは非負データ用です。',
-    toast_parsefail:'CSVの解析に失敗しました: {m}',
-    toast_calcerr:'計算エラー: {m}',
-    meta_file:'file', meta_loaded:'読込', meta_transposed:'転置後',
-    meta_nan:'非数値 {n} 個を 0 に置換'
-  },
-  en:{
-    h1:'Non-negative Matrix Factorization',
-    subtitle:'',
-    eq:'<span class="y">Y</span> ≈ <b>X</b><i>B</i> &nbsp;<span style="color:var(--ink-faint)">(</span>Y: P×N, <b style="color:var(--amber)">X</b>: P×Q, <i style="color:var(--violet)">B</i>: Q×N &nbsp;→&nbsp; each column <span class="y">y</span> ≈ <b>X</b><i>b</i><span style="color:var(--ink-faint)">)</span>',
-    g_data:'Data', g_param:'Parameters', g_constr:'Constraints & preprocessing',
-    drop_big:'Drop or click a CSV', drop_small:'rows = features (P) · cols = samples (N)',
-    cb_header:'Use first row as column names', cb_rowname:'Use first column as row names',
-    cb_transpose:'Transpose before factorization', cb_transpose_sub:'Y → Yᵀ (swap rows and columns)',
-    demo_btn:'◇ Load demo data',
-    p_rank:'Rank Q (bases = clusters)', p_maxit:'Max iterations', p_eps:'Convergence tol. (relative)',
-    p_seed:'Random seed', p_nstart:'Restarts (nstart)', p_init:'Initial value of X',
-    init_kmeans:'k-means++ (centroids of Y columns)', init_random:'Uniform random',
-    init_ref:'k-means++ initialization from <a href="https://dl.acm.org/doi/10.5555/1283383.1283494" target="_blank" rel="noopener">Arthur &amp; Vassilvitskii (2007), SODA</a>. Seeds are chosen with probability ∝ squared distance for a stable start.',
-    cb_xnorm:'Constrain columns of X to sum to 1', cb_xnorm_sub:'normalized within updates; each basis becomes a distribution',
-    cb_normcol:'Preprocess: min-max scale each variable (row) to [0,1]', cb_normcol_sub:'(x−min)/(max−min) per row (applied after transpose)',
-    run:'Run factorization', run_busy:'Computing…',
-    hint:'Estimates <span style="color:var(--amber)">X</span>·<span style="color:var(--violet)">B</span> via multiplicative updates (Lee &amp; Seung, squared error). Each column reads as a latent-variable regression <span class="y">y</span> ≈ <span style="color:var(--amber)">X</span><span style="color:var(--violet)">b</span>. Normalizing rows of <span style="color:var(--amber)">X</span> gives feature memberships; normalizing columns of <span style="color:var(--violet)">B</span> gives sample memberships. Everything runs in your browser; no data is uploaded.',
-    ph_main:'Load a CSV on the left, or try the demo data.',
-    ph_sub:'Factorize Y into Q non-negative bases (X) and coefficients (B), then cluster from both sides.',
-    f_model:'model: Y ≈ XB (Lee &amp; Seung multiplicative update)',
-    f_pkg:'related R package: ', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
-    m_iters:'iters', m_size:'size',
-    c_conv:'Convergence curve', c_conv_d:'Residual sum of squares per iteration. A monotone decrease means it is converging.',
-    c_X:'Basis matrix', c_X_d_base:'Each column is one basis pattern', c_X_d_norm:' (columns sum to 1; a distribution)', c_X_d_end:'.',
-    c_B:'Coefficient matrix', c_B_d:'How much each column (sample) mixes the bases.',
-    c_recon:'Reconstruction', c_recon_d:'Left: original Y. Right: approximation XB. Matching patterns indicate a good fit.',
-    lab_orig:'Y (original)', lab_approx:'XB (approx)',
-    leg_low:'low', leg_high:'high',
-    sec_feat_badge:'rows of X', sec_feat:'feature clustering',
-    sec_samp_badge:'columns of B', sec_samp:'sample clustering',
-    cc_hard:'Hard clustering', cc_hard_d:'Each {n} is assigned to the basis with the highest membership.',
-    cc_table_tag:'optimal / membership / hard', cc_table_d:'Top: optimal values. Middle: membership (sums to 1). Bottom: hard assignment.',
-    tbl_X:'X table', tbl_B:'B table',
-    cluster_word:'Cluster', items:'items',
-    tbl_head_feat:'row \\ feature', tbl_head_samp:'row \\ sample',
-    noun_feat:'feature', noun_samp:'sample',
-    dl_title:'Downloads',
-    dl_log:'.log (settings & metrics)',
-    dl_X:'X.csv (basis)', dl_B:'B.csv (coefficients)',
-    dl_Xmem:'X_membership.csv (feature membership)', dl_Xhard:'X_hard.csv (feature assignment)',
-    dl_Bmem:'B_membership.csv (sample membership)', dl_Bhard:'B_hard.csv (sample assignment)',
-    dl_XB:'XB.csv (reconstruction)',
-    toast_demo:'Loaded demo data (6×6 preference matrix)',
-    toast_nonum:'Could not read numeric data',
-    toast_neg:'Found {n} negative values. NMF expects non-negative data.',
-    toast_parsefail:'Failed to parse CSV: {m}',
-    toast_calcerr:'Computation error: {m}',
-    meta_file:'file', meta_loaded:'loaded', meta_transposed:'transposed',
-    meta_nan:'replaced {n} non-numeric values with 0'
-  }
-};
-function t(k){ const d=I18N[LANG]; return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k); }
-
-function applyI18n(){
-  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
-  document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
-  const runBtn=$('#run'); if(runBtn && !runBtn.classList.contains('busy')) runBtn.textContent=t('run');
-  document.querySelectorAll('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
-  document.documentElement.lang=LANG;
-  if(DATA) refreshMeta();
-  if(LAST) render(LAST.res,LAST.data);
-}
-
-/* ================= math / IO ================= */
 let toastTimer=null;
-function toast(msg){const t2=$('#toast');t2.textContent=msg;t2.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>t2.style.display='none',3500);}
+function toast(msg){const el=$doc('#toast');el.textContent=msg;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',3600);}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888';}
+const cssv=cssVar;
 
+/* --- shared random / linear algebra --- */
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
-
-function parseCSV(text){
-  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim();
-  const firstLine=text.split('\n')[0];
-  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
-  const rows=[];let row=[];let cur='';let q=false;
-  for(let i=0;i<text.length;i++){const c=text[i];
-    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
-    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
-  }
-  row.push(cur);rows.push(row);
-  return rows.filter(r=>r.length&&!(r.length===1&&r[0].trim()===''));
-}
-
-function buildMatrix(rows,hasHeader,hasRowname){
-  let colnames=null,rownames=[];
-  if(hasHeader){const h=rows[0];colnames=hasRowname?h.slice(1):h.slice();rows=rows.slice(1);}
-  const matrix=[];
-  rows.forEach((r,ri)=>{
-    let cells=r;
-    if(hasRowname){rownames.push(r[0]===''?('r'+(ri+1)):r[0]);cells=r.slice(1);}else rownames.push('r'+(ri+1));
-    matrix.push(cells.map(x=>{const v=parseFloat(String(x).trim());return isFinite(v)?v:NaN;}));
-  });
-  const N=Math.max(...matrix.map(r=>r.length));
-  let nanCount=0,negCount=0;
-  for(const r of matrix){while(r.length<N)r.push(NaN);for(let j=0;j<N;j++){if(!isFinite(r[j])){r[j]=0;nanCount++;}else if(r[j]<0)negCount++;}}
-  if(!colnames)colnames=Array.from({length:N},(_,j)=>'c'+(j+1));
-  while(colnames.length<N)colnames.push('c'+(colnames.length+1));
-  return {matrix,rownames,colnames,P:matrix.length,N,nanCount,negCount};
-}
-
-function transposeData(d){
-  const T=Array.from({length:d.N},()=>new Array(d.P));
-  for(let i=0;i<d.P;i++)for(let j=0;j<d.N;j++)T[j][i]=d.matrix[i][j];
-  return {matrix:T,rownames:d.colnames.slice(),colnames:d.rownames.slice(),P:d.N,N:d.P,nanCount:d.nanCount,negCount:d.negCount};
-}
-
 function matmul(A,B,ar,ac,bc){const C=Array.from({length:ar},()=>new Float64Array(bc));for(let i=0;i<ar;i++){const Ai=A[i],Ci=C[i];for(let k=0;k<ac;k++){const a=Ai[k];if(a===0)continue;const Bk=B[k];for(let j=0;j<bc;j++)Ci[j]+=a*Bk[j];}}return C;}
 
-/* k-means (k-means++) over columns of Y; centroids -> initial columns of X */
+/* k-means++ over columns of Y; centroids -> initial columns of X (reproducible non-random start) */
 function kmeansInitX(Y,P,N,Q,rand){
   const pts=Array.from({length:N},(_,j)=>Float64Array.from({length:P},(_,i)=>Y[i][j]));
   const centers=[];const first=Math.floor(rand()*N);centers.push(pts[first].slice());
@@ -446,7 +429,7 @@ function kmeansInitX(Y,P,N,Q,rand){
   return X;
 }
 
-/* NMF:  Y (P x N) ≈ X (P x Q) · B (Q x N) */
+/* NMF:  Y (P x N) ≈ X (P x Q) · B (Q x N)  — Lee & Seung multiplicative update (squared error) */
 function nmf(Y,Q,opts){
   const {maxit,eps,seed,xColNorm,init}=opts;
   const P=Y.length,N=Y[0].length;
@@ -480,7 +463,7 @@ function nmf(Y,Q,opts){
     if(it>=10){const rel=Math.abs(prevObj-rss)/Math.max(Math.abs(rss),1);if(rel<=eps){iters=it;converged=true;prevObj=rss;break;}}
     prevObj=rss;
   }
-  // reorder bases by their centroid (weighted mean of the row index) -> consistent, reproducible order
+  // reorder bases by centroid (weighted mean of row index) -> consistent, reproducible order
   if(Q>1){
     const cent=new Array(Q);for(let k=0;k<Q;k++){let s=0;for(let i=0;i<P;i++)s+=((i+1)/P)*X[i][k];cent[k]=s;}
     const idx=Array.from({length:Q},(_,k)=>k).sort((a,b)=>cent[a]-cent[b]);
@@ -489,7 +472,7 @@ function nmf(Y,Q,opts){
   }
   return finish(X,B,Y,P,Q,N,objHist,iters,converged);
 }
-// multi-start: run nstart fits from consecutive seeds, keep the one with smallest RSS (like nmfkc's nstart)
+// multi-start: run nstart fits from consecutive seeds, keep the smallest RSS (like nmfkc's nstart)
 function nmfMulti(Y,Q,opts,nstart){
   let best=null,tried=0;
   for(let s=0;s<Math.max(1,nstart|0);s++){
@@ -498,7 +481,6 @@ function nmfMulti(Y,Q,opts,nstart){
   }
   best.nstart=tried;return best;
 }
-
 function finish(X,B,Y,P,Q,N,objHist,iters,converged){
   let rss=0,tss=0,sum=0,cnt=0;
   const XB=matmul(X,B,P,Q,N);
@@ -507,7 +489,6 @@ function finish(X,B,Y,P,Q,N,objHist,iters,converged){
   for(let i=0;i<P;i++)for(let j=0;j<N;j++){const d=Y[i][j]-XB[i][j];rss+=d*d;const dt=Y[i][j]-mean;tss+=dt*dt;}
   return {X,B,XB,rss,rmse:Math.sqrt(rss/cnt),r2:tss>0?1-rss/tss:0,iters,converged:!!converged,rank:Q,objHist,P,N};
 }
-
 function clusterCols(B,Q,N){
   const membership=Array.from({length:Q},()=>new Float64Array(N));const hard=new Array(N);
   for(let j=0;j<N;j++){let s=0;for(let k=0;k<Q;k++)s+=B[k][j];let best=0,bv=-Infinity;
@@ -523,6 +504,566 @@ function clusterRows(X,P,Q){
   return {membership,hard,sizes};
 }
 
+/* --- shared chrome i18n (header title/eq, footer, tab labels) --- */
+const CHROME_I18N={
+  ja:{tab_topic:'トピックモデル', tab_matrix:'行列分解 NMF',
+    f_model:'モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)', f_pkg:'関連Rパッケージ: ', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存'},
+  en:{tab_topic:'Topic Model', tab_matrix:'Matrix NMF',
+    f_model:'model: Y ≈ XB (Lee &amp; Seung multiplicative update)', f_pkg:'related R package: ', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub'}
+};
+const HEADER_I18N={
+  topic:{
+    ja:{h1:'NMFトピックモデル', eq:'文書単語行列 &rarr; <span style="color:var(--amber)">トピック所属</span> &middot; <span style="color:var(--violet)">グループ比較</span>'},
+    en:{h1:'NMF Topic Model', eq:'document-feature matrix &rarr; <span style="color:var(--amber)">topic membership</span> &middot; <span style="color:var(--violet)">group comparison</span>'}
+  },
+  matrix:{
+    ja:{h1:'非負値行列因子分解', eq:'<span class="y">Y</span> ≈ <b>X</b><i>B</i> &nbsp;<span style="color:var(--ink-faint)">(</span>Y: P×N, <b style="color:var(--amber)">X</b>: P×Q, <i style="color:var(--violet)">B</i>: Q×N &nbsp;→&nbsp; 各列 <span class="y">y</span> ≈ <b>X</b><i>b</i><span style="color:var(--ink-faint)">)</span>'},
+    en:{h1:'Non-negative Matrix Factorization', eq:'<span class="y">Y</span> ≈ <b>X</b><i>B</i> &nbsp;<span style="color:var(--ink-faint)">(</span>Y: P×N, <b style="color:var(--amber)">X</b>: P×Q, <i style="color:var(--violet)">B</i>: Q×N &nbsp;→&nbsp; each column <span class="y">y</span> ≈ <b>X</b><i>b</i><span style="color:var(--ink-faint)">)</span>'}
+  }
+};
+function ct(k){const d=CHROME_I18N[LANG]||CHROME_I18N.ja;return d[k]!=null?d[k]:(CHROME_I18N.ja[k]!=null?CHROME_I18N.ja[k]:k);}
+function applyChromeI18n(){
+  $$doc('[data-ci18n]').forEach(el=>{el.textContent=ct(el.dataset.ci18n);});
+  $$doc('[data-ci18n-html]').forEach(el=>{el.innerHTML=ct(el.dataset.ci18nHtml);});
+}
+function updateHeader(){
+  const h=(HEADER_I18N[ACTIVE]||HEADER_I18N.topic)[LANG]||HEADER_I18N[ACTIVE].ja;
+  $doc('#appTitle').textContent=h.h1;
+  $doc('#appEq').innerHTML=h.eq;
+}
+function applyI18nAll(){
+  $$doc('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  document.documentElement.lang=LANG;
+  applyChromeI18n();updateHeader();
+  MODULES.forEach(m=>{try{m.applyI18n();}catch(e){}});
+}
+function switchTab(name){
+  ACTIVE=name;
+  $$doc('.tabpanel').forEach(p=>{p.hidden=(p.dataset.tab!==name);});
+  $$doc('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
+  updateHeader();
+}
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',THEME);
+  $$doc('#themetog button').forEach(b=>b.classList.toggle('on',b.dataset.theme===THEME));
+}
+
+/* --- chrome events --- */
+$$doc('#langtog button').forEach(b=>b.onclick=()=>{LANG=b.dataset.lang;applyI18nAll();});
+$$doc('#themetog button').forEach(b=>b.onclick=()=>{THEME=b.dataset.theme;applyTheme();applyI18nAll();});
+$$doc('#tabbar button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+// save this self-contained app to a local .html file (fetches its own pristine source)
+async function saveSelf(){
+  try{const res=await fetch(location.href.split('?')[0]);const html=await res.text();
+    const name=(location.pathname.split('/').pop()||'nmf_app.html');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }catch(e){toast('保存に失敗しました: '+e.message);}
+}
+$doc('#saveApp').onclick=saveSelf;
+
+/* ============================================================
+   TOPIC MODULE  (DFM -> NMF topics -> group comparison)
+   ============================================================ */
+(function(){
+const PANEL=document.getElementById('panel-topic');
+const $=s=>PANEL.querySelector(s);
+const $$=s=>PANEL.querySelectorAll(s);
+
+const I18N={
+  ja:{
+    g_data:'データ', drop_big:'文書単語行列CSVをドロップ / クリック', drop_small:'文書 × 語（属性列を含む）',
+    demo_btn:'◇ デモ（沖縄観光アンケート DFM）',
+    demo_credit:'デモは沖縄県観光商工部「<b>平成18年度観光統計実態調査「沖縄観光客満足度調査」</b>」（別冊『観光客の声』・<b>第4回調査</b>）の自由記述の<b>一部</b>から作成した文書単語行列です（属性: 居住地・性別・年代・満足度、値は語の出現頻度）。出典: <a href="https://www.pref.okinawa.jp/shigoto/kankotokusan/1011671/1011816/1011825/1020290.html" target="_blank" rel="noopener">沖縄県</a>（&copy; 沖縄県）。',
+    g_group:'グループ変数（カテゴリ）', group_empty:'ファイルを読み込むと候補が表示されます。',
+    group_hint:'カテゴリ属性（水準数 2〜20）を最大2つ選べます。2つ選ぶと交互作用（例: 男性_20代）を内部で作成します。',
+    g_topic:'トピック', c_ntopic:'トピック数', c_topwords:'各トピックの上位語数',
+    g_nmf:'NMF設定', p_init:'Xの初期値', init_random:'ランダム', init_kmeans:'k-means++', p_seed:'乱数シード', p_nstart:'再スタート回数 (nstart)', p_maxit:'最大反復回数', p_eps:'収束閾値（相対）', recalc:'↻ 再計算（シードを進めて解き直す）',
+    init_ref:'k-means++ は <a href="https://dl.acm.org/doi/10.5555/1283383.1283494" target="_blank" rel="noopener">Arthur &amp; Vassilvitskii (2007), SODA</a> による初期化。初期中心を距離²に比例した確率で選び、安定した開始点を得る。',
+    ph_main:'左で属性列付きの文書単語行列CSVを読み込むか、デモを試してください。',
+    ph_sub:'語×文書行列にNMFを適用してトピックを抽出し、グループ変数ごとに文書（個体）のトピック所属確率の平均を比較します。',
+    m_cats:'グループ数', m_words:'語数', m_docs:'文書数', m_topics:'トピック数', m_iters:'反復', m_conv:'収束', m_noconv:'未収束（最大反復に到達）',
+    sec_group:'グループ別トピック構成（平均所属確率）', sec_group_d:'各グループに属する文書のトピック所属確率の平均。積み上げの合計は1。',
+    sec_comp:'トピックの構成語', sec_comp_d:'Pr(単語|トピック)＝各トピックを構成する語の確率（トピックごとに合計1）。%はのべ出現回数に基づく構成確率。',
+    sec_feat:'トピックの特徴語', sec_feat_d:'Pr(トピック|単語)＝その語が各トピックに属する確率（語ごとに合計1）。そのトピックに特有の語ほど上位。',
+    dl_group:'トピック構成 SVG', dl_svg:'SVG', dl_csv:'CSV', dl_log:'ログ', topic_label:'トピック', overall:'全体',
+    toast_demo:'デモDFMを読み込みました（沖縄観光アンケート）', toast_parsefail:'CSVの解析に失敗しました',
+    toast_nogroup:'グループ変数を1〜2個選択してください', toast_nocat:'グループのカテゴリが作れません。別の属性を選んでください。',
+    toast_group_max:'グループ変数は最大2つまでです', toast_nocand:'カテゴリ属性（水準数 2〜20）が見つかりません',
+    meta_file:'file', meta_cats:'グループ', meta_words:'語', meta_docs:'文書', meta_group:'グループ変数', meta_none:'（未選択）'
+  },
+  en:{
+    g_data:'Data', drop_big:'Drop or click a DFM CSV', drop_small:'docs × words (with attribute columns)',
+    demo_btn:'◇ Demo (Okinawa tourism survey DFM)',
+    demo_credit:'Demo: a document-feature matrix built from <b>part</b> of the free-text answers in the "Okinawa Tourist Satisfaction Survey" (<b>FY2006 Tourism Statistics Survey</b>, supplement "Voices of Tourists", 4th-round survey), Dept. of Tourism &amp; Commerce, Okinawa Prefecture. Attributes: residence, sex, age, satisfaction; values are word counts. Source: <a href="https://www.pref.okinawa.jp/shigoto/kankotokusan/1011671/1011816/1011825/1020290.html" target="_blank" rel="noopener">Okinawa Prefecture</a> (&copy; Okinawa Prefectural Government).',
+    g_group:'Group variables (categorical)', group_empty:'Candidates appear here after a file is loaded.',
+    group_hint:'Pick up to 2 categorical attributes (2–20 levels). Picking 2 builds their interaction internally (e.g. male_20s).',
+    g_topic:'Topics', c_ntopic:'Number of topics', c_topwords:'Top words per topic',
+    g_nmf:'NMF settings', p_init:'Initial X', init_random:'Random', init_kmeans:'k-means++', p_seed:'Random seed', p_nstart:'Restarts (nstart)', p_maxit:'Max iterations', p_eps:'Tolerance (relative)', recalc:'↻ Recompute (advance seed & refit)',
+    init_ref:'k-means++ initialization from <a href="https://dl.acm.org/doi/10.5555/1283383.1283494" target="_blank" rel="noopener">Arthur &amp; Vassilvitskii (2007), SODA</a>. Seeds are chosen with probability ∝ squared distance for a stable start.',
+    ph_main:'Load a DFM CSV that has attribute columns on the left, or try the demo.',
+    ph_sub:'Apply NMF to the word×document matrix to extract topics, then compare the mean topic-membership of documents (individuals) across each group variable.',
+    m_cats:'Groups', m_words:'Words', m_docs:'Documents', m_topics:'Topics', m_iters:'iters', m_conv:'converged', m_noconv:'not converged (reached max iterations)',
+    sec_group:'Topic composition by group (mean membership)', sec_group_d:'Mean topic-membership over documents in each group. Each stacked bar sums to 1.',
+    sec_comp:'Topic composition words', sec_comp_d:'Pr(word|topic) = probability of words composing each topic (sums to 1 per topic). % is the composition probability based on total occurrence counts.',
+    sec_feat:'Topic characteristic words', sec_feat_d:'Pr(topic|word) = probability a word belongs to each topic (sums to 1 per word). Words specific to a topic rank higher.',
+    dl_group:'Topic composition SVG', dl_svg:'SVG', dl_csv:'CSV', dl_log:'log', topic_label:'Topic', overall:'Overall',
+    toast_demo:'Loaded demo DFM (Okinawa tourism survey)', toast_parsefail:'Failed to parse CSV',
+    toast_nogroup:'Select 1–2 group variables', toast_nocat:'Cannot form group categories. Choose another attribute.',
+    toast_group_max:'At most 2 group variables', toast_nocand:'No categorical attribute (2–20 levels) found',
+    meta_file:'file', meta_cats:'groups', meta_words:'words', meta_docs:'docs', meta_group:'group', meta_none:'(none)'
+  }
+};
+function t(k){const d=I18N[LANG];return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k);}
+function applyI18n(){
+  $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  $$('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  if(DATA)renderTopic();
+}
+
+// DOM helpers
+function el(tag,attrs,children){const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==='text')e.textContent=attrs[k];else e.setAttribute(k,attrs[k]);}if(children)children.forEach(c=>e.appendChild(c));return e;}
+function svgEl(tag,attrs){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+const CLU=['#4fd6c8','#e8a54b','#9d8cf0','#e06a6a','#6fb1e0','#7fce8f','#d98cc0','#c9b45a','#5ac0b0','#b08fe0','#4f9dd6','#e8894b','#5fbf7f','#c86ac8','#e6c34b','#7570d6','#d9646a','#3fb6a8','#b08a4d','#8a9bb0'];
+
+function parseCSVRows(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(text.endsWith('\n'))text=text.slice(0,-1);
+  const firstLine=text.split('\n')[0]||'';
+  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(r=>!(r.length===1&&r[0].trim()===''));
+}
+function isInt(v){return /^-?\d+$/.test(String(v).trim());}
+function guessAttrCols(rows){
+  // relaxed: a column is an attribute (categorical) only if it contains a non-integer (text) value.
+  // any all-integer column is treated as a "word" (count) column, so dense numeric matrices work too.
+  const header=rows[0],data=rows.slice(1),attrs=new Set();
+  for(let c=1;c<header.length;c++){
+    let numeric=true;
+    for(const r of data){const v=(r[c]||'').trim();if(v==='')continue;if(!isInt(v)){numeric=false;break;}}
+    if(!numeric)attrs.add((header[c]||'').trim());
+  }
+  return attrs;
+}
+function isBlank(v){return v===''||v==='NA'||v==='na'||v==='NaN';}
+
+// DATA = {header, rows(data), attrCols:[{name,colIdx,nlev,levels}], wordCols:[{name,colIdx}], docN}
+let DATA=null, TOPIC=null, LASTNAME='';
+function buildData(rows){
+  const header=rows[0],data=rows.slice(1);
+  const attrNames=guessAttrCols(rows);
+  const attrCols=[],wordCols=[];
+  for(let c=1;c<header.length;c++){
+    const name=(header[c]||'').trim();if(!name)continue;
+    if(attrNames.has(name)){
+      const lv=new Set();
+      data.forEach(r=>{const v=(r[c]||'').trim();if(!isBlank(v))lv.add(v);});
+      attrCols.push({name,colIdx:c,nlev:lv.size,levels:[...lv]});
+    }else{
+      wordCols.push({name,colIdx:c});
+    }
+  }
+  return {header,rows:data,attrCols,wordCols,docN:data.length};
+}
+
+function groupSel(){const names=Array.from($$('#groupList input:checked')).map(x=>x.value);return DATA.attrCols.filter(a=>names.includes(a.name));}
+// Y: words (P) × documents (N), attributes excluded. docCat[d] = group category index (or -1 if missing).
+function buildTopicData(groups){
+  const P=DATA.wordCols.length,Ndoc=DATA.docN;
+  const Y=Array.from({length:P},()=>new Float64Array(Ndoc));
+  DATA.rows.forEach((r,di)=>{DATA.wordCols.forEach((wc,wi)=>{const v=(r[wc.colIdx]||'').trim();const n=v===''?0:(+v||0);if(n>0)Y[wi][di]=n;});});
+  const cats=new Map(),catLabels=[],docCat=new Array(Ndoc).fill(-1);
+  if(!groups.length){
+    // no group variable selected -> all documents belong to one "overall" group (like a constant =1 covariate)
+    for(let di=0;di<Ndoc;di++)docCat[di]=0;
+    catLabels.push(t('overall'));
+  }else{
+    DATA.rows.forEach((r,di)=>{const vals=groups.map(g=>(r[g.colIdx]||'').trim());if(vals.some(isBlank))return;const key=vals.join('_');if(!cats.has(key)){cats.set(key,catLabels.length);catLabels.push(key);}docCat[di]=cats.get(key);});
+  }
+  return {Y,P,Ndoc,catLabels,docCat,words:DATA.wordCols.map(w=>w.name)};
+}
+
+// ---------- topic composition chart (group × topic stacked bars) ----------
+function topicChartSvg(catLabels,avg,k){
+  const R=catLabels.length;
+  const left=170,barW=460,right=40,rowH=34,top=52;
+  const legItemW=104,contentW=Math.max(barW,k*legItemW);
+  const W=left+contentW+right,H=top+R*rowH+18;
+  const svg=svgEl('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
+  for(let tp=0;tp<k;tp++){
+    const lx=left+tp*legItemW;
+    svg.appendChild(svgEl('rect',{x:lx,y:18,width:13,height:13,rx:2,fill:CLU[tp%CLU.length]}));
+    const tt=svgEl('text',{x:lx+18,y:29,'font-size':12,'font-family':cssv('--sans'),fill:'#000'});tt.textContent=t('topic_label')+' '+(tp+1);svg.appendChild(tt);
+  }
+  catLabels.forEach((c,g)=>{
+    const y=top+g*rowH;
+    const lb=svgEl('text',{x:left-10,y:y+rowH/2+4,'font-size':12.5,'font-family':cssv('--sans'),fill:'#000','text-anchor':'end','font-weight':700});lb.textContent=c;svg.appendChild(lb);
+    let acc=0;
+    for(let tp=0;tp<k;tp++){
+      const w=avg[g][tp]*barW;
+      svg.appendChild(svgEl('rect',{x:left+acc,y:y+5,width:Math.max(0,w),height:rowH-14,fill:CLU[tp%CLU.length]}));
+      if(w>28){const pt=svgEl('text',{x:left+acc+w/2,y:y+rowH/2+3.5,'font-size':10.5,'font-family':cssv('--sans'),fill:'#000','text-anchor':'middle'});pt.textContent=Math.round(avg[g][tp]*100)+'%';svg.appendChild(pt);}
+      acc+=w;
+    }
+  });
+  return svg;
+}
+
+// ---------- render ----------
+function renderTopic(){
+  if(!DATA)return;
+  const groups=groupSel();
+  const box=$('#results');
+  const td=buildTopicData(groups);
+  if(td.catLabels.length<1){toast(t('toast_nocat'));return;}
+  const maxTopic=Math.max(2,Math.min(td.words.length,td.Ndoc,10));
+  const ks=$('#kTopic');ks.max=maxTopic;
+  if(+ks.value>maxTopic){ks.value=maxTopic;$('#kVal').textContent=maxTopic;}
+  const maxTW=Math.max(3,Math.min(td.words.length,30));
+  const tws=$('#topWords');tws.max=maxTW;
+  if(+tws.value>maxTW){tws.value=maxTW;$('#twVal').textContent=maxTW;}
+  const k=+ks.value, twN=+tws.value;
+  // NMF: Y (words × docs) ≈ X (words × k) · B (k × docs); X columns = topic word-distributions
+  const res=nmfMulti(td.Y,k,{maxit:+$('#maxit').value,eps:+$('#eps').value,seed:+$('#seed').value,xColNorm:true,init:$('#init').value},+$('#nstart').value);
+  const memb=clusterCols(res.B,k,td.Ndoc).membership; // memb[topic][doc] = per-document topic membership
+  const R=td.catLabels.length;
+  let avg=Array.from({length:R},()=>new Array(k).fill(0)),cnt=new Array(R).fill(0);
+  for(let d=0;d<td.Ndoc;d++){const g=td.docCat[d];if(g<0)continue;cnt[g]++;for(let tp=0;tp<k;tp++)avg[g][tp]+=memb[tp][d];}
+  for(let g=0;g<R;g++)if(cnt[g])for(let tp=0;tp<k;tp++)avg[g][tp]/=cnt[g];
+  const order=td.catLabels.map((_,i)=>i).sort((a,b)=>td.catLabels[a].localeCompare(td.catLabels[b],'ja'));
+  td.catLabels=order.map(i=>td.catLabels[i]); avg=order.map(i=>avg[i]); cnt=order.map(i=>cnt[i]);
+  const wordFreq=td.words.map((_,wi)=>{let s=0;const Yi=td.Y[wi];for(let d=0;d<td.Ndoc;d++)s+=Yi[d];return Math.round(s);});
+  const compWords=[];
+  for(let tp=0;tp<k;tp++){const idx=td.words.map((_,wi)=>wi).sort((a,b)=>res.X[b][tp]-res.X[a][tp]).slice(0,twN);compWords.push(idx.map(wi=>({w:td.words[wi],p:res.X[wi][tp],f:wordFreq[wi]})));}
+  const rowsum=td.words.map((_,wi)=>{let s=0;for(let tp=0;tp<k;tp++)s+=res.X[wi][tp];return s||1;});
+  const featWords=[];
+  for(let tp=0;tp<k;tp++){const idx=td.words.map((_,wi)=>wi).sort((a,b)=>(res.X[b][tp]/rowsum[b])-(res.X[a][tp]/rowsum[a])).slice(0,twN);featWords.push(idx.map(wi=>({w:td.words[wi],p:res.X[wi][tp]/rowsum[wi],f:wordFreq[wi]})));}
+  TOPIC={td,avg,k,compWords,featWords};
+  $('#placeholder').style.display='none';box.style.display='';box.innerHTML='';
+  const met=el('div',{class:'metrics'});
+  const addM=(kk,v)=>{const m=el('div',{class:'metric'});m.appendChild(el('div',{class:'k',text:kk}));m.appendChild(el('div',{class:'v',text:v}));met.appendChild(m);};
+  const addMH=(kk,html)=>{const m=el('div',{class:'metric'});m.appendChild(el('div',{class:'k',text:kk}));const vv=el('div',{class:'v'});vv.innerHTML=html;m.appendChild(vv);met.appendChild(m);};
+  addM(t('m_cats'),R);addM(t('m_words'),td.words.length);addM(t('m_docs'),cnt.reduce((a,b)=>a+b,0));addM(t('m_topics'),k);
+  const _mx=+$('#maxit').value;
+  addMH(t('m_iters'),`${res.iters}<small> / ${_mx}</small> <span title="${res.converged?t('m_conv'):t('m_noconv')}" style="font-size:13px;color:${res.converged?'var(--cyan)':'var(--amber)'}">${res.converged?'✓':'⚠'}</span>`);
+  box.appendChild(met);
+  const TN=Array.from({length:k},(_,i)=>'Topic'+(i+1));
+  const xColCSV=()=>{const rows=[['word'].concat(TN)];td.words.forEach((w,wi)=>rows.push([w].concat(Array.from({length:k},(_,tp)=>res.X[wi][tp].toFixed(6)))));return rows;};
+  const xRowCSV=()=>{const rows=[['word'].concat(TN)];td.words.forEach((w,wi)=>rows.push([w].concat(Array.from({length:k},(_,tp)=>(res.X[wi][tp]/rowsum[wi]).toFixed(6)))));return rows;};
+  const grpCSV=()=>{const rows=[['group','n'].concat(TN)];td.catLabels.forEach((c,g)=>rows.push([c,cnt[g]].concat(Array.from({length:k},(_,tp)=>avg[g][tp].toFixed(6)))));return rows;};
+  const buildLog=()=>{
+    const L=[];
+    L.push('# NMF Topic Model — settings & result log (nmf_app.html / topic tab)');L.push('');
+    L.push('[settings]');
+    L.push('group_variables     : '+(groups.map(g=>g.name).join(' x ')||'(none)'));
+    L.push('n_topics (rank)     : '+k);
+    L.push('top_words_per_topic : '+twN);
+    L.push('nmf_update          : Lee & Seung multiplicative update (squared error)');
+    L.push('nmf_max_iterations  : '+$('#maxit').value);
+    L.push('nmf_tolerance       : '+$('#eps').value+' (relative)');
+    L.push('nmf_seed            : '+$('#seed').value);
+    L.push('nstart (multi-start): '+(res.nstart||1)+' (best of; smallest RSS kept)');
+    L.push('X_init              : '+$('#init').value);
+    L.push('X_column_normalized : true (each topic column sums to 1)');L.push('');
+    L.push('[data]');
+    L.push('documents_used      : '+cnt.reduce((a,b)=>a+b,0)+' (non-missing group value)');
+    L.push('words               : '+td.words.length);
+    L.push('groups (categories) : '+td.catLabels.length);
+    L.push('nmf_iterations_run  : '+res.iters+' (of the kept fit)');
+    L.push('converged           : '+res.converged);
+    L.push('objective (RSS)     : '+(res.rss!=null?res.rss.toFixed(2):'NA'));L.push('');
+    L.push('[topic composition words] Pr(word|topic)=X column (sum=1 per topic); (freq)=total occurrences');
+    for(let tp=0;tp<k;tp++)L.push('Topic'+(tp+1)+': '+compWords[tp].map(o=>o.w+'('+o.f+') '+(o.p*100).toFixed(1)+'%').join(', '));
+    L.push('');
+    L.push('[topic characteristic words] Pr(topic|word)=X row-normalized (sum=1 per word)');
+    for(let tp=0;tp<k;tp++)L.push('Topic'+(tp+1)+': '+featWords[tp].map(o=>o.w+'('+o.f+') '+(o.p*100).toFixed(1)+'%').join(', '));
+    L.push('');
+    L.push('[mean topic membership by group] (rows sum to 1)');
+    L.push(['group','n'].concat(TN).join('\t'));
+    td.catLabels.forEach((c,g)=>L.push([c,cnt[g]].concat(Array.from({length:k},(_,tp)=>avg[g][tp].toFixed(4))).join('\t')));
+    return L.join('\n');
+  };
+  const bc=el('div',{class:'card'});
+  const h3=el('h3');h3.appendChild(el('span',{text:t('sec_group')}));
+  const btns=el('div',{});btns.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-left:auto';
+  const bLog=el('button',{class:'dl',text:t('dl_log')});bLog.onclick=()=>downloadText('topic_log.txt',buildLog());btns.appendChild(bLog);
+  const bCsv=el('button',{class:'dl',text:t('dl_csv')});bCsv.onclick=()=>downloadCSV('topic_by_group.csv',grpCSV());btns.appendChild(bCsv);
+  const bSvg=el('button',{class:'dl',text:t('dl_svg')});btns.appendChild(bSvg);
+  h3.appendChild(btns);bc.appendChild(h3);
+  bc.appendChild(el('div',{class:'desc',text:t('sec_group_d')}));
+  const bw=el('div',{class:'svgscroll'});const svg=topicChartSvg(td.catLabels,avg,k);bw.appendChild(svg);bc.appendChild(bw);
+  bSvg.onclick=()=>downloadSvg(svg,'topic_by_group.svg');
+  box.appendChild(bc);
+  box.appendChild(topicWordCard('sec_comp','sec_comp_d',compWords,k,()=>downloadCSV('X_word_by_topic_colsum1.csv',xColCSV())));
+  box.appendChild(topicWordCard('sec_feat','sec_feat_d',featWords,k,()=>downloadCSV('X_word_by_topic_rowsum1.csv',xRowCSV())));
+}
+function topicWordCard(titleKey,descKey,perTopic,k,onCsv){
+  const wc=el('div',{class:'card'});
+  const h3=el('h3');h3.appendChild(el('span',{text:t(titleKey)}));
+  if(onCsv){const b=el('button',{class:'dl',text:t('dl_csv')});b.style.marginLeft='auto';b.onclick=onCsv;h3.appendChild(b);}
+  wc.appendChild(h3);
+  wc.appendChild(el('div',{class:'desc',text:t(descKey)}));
+  const tl=el('div',{class:'topicwords'});
+  for(let tp=0;tp<k;tp++){
+    const row=el('div',{class:'twrow'});
+    const badge=el('span',{class:'tbadge',text:t('topic_label')+' '+(tp+1)});badge.style.background=CLU[tp%CLU.length];
+    row.appendChild(badge);
+    row.appendChild(el('span',{class:'twlist',text:perTopic[tp].map(o=>o.w+'('+o.f+')'+Math.round(o.p*100)+'%').join('  ·  ')}));
+    tl.appendChild(row);
+  }
+  wc.appendChild(tl);return wc;
+}
+function downloadSvg(svg,name){
+  const clone=svg.cloneNode(true);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  const s='<?xml version="1.0" encoding="UTF-8"?>\n'+clone.outerHTML;
+  const blob=new Blob([s],{type:'image/svg+xml;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function downloadBlob(name,text,type){const blob=new Blob([text],{type:type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function downloadText(name,text){downloadBlob(name,text,'text/plain;charset=utf-8');}
+function downloadCSV(name,rows){const csv='﻿'+rows.map(r=>r.map(c=>{const s=String(c);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');downloadBlob(name,csv,'text/csv;charset=utf-8');}
+
+// ---------- group selection UI ----------
+function onGroupToggle(e){
+  const checked=Array.from($$('#groupList input:checked'));
+  if(checked.length>2){e.target.checked=false;toast(t('toast_group_max'));return;}
+  renderTopic();
+}
+function buildGroupChecks(preferred){
+  const box=$('#groupList');box.innerHTML='';
+  const cands=DATA.attrCols.filter(a=>a.nlev>=2&&a.nlev<=20);
+  if(!cands.length){box.innerHTML='<span class="empty">'+t('toast_nocand')+'</span>';return false;}
+  cands.forEach(a=>{
+    const lab=document.createElement('label');
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=a.name;cb.onchange=onGroupToggle;
+    if(preferred&&preferred.includes(a.name))cb.checked=true;
+    const sp=document.createElement('span');sp.textContent=a.name+' ('+a.nlev+')';
+    lab.appendChild(cb);lab.appendChild(sp);box.appendChild(lab);
+  });
+  // default: no group variable selected -> overall (全体) view
+  return true;
+}
+function setMeta(filename,cats){
+  $('#meta').classList.add('show');
+  const grp=groupSel().map(g=>g.name).join(' × ')||t('meta_none');
+  $('#meta').innerHTML='<span class="k">'+t('meta_file')+'</span> <span class="v">'+(filename||'demo')+'</span><br>'+
+    '<span class="k">'+t('meta_cats')+'</span> <span class="v">'+cats+'</span> · '+
+    '<span class="k">'+t('meta_words')+'</span> <span class="v">'+DATA.wordCols.length+'</span> · '+
+    '<span class="k">'+t('meta_docs')+'</span> <span class="v">'+DATA.docN+'</span><br>'+
+    '<span class="k">'+t('meta_group')+'</span> <span class="v">'+grp+'</span>';
+}
+function loadRows(rows,filename,preferred){
+  DATA=buildData(rows);LASTNAME=filename;
+  buildGroupChecks(preferred);
+  ['#groupGroup','#topicGroup','#nmfGroup'].forEach(s=>$(s).style.display='');
+  renderTopic();
+  const cats=TOPIC?TOPIC.avg.length:0;
+  setMeta(filename,cats);
+}
+function ingest(text,filename,preferred){
+  const rows=parseCSVRows(text);
+  if(!rows.length){toast(t('toast_parsefail'));return;}
+  loadRows(rows,filename,preferred);
+}
+
+// ---------- demo (Okinawa tourism survey DFM, sparse) ----------
+const DEMO_OKINAWA={"attrCols":["居住地","性別","年代","満足度"],"attrs":[["関東","男性","３０代","やや満足"],["関東","女性","６０代","やや満足"],["関東","男性","５０代","やや満足"],["中部","女性","２０代","大変満足"],["近畿","男性","６０代","大変満足"],["関東","女性","２０代","やや満足"],["中部","男性","７０代","やや満足"],["九州","男性","７０代","大変満足"],["北海道・東北","女性","５０代","大変満足"],["九州","男性","６０代","大変満足"],["関東","男性","４０代","やや満足"],["中国・四国","女性","５０代","やや満足"],["中国・四国","女性","４０代","やや満足"],["九州","男性","７０代","やや満足"],["関東","女性","３０代","やや満足"],["関東","男性","６０代","大変満足"],["関東","男性","７０代","やや不満"],["中国・四国","女性","６０代","やや満足"],["関東","男性","７０代","やや満足"],["九州","女性","２０代","やや満足"],["関東","男性","３０代","やや満足"],["関東","女性","６０代","大変満足"],["関東","男性","７０代","やや満足"],["関東","男性","３０代","大変満足"],["関東","男性","４０代","やや不満"],["関東","女性","３０代","やや満足"],["近畿","女性","２０代","大変満足"],["関東","女性","３０代","大変満足"],["関東","女性","６０代","大変満足"],["関東","男性","５０代","大変満足"],["九州","女性","６０代","NA"],["中部","女性","６０代","やや満足"],["中部","女性","６０代","大変不満"],["中部","女性","５０代","大変満足"],["中部","男性","７０代","大変満足"],["中部","女性","２０代","やや満足"],["近畿","男性","７０代","やや満足"],["関東","女性","４０代","やや満足"],["近畿","女性","５０代","やや満足"],["九州","男性","２０代","やや満足"],["中国・四国","女性","５０代","やや満足"],["中国・四国","女性","５０代","やや満足"],["関東","男性","７０代","やや満足"],["関東","男性","６０代","大変満足"],["関東","女性","２０代","やや満足"],["近畿","男性","５０代","やや満足"],["中部","男性","７０代","NA"],["九州","女性","５０代","大変満足"],["関東","男性","５０代","やや満足"],["関東","男性","４０代","やや満足"],["近畿","男性","６０代","やや満足"],["北海道・東北","女性","３０代","大変満足"],["北海道・東北","女性","５０代","やや満足"],["中部","女性","６０代","大変満足"],["近畿","男性","２０代","大変不満"],["北海道・東北","男性","６０代","大変満足"],["近畿","女性","４０代","大変満足"],["関東","女性","３０代","やや満足"],["中部","男性","６０代","やや満足"],["中部","女性","６０代","やや満足"],["近畿","女性","４０代","大変満足"],["北海道・東北","女性","６０代","やや満足"],["関東","女性","３０代","大変満足"],["九州","男性","３０代","やや満足"],["九州","男性","４０代","NA"],["中部","男性","３０代","大変満足"],["近畿","女性","２０代","やや満足"],["九州","女性","６０代","大変満足"],["近畿","男性","４０代","やや満足"],["関東","男性","６０代","やや満足"],["関東","女性","６０代","大変満足"],["関東","女性","５０代","やや満足"],["中部","男性","３０代","大変満足"],["中部","女性","５０代","大変満足"],["中部","男性","４０代","やや不満"],["関東","男性","３０代","大変満足"],["関東","男性","５０代","やや満足"],["関東","男性","６０代","やや満足"],["関東","女性","５０代","やや満足"],["九州","男性","３０代","やや満足"],["中部","女性","３０代","やや満足"],["九州","女性","４０代","大変満足"],["中部","男性","４０代","やや満足"],["関東","男性","６０代","やや満足"],["関東","男性","６０代","やや満足"],["近畿","男性","４０代","該当しない"],["中部","男性","２０代","大変満足"],["中部","男性","４０代","やや満足"],["近畿","女性","５０代","NA"],["近畿","女性","７０代","やや満足"],["北海道・東北","女性","４０代","やや満足"],["中部","女性","２０代","大変満足"],["北海道・東北","女性","５０代","やや満足"],["近畿","女性","３０代","やや満足"],["関東","男性","６０代","やや満足"],["九州","女性","５０代","大変満足"],["九州","男性","３０代","大変満足"],["近畿","女性","３０代","やや満足"],["関東","男性","６０代","大変満足"],["中部","女性","２０代","やや満足"],["NA","NA","３０代","やや満足"],["近畿","女性","３０代","大変満足"],["九州","男性","６０代","やや満足"],["中国・四国","女性","４０代","やや満足"],["関東","男性","５０代","NA"],["中部","男性","４０代","大変満足"],["近畿","女性","４０代","NA"],["九州","女性","４０代","大変満足"],["中部","女性","５０代","やや満足"],["北海道・東北","男性","７０代","大変満足"],["北海道・東北","男性","３０代","大変満足"],["中部","男性","５０代","大変満足"],["関東","女性","３０代","やや満足"],["近畿","女性","６０代","やや満足"],["北海道・東北","女性","５０代","大変満足"],["関東","女性","２０代","やや満足"],["近畿","男性","６０代","やや満足"],["近畿","女性","３０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","男性","５０代","やや満足"],["NA","女性","７０代","大変満足"],["中国・四国","男性","７０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","女性","５０代","大変満足"],["関東","男性","５０代","やや満足"],["近畿","男性","６０代","やや満足"],["関東","女性","６０代","大変満足"],["中国・四国","男性","３０代","大変満足"],["近畿","男性","６０代","やや満足"],["北海道・東北","男性","６０代","やや満足"],["関東","女性","３０代","やや満足"],["関東","男性","４０代","やや満足"],["中国・四国","男性","２０代","大変満足"],["関東","男性","５０代","大変満足"],["九州","女性","２０代","大変満足"],["関東","男性","４０代","やや満足"],["関東","女性","６０代","やや不満"],["九州","男性","４０代","やや満足"],["中国・四国","女性","６０代","やや満足"],["中部","女性","５０代","大変満足"],["中国・四国","男性","６０代","大変満足"],["近畿","女性","６０代","大変満足"],["中部","男性","５０代","やや満足"],["中部","男性","５０代","やや満足"],["九州","女性","６０代","大変満足"],["近畿","男性","４０代","やや満足"],["中部","女性","５０代","大変満足"],["関東","女性","３０代","やや満足"],["近畿","女性","６０代","大変満足"],["九州","女性","５０代","やや満足"],["関東","女性","７０代","やや満足"],["関東","男性","４０代","大変満足"],["北海道・東北","女性","３０代","大変満足"],["中国・四国","女性","６０代","NA"],["関東","男性","４０代","大変満足"],["中部","男性","６０代","やや満足"],["近畿","女性","６０代","大変満足"],["北海道・東北","男性","３０代","NA"],["近畿","男性","５０代","やや満足"],["関東","女性","４０代","やや満足"],["関東","女性","３０代","やや満足"],["九州","男性","５０代","大変満足"],["中国・四国","男性","３０代","やや満足"],["近畿","女性","６０代","大変満足"],["関東","女性","７０代","大変満足"],["関東","女性","３０代","やや満足"],["関東","女性","３０代","大変満足"],["中国・四国","男性","４０代","やや満足"],["中部","男性","５０代","やや満足"],["関東","男性","４０代","やや満足"],["近畿","男性","６０代","やや満足"],["中国・四国","女性","５０代","やや不満"],["関東","女性","５０代","やや満足"],["関東","男性","６０代","大変満足"],["中部","女性","２０代","大変満足"],["中部","女性","５０代","やや満足"],["中国・四国","女性","６０代","やや不満"],["北海道・東北","女性","２０代","やや満足"],["北海道・東北","女性","３０代","やや満足"],["九州","女性","２０代","やや満足"],["関東","男性","３０代","該当しない"],["関東","女性","６０代","やや満足"],["近畿","女性","２０代","大変満足"],["中部","男性","６０代","やや満足"],["九州","男性","５０代","NA"],["近畿","男性","５０代","やや不満"],["中国・四国","男性","５０代","大変満足"],["中部","女性","３０代","大変満足"],["中部","女性","２０代","やや満足"],["北海道・東北","男性","５０代","NA"],["関東","女性","２０代","やや満足"],["中部","女性","６０代","やや満足"],["中国・四国","女性","５０代","やや満足"],["中国・四国","男性","６０代","NA"],["関東","男性","６０代","やや満足"],["近畿","女性","６０代","やや満足"],["九州","女性","３０代","大変満足"],["関東","女性","３０代","大変満足"],["関東","女性","６０代","大変満足"],["関東","女性","５０代","やや満足"],["関東","女性","２０代","大変満足"],["近畿","男性","４０代","大変満足"],["近畿","女性","７０代","大変満足"],["関東","女性","２０代","大変満足"],["中部","男性","４０代","大変満足"],["中部","女性","６０代","大変満足"],["関東","女性","５０代","大変満足"],["中部","男性","４０代","やや満足"],["中部","女性","５０代","やや不満"],["近畿","男性","２０代","大変満足"],["関東","男性","５０代","NA"],["関東","男性","２０代","大変満足"],["関東","女性","５０代","大変満足"],["中国・四国","女性","５０代","やや満足"],["関東","男性","６０代","やや不満"],["九州","男性","５０代","大変満足"],["関東","女性","６０代","やや満足"],["関東","男性","５０代","大変満足"],["近畿","女性","５０代","大変満足"],["関東","女性","３０代","大変満足"],["北海道・東北","女性","４０代","やや満足"],["関東","女性","６０代","やや満足"],["九州","女性","６０代","大変満足"],["近畿","女性","２０代","大変満足"],["関東","女性","５０代","大変満足"],["中部","男性","４０代","やや不満"],["九州","女性","６０代","やや満足"],["関東","女性","６０代","大変満足"],["近畿","男性","３０代","大変満足"],["関東","女性","６０代","NA"],["関東","女性","２０代","大変満足"],["近畿","女性","５０代","やや満足"],["近畿","男性","５０代","やや満足"],["九州","男性","５０代","大変満足"],["九州","女性","５０代","大変満足"],["関東","男性","４０代","やや満足"],["近畿","男性","３０代","やや満足"],["関東","男性","３０代","やや満足"],["関東","女性","６０代","やや満足"],["中部","男性","５０代","やや満足"],["九州","女性","６０代","やや満足"],["関東","男性","５０代","大変満足"],["近畿","女性","５０代","大変満足"],["関東","女性","６０代","NA"],["中国・四国","女性","２０代","大変満足"],["関東","女性","２０代","大変満足"],["中部","男性","５０代","大変満足"],["九州","男性","６０代","NA"],["北海道・東北","女性","５０代","大変満足"],["関東","男性","２０代","やや満足"],["関東","男性","６０代","大変満足"],["近畿","女性","６０代","やや満足"],["関東","女性","３０代","大変満足"],["近畿","女性","３０代","大変満足"],["関東","男性","６０代","大変満足"],["九州","男性","６０代","やや満足"],["近畿","男性","６０代","やや満足"],["近畿","女性","３０代","やや不満"],["中部","男性","４０代","大変満足"],["中国・四国","女性","４０代","大変満足"],["関東","女性","３０代","大変満足"],["関東","男性","３０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","女性","３０代","大変満足"],["近畿","女性","４０代","やや満足"],["九州","男性","３０代","大変満足"],["関東","女性","２０代","大変満足"],["近畿","女性","２０代","やや満足"],["近畿","女性","５０代","やや満足"],["関東","男性","７０代","大変満足"],["中部","女性","２０代","やや満足"],["北海道・東北","女性","３０代","やや満足"],["中国・四国","女性","６０代","大変満足"],["近畿","男性","２０代","大変満足"],["中国・四国","女性","５０代","やや満足"],["関東","男性","４０代","大変満足"],["関東","女性","４０代","大変満足"],["中国・四国","男性","６０代","大変満足"],["近畿","男性","３０代","大変満足"],["中部","男性","３０代","やや満足"],["関東","男性","７０代","やや満足"],["中国・四国","男性","３０代","やや満足"],["関東","女性","４０代","大変満足"],["関東","女性","３０代","やや満足"],["関東","女性","６０代","NA"],["中部","男性","７０代","やや不満"],["近畿","女性","６０代","NA"],["関東","女性","２０代","やや満足"],["関東","女性","２０代","やや満足"],["九州","女性","６０代","やや満足"],["北海道・東北","女性","５０代","大変満足"],["関東","男性","４０代","やや満足"],["関東","男性","２０代","大変満足"],["九州","女性","２０代","やや不満"],["中部","男性","５０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","女性","３０代","大変満足"],["北海道・東北","女性","３０代","大変満足"],["近畿","女性","５０代","やや満足"],["近畿","女性","２０代","大変満足"],["北海道・東北","女性","２０代","大変満足"],["中部","男性","４０代","大変満足"],["関東","女性","３０代","やや満足"],["関東","男性","６０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","女性","３０代","大変満足"],["近畿","男性","６０代","NA"],["中部","女性","５０代","大変満足"],["九州","男性","５０代","やや満足"],["近畿","女性","７０代","大変満足"],["九州","女性","５０代","大変満足"],["関東","男性","６０代","やや不満"],["近畿","NA","７０代","大変満足"],["近畿","女性","７０代","大変満足"],["関東","女性","５０代","大変満足"],["中国・四国","男性","６０代","大変満足"],["九州","女性","２０代","大変満足"],["関東","女性","６０代","NA"],["中部","男性","７０代","NA"],["中部","男性","４０代","やや満足"],["中部","女性","４０代","やや満足"],["中部","女性","３０代","やや満足"],["中部","女性","５０代","大変満足"]],"words":["沖縄","思い","観光","思う","自然","ホテル","今回","バス","旅行","感じ","欲しい","良い","観光地","時間","道路","多く","整備","レンタカー","多い","行き","親切","案内","食事","タクシー","残念","行く","利用","必要","考え","もう少し","運転","モノレール","大変","情報","料理","渋滞","空港","離島","観光客","大切","ツアー","以上","場所","対応","施設","次回","特に","良く","印象","本島","説明","運転手","充実","移動","ガイド","出来","少し","感動","料金","楽しみ","満足","文化","沖縄料理","自分","体験","少ない","改善","海水族館","美しい海","観光バス","トイレ","マナー","北部","好き","是非","期待","環境","市内","首里城","イメージ","キレイ","ゴミ","交通","同じ","国際通り","多か","天気","悪い","素晴","開発","飛行機","標識","美しい自然","駐車場","以外"],"docN":323,"data":[[2,1,1],[6,1,1],[26,1,1],[28,1,1],[33,1,1],[2,2,1],[11,2,1],[23,2,1],[26,2,1],[36,2,1],[84,2,1],[0,3,1],[6,3,1],[19,3,1],[30,3,1],[45,3,1],[0,4,1],[6,4,1],[8,4,1],[21,4,1],[26,4,1],[43,4,1],[54,4,1],[69,4,1],[79,4,1],[88,4,1],[35,5,1],[53,5,1],[18,6,1],[24,6,1],[86,6,1],[2,7,1],[12,7,1],[44,7,1],[45,7,1],[60,7,1],[1,8,1],[4,9,1],[0,10,1],[47,10,1],[62,10,1],[73,10,1],[0,11,3],[1,11,2],[0,12,1],[7,12,1],[9,12,1],[51,12,1],[8,13,1],[20,13,2],[0,14,1],[8,14,1],[29,14,1],[46,14,1],[79,14,1],[4,15,1],[32,15,1],[90,16,1],[17,17,2],[20,17,1],[18,18,1],[82,18,1],[0,19,1],[0,20,1],[18,20,1],[25,20,1],[28,20,1],[89,20,1],[90,20,1],[1,21,1],[38,21,1],[2,22,1],[10,22,1],[0,23,1],[2,23,1],[35,23,1],[46,23,1],[59,23,1],[7,24,1],[31,24,1],[76,24,1],[82,24,1],[1,25,1],[29,25,1],[0,26,1],[1,26,2],[9,26,1],[30,26,1],[42,26,1],[66,26,1],[85,26,1],[15,27,1],[19,27,1],[37,27,1],[38,27,2],[41,27,1],[71,27,1],[30,28,1],[0,29,1],[1,29,1],[2,29,1],[7,29,1],[14,29,1],[16,29,1],[17,29,1],[93,29,1],[2,30,1],[5,30,2],[6,30,1],[7,30,1],[8,30,2],[9,30,1],[15,30,1],[22,30,2],[46,30,1],[51,30,2],[60,30,1],[1,31,1],[41,31,1],[0,32,1],[8,32,1],[13,32,2],[26,32,1],[33,32,1],[45,32,1],[53,32,1],[9,33,1],[15,33,1],[38,33,1],[0,34,1],[1,34,1],[9,34,1],[16,34,2],[24,34,1],[38,34,1],[39,34,1],[60,34,1],[37,35,1],[0,37,1],[2,37,1],[6,37,1],[8,37,2],[13,37,1],[19,37,1],[24,37,2],[28,37,2],[35,37,1],[41,37,1],[59,37,1],[67,37,1],[86,37,1],[1,38,1],[17,38,1],[20,38,1],[30,38,1],[53,38,1],[77,38,1],[30,39,1],[20,40,1],[1,41,1],[49,41,1],[0,42,1],[1,42,1],[3,42,1],[4,42,1],[21,42,1],[28,42,1],[38,42,1],[65,42,1],[91,42,1],[1,43,1],[8,43,1],[10,43,1],[27,43,1],[28,43,1],[47,43,1],[71,43,1],[81,43,1],[92,43,1],[13,44,1],[44,44,1],[56,44,1],[87,44,1],[0,45,3],[2,45,1],[18,45,1],[34,45,1],[41,45,1],[68,45,1],[74,45,2],[31,46,1],[6,47,1],[14,48,1],[0,49,1],[37,49,1],[58,49,1],[20,50,1],[46,50,1],[57,50,1],[0,51,1],[17,51,2],[19,51,1],[20,51,1],[23,51,2],[26,51,2],[30,51,1],[42,52,1],[0,53,1],[1,53,1],[2,53,1],[5,53,2],[6,53,1],[11,53,1],[22,53,1],[34,53,1],[17,54,2],[18,54,1],[0,55,1],[1,55,1],[25,55,1],[39,55,1],[59,55,1],[61,55,2],[10,56,1],[40,56,1],[22,57,1],[66,57,1],[0,58,1],[8,58,1],[17,58,1],[54,58,1],[57,58,1],[68,58,1],[69,58,1],[72,58,1],[0,59,1],[2,59,1],[5,59,3],[6,59,1],[7,59,1],[17,59,1],[25,59,1],[28,59,1],[53,59,1],[58,59,1],[69,59,1],[83,59,1],[2,60,2],[4,60,1],[7,60,1],[23,60,1],[35,60,1],[51,60,1],[72,60,1],[77,60,3],[4,61,1],[29,61,1],[62,61,1],[1,62,1],[9,62,1],[14,62,1],[16,62,1],[28,62,1],[47,62,1],[76,62,1],[1,63,1],[8,63,2],[12,63,1],[42,63,1],[73,63,1],[43,64,1],[58,64,1],[3,65,1],[16,65,1],[35,65,1],[43,65,1],[77,65,1],[82,65,1],[0,66,1],[1,66,1],[4,66,1],[23,66,1],[46,66,1],[56,66,1],[80,66,1],[87,66,1],[1,67,1],[7,67,1],[51,67,1],[7,68,1],[16,69,1],[66,69,1],[93,69,1],[4,70,1],[8,70,1],[10,70,1],[12,70,1],[39,70,1],[0,71,1],[1,71,2],[8,71,1],[60,71,1],[0,72,1],[1,72,1],[19,72,1],[39,72,1],[61,72,1],[0,73,1],[18,73,1],[46,73,1],[57,73,1],[64,73,2],[27,74,1],[40,74,2],[42,74,1],[58,74,1],[26,75,1],[70,75,1],[0,76,1],[2,76,1],[8,76,1],[20,76,1],[21,76,1],[24,76,1],[34,76,1],[49,76,1],[58,76,1],[3,77,1],[16,77,1],[27,77,1],[47,77,1],[84,77,1],[8,78,1],[17,78,1],[80,78,1],[72,79,1],[1,80,2],[5,80,1],[8,80,1],[13,80,1],[15,80,1],[17,80,1],[29,80,1],[79,80,1],[0,81,2],[1,81,4],[2,81,1],[21,81,1],[25,81,1],[35,81,1],[36,81,1],[58,83,1],[5,84,1],[0,86,3],[1,86,1],[2,86,1],[3,86,2],[5,86,1],[7,86,2],[16,86,1],[21,86,1],[26,86,1],[27,86,1],[31,86,1],[34,86,1],[38,86,1],[47,86,1],[51,86,1],[52,86,3],[59,86,1],[65,86,1],[74,86,1],[75,86,1],[4,87,1],[81,87,1],[0,88,1],[1,88,3],[2,88,1],[3,88,1],[12,88,1],[34,88,1],[61,88,1],[64,88,2],[74,88,1],[94,88,1],[6,89,1],[14,89,1],[15,89,1],[21,89,1],[63,89,1],[85,89,1],[2,90,1],[12,90,1],[0,91,2],[2,92,1],[8,92,1],[24,92,1],[1,93,1],[9,93,1],[10,93,1],[14,93,1],[16,93,1],[27,93,1],[67,93,1],[72,93,2],[88,93,1],[0,94,1],[11,94,1],[1,95,4],[2,95,1],[5,95,1],[10,95,1],[11,95,1],[48,95,1],[49,95,1],[68,95,1],[83,95,1],[0,96,1],[1,96,1],[7,96,4],[9,96,1],[13,96,1],[23,96,2],[42,96,1],[45,96,1],[73,96,1],[74,96,1],[0,97,1],[1,97,1],[3,97,1],[6,97,1],[22,97,1],[29,97,1],[38,97,1],[89,97,1],[21,98,1],[27,98,2],[33,98,1],[10,99,1],[10,100,3],[17,100,1],[58,100,1],[70,100,1],[76,100,1],[80,100,1],[84,100,1],[93,100,2],[1,101,1],[5,101,1],[22,101,1],[29,101,1],[34,101,1],[62,101,3],[94,101,3],[0,102,1],[23,102,1],[26,102,2],[46,102,1],[48,102,1],[87,102,1],[2,103,1],[16,103,1],[19,103,2],[30,103,1],[36,103,1],[52,103,1],[63,103,1],[69,103,1],[75,103,1],[22,104,1],[56,106,1],[7,107,1],[54,107,1],[59,107,1],[74,109,1],[75,109,1],[12,110,1],[70,110,1],[1,111,1],[44,111,1],[1,113,1],[19,113,1],[36,113,1],[1,114,2],[5,114,2],[6,114,1],[19,114,1],[41,114,1],[63,114,2],[87,114,1],[94,114,1],[5,115,1],[20,115,1],[24,115,1],[33,115,1],[1,116,1],[2,116,1],[9,116,1],[12,116,1],[28,116,1],[3,117,4],[5,117,3],[6,117,1],[7,117,1],[11,117,1],[29,117,1],[43,117,1],[67,117,1],[77,117,1],[1,118,2],[32,118,1],[71,118,1],[2,119,2],[5,119,2],[21,119,1],[65,119,1],[0,120,1],[0,121,1],[4,121,1],[0,122,2],[25,122,1],[34,122,1],[37,122,1],[5,123,1],[7,123,1],[9,123,1],[12,123,1],[52,123,1],[83,123,1],[10,124,1],[12,124,1],[13,124,1],[1,125,1],[31,125,2],[0,126,1],[4,126,1],[39,126,1],[57,126,1],[0,128,1],[16,128,1],[25,128,1],[56,128,1],[84,128,1],[15,129,1],[44,129,1],[58,129,1],[83,129,1],[68,130,1],[0,131,1],[4,131,1],[12,131,1],[25,131,1],[7,132,1],[10,132,1],[1,133,1],[6,133,1],[32,133,2],[42,133,1],[45,133,1],[50,133,1],[54,133,1],[60,133,1],[69,133,1],[86,133,1],[1,134,1],[28,134,1],[63,134,2],[0,135,2],[1,135,2],[14,135,1],[16,135,1],[24,135,1],[2,136,1],[6,136,2],[8,136,1],[13,136,2],[18,136,1],[27,136,1],[40,136,1],[9,137,1],[10,137,1],[25,137,1],[27,137,1],[31,137,2],[78,137,2],[5,138,1],[36,138,1],[69,138,1],[21,139,1],[88,139,1],[4,140,1],[8,140,1],[10,140,1],[11,140,1],[15,140,1],[43,140,1],[74,140,1],[2,142,1],[5,142,1],[17,142,1],[22,142,2],[30,142,1],[32,142,1],[44,142,1],[46,142,1],[48,142,1],[52,142,1],[60,142,1],[62,142,1],[82,142,1],[14,143,1],[1,144,2],[4,144,2],[5,144,1],[7,144,1],[45,144,1],[49,144,1],[50,144,1],[51,144,1],[54,144,1],[57,144,1],[59,144,1],[79,144,1],[2,145,1],[10,145,1],[31,145,1],[80,145,1],[1,146,2],[15,146,1],[17,146,1],[18,146,1],[21,146,1],[57,146,1],[88,146,1],[91,146,1],[0,147,1],[3,147,1],[6,147,1],[26,147,1],[33,147,1],[5,148,1],[7,148,1],[25,148,1],[36,148,1],[65,148,1],[3,149,1],[4,149,1],[11,149,1],[47,149,1],[81,149,1],[9,150,1],[23,150,1],[51,150,1],[0,151,3],[1,151,1],[2,151,1],[4,151,1],[9,151,1],[10,151,1],[11,151,1],[28,151,2],[61,151,2],[2,152,1],[3,152,2],[9,152,1],[10,152,2],[12,152,1],[20,152,2],[33,152,1],[39,152,1],[68,152,1],[1,153,1],[19,153,1],[22,153,1],[41,153,1],[0,154,1],[4,154,1],[10,154,1],[1,155,2],[11,155,1],[12,155,1],[16,155,1],[37,155,1],[75,155,1],[81,155,1],[11,156,1],[66,157,1],[67,157,1],[93,157,1],[4,158,2],[10,158,1],[12,158,1],[14,158,2],[16,158,1],[27,158,1],[76,158,2],[81,158,1],[1,159,1],[14,159,1],[16,159,1],[67,159,1],[10,160,1],[13,160,1],[0,161,1],[14,161,1],[30,161,1],[6,162,1],[86,162,1],[2,163,1],[6,163,1],[13,163,1],[24,163,1],[55,163,1],[63,163,1],[73,163,1],[7,164,1],[9,164,1],[13,164,1],[20,164,1],[32,164,1],[41,164,1],[53,164,3],[90,164,1],[0,165,1],[25,165,1],[36,165,1],[0,166,2],[3,166,1],[41,166,1],[59,166,1],[20,168,1],[43,168,1],[60,168,1],[11,169,1],[18,169,1],[44,169,1],[49,169,1],[16,170,1],[31,170,1],[3,171,1],[18,171,1],[22,171,1],[24,171,1],[38,171,1],[56,171,1],[3,172,1],[11,172,1],[90,172,1],[3,173,1],[76,173,1],[0,174,1],[55,174,1],[57,174,1],[80,174,1],[86,174,1],[4,175,1],[87,176,1],[2,177,1],[23,177,1],[44,177,1],[30,178,1],[71,178,1],[42,179,1],[91,179,1],[21,180,1],[0,181,1],[26,181,1],[29,181,1],[92,181,1],[0,182,1],[37,182,1],[49,182,1],[73,182,2],[11,183,1],[69,185,1],[31,186,1],[46,187,1],[66,187,1],[82,187,1],[2,188,1],[23,188,2],[39,188,1],[51,188,1],[82,188,1],[87,188,1],[7,189,2],[25,189,1],[31,189,1],[63,189,1],[78,189,2],[0,190,1],[55,190,1],[0,191,1],[10,191,1],[39,191,1],[50,191,1],[2,192,1],[9,192,1],[12,192,1],[0,193,1],[47,193,1],[55,193,1],[89,193,1],[2,194,1],[8,194,1],[44,194,1],[52,194,1],[36,195,1],[3,196,1],[12,196,1],[48,196,1],[53,196,1],[70,196,2],[0,197,1],[2,197,1],[3,197,1],[18,197,2],[25,197,1],[7,198,1],[43,198,1],[54,198,1],[1,199,1],[36,199,1],[59,199,1],[0,200,1],[1,200,1],[81,200,1],[0,201,1],[4,201,1],[45,201,1],[61,201,1],[75,201,1],[79,201,1],[4,202,1],[6,202,1],[45,202,1],[56,202,1],[64,202,2],[0,203,1],[1,203,1],[7,203,1],[15,203,1],[20,203,1],[47,203,1],[63,203,1],[80,203,1],[3,204,2],[11,204,1],[18,204,1],[29,204,1],[35,204,1],[66,204,1],[11,205,2],[12,205,1],[49,205,1],[0,206,2],[1,206,1],[5,206,1],[24,206,1],[32,206,2],[68,206,1],[76,206,1],[89,206,1],[32,207,1],[43,207,1],[0,208,2],[1,208,2],[2,208,2],[4,208,1],[6,208,1],[10,208,1],[13,208,1],[39,208,1],[68,208,1],[0,209,1],[0,211,1],[1,212,1],[14,212,2],[20,212,1],[36,212,1],[48,212,1],[85,212,1],[3,213,2],[20,213,1],[64,213,1],[6,214,1],[8,214,1],[24,214,1],[25,214,1],[90,214,1],[4,215,1],[92,215,1],[3,216,1],[13,216,1],[40,216,1],[65,216,1],[78,216,1],[0,217,1],[2,218,1],[7,218,1],[35,219,1],[70,219,1],[0,220,1],[5,220,1],[40,220,1],[58,220,1],[6,221,1],[9,221,1],[40,221,1],[53,221,1],[4,223,1],[89,223,1],[15,224,1],[35,224,1],[0,225,2],[2,225,1],[14,225,1],[67,225,1],[77,225,1],[79,225,1],[87,225,1],[2,226,1],[40,226,1],[3,227,1],[11,227,1],[24,227,1],[57,227,1],[55,228,1],[72,228,1],[3,229,2],[13,229,1],[29,229,1],[40,229,1],[42,229,1],[84,229,1],[24,231,1],[86,231,1],[3,232,1],[9,232,1],[22,232,1],[42,232,1],[65,232,1],[9,233,1],[73,234,1],[0,235,1],[11,235,1],[0,236,1],[11,236,1],[72,236,1],[59,237,1],[0,238,1],[6,240,1],[4,241,1],[9,241,1],[16,241,1],[37,241,1],[0,242,1],[15,242,1],[24,242,1],[83,242,1],[84,242,1],[0,243,1],[4,243,1],[5,243,1],[34,243,1],[57,243,1],[88,243,1],[17,244,1],[23,244,2],[30,244,2],[0,246,1],[4,246,1],[28,246,1],[2,247,1],[3,247,3],[9,247,1],[11,247,1],[12,247,1],[14,247,2],[18,247,1],[26,247,1],[44,247,1],[30,249,1],[20,250,1],[71,250,1],[85,250,1],[2,251,1],[24,251,1],[34,251,1],[35,252,1],[65,252,1],[0,253,2],[4,253,1],[7,253,1],[39,253,1],[56,253,1],[0,254,1],[2,254,1],[3,254,1],[12,254,1],[27,254,2],[83,254,1],[2,255,1],[13,255,1],[2,256,1],[29,256,1],[15,257,1],[21,257,1],[25,257,1],[62,257,1],[20,258,1],[38,258,1],[32,259,1],[67,259,1],[88,259,1],[74,261,1],[92,261,1],[7,262,1],[85,262,1],[6,263,1],[9,264,1],[12,264,1],[35,265,1],[11,266,1],[17,267,1],[33,267,1],[94,267,2],[10,268,1],[12,269,1],[18,269,2],[93,269,1],[15,270,1],[33,270,1],[56,270,1],[14,271,1],[15,271,1],[35,271,1],[71,271,1],[81,271,1],[55,272,1],[7,273,1],[11,273,1],[70,273,1],[41,274,1],[4,275,1],[3,276,1],[6,276,1],[16,276,1],[38,276,2],[41,276,1],[89,276,1],[91,276,1],[14,277,1],[66,277,1],[82,277,1],[91,277,2],[0,278,1],[1,278,3],[2,278,1],[4,278,1],[9,278,1],[15,278,1],[28,278,1],[34,278,1],[44,278,1],[52,278,1],[88,278,1],[26,279,1],[37,279,1],[83,280,1],[84,280,1],[0,282,3],[1,282,5],[2,282,1],[4,282,1],[6,282,2],[8,282,1],[16,282,1],[26,282,1],[90,282,1],[29,283,1],[33,283,1],[37,283,1],[5,284,1],[9,284,1],[13,284,1],[22,284,1],[36,284,1],[40,284,1],[3,285,1],[6,285,1],[43,285,1],[49,285,2],[0,286,1],[5,286,1],[6,286,2],[8,286,1],[12,286,2],[13,286,1],[21,286,3],[22,286,1],[40,286,1],[50,286,1],[54,286,1],[62,286,1],[67,286,1],[78,286,1],[15,287,1],[18,287,1],[29,287,1],[37,287,1],[93,287,1],[0,288,1],[1,288,1],[4,288,1],[19,288,1],[39,288,1],[42,288,1],[76,288,1],[5,289,2],[22,289,1],[28,289,1],[47,289,1],[70,289,1],[0,290,3],[2,290,3],[8,290,1],[19,290,1],[45,290,1],[69,290,1],[75,290,2],[85,290,1],[7,291,1],[23,291,1],[31,291,1],[4,292,1],[1,293,1],[13,293,1],[23,293,2],[43,293,1],[51,293,1],[66,293,1],[0,294,1],[1,294,1],[8,294,1],[19,294,2],[32,294,1],[24,295,1],[37,295,1],[49,295,1],[80,295,1],[0,296,1],[5,296,1],[10,296,1],[0,297,1],[4,297,1],[45,297,1],[68,298,1],[73,298,1],[25,299,1],[72,299,1],[0,300,1],[6,301,1],[8,301,1],[86,301,1],[0,302,1],[4,302,1],[9,302,1],[22,302,1],[48,302,1],[56,302,1],[79,302,1],[6,303,1],[55,303,1],[64,303,1],[85,303,1],[90,303,1],[0,304,1],[0,305,1],[3,305,1],[11,305,1],[12,305,1],[18,305,1],[21,305,1],[33,305,1],[36,305,1],[48,305,2],[61,305,1],[52,306,1],[11,307,1],[15,307,1],[92,307,2],[14,308,1],[65,308,1],[77,309,1],[0,310,1],[19,310,1],[13,311,1],[29,311,1],[48,311,1],[78,311,1],[0,312,2],[1,312,1],[0,313,1],[50,313,2],[54,313,1],[61,313,1],[78,313,1],[5,315,1],[27,315,1],[0,316,1],[1,316,1],[5,316,1],[9,316,2],[12,316,1],[19,316,1],[33,316,1],[37,316,1],[53,316,1],[60,316,1],[6,317,1],[32,317,1],[46,317,1],[71,317,2],[0,318,1],[3,318,3],[22,318,2],[34,318,1],[47,318,1],[50,318,1],[55,318,1],[62,318,1],[0,319,1],[3,319,1],[4,319,1],[10,319,1],[64,319,1],[15,320,1],[13,321,1],[19,321,1],[23,321,1],[25,321,1],[27,321,1],[33,321,1],[52,321,1],[8,322,1],[19,322,1],[21,322,2],[34,322,1],[50,322,1],[55,322,1],[60,322,1],[75,322,1]]};
+function rowsFromDemo(){
+  const d=DEMO_OKINAWA,wN=d.words.length;
+  const mat=Array.from({length:d.docN},()=>new Array(wN).fill(0));
+  d.data.forEach(([wi,di,c])=>{mat[di][wi]=c;});
+  const rows=[['doc',...d.attrCols,...d.words]];
+  for(let di=0;di<d.docN;di++)rows.push(['d'+(di+1),...d.attrs[di],...mat[di].map(String)]);
+  return rows;
+}
+
+// ---------- events ----------
+const drop=$('#drop'),fileInput=$('#file');
+drop.onclick=()=>fileInput.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
+fileInput.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
+$('#demo').onclick=()=>{loadRows(rowsFromDemo(),'okinawa_dfm.csv');toast(t('toast_demo'));};
+
+$('#kTopic').oninput=e=>$('#kVal').textContent=e.target.value;
+$('#kTopic').onchange=()=>renderTopic();
+$('#topWords').oninput=e=>$('#twVal').textContent=e.target.value;
+$('#topWords').onchange=()=>renderTopic();
+$('#init').onchange=()=>renderTopic();
+$('#seed').oninput=e=>$('#seedVal').textContent=e.target.value;
+$('#seed').onchange=()=>renderTopic();
+$('#nstart').oninput=e=>$('#nstartVal').textContent=e.target.value;
+$('#nstart').onchange=()=>renderTopic();
+$('#maxit').onchange=()=>renderTopic();
+$('#eps').onchange=()=>renderTopic();
+$('#recalc').onclick=()=>{let s=+$('#seed').value+1;if(s>+$('#seed').max)s=1;$('#seed').value=s;$('#seedVal').textContent=s;renderTopic();};
+
+MODULES.push({applyI18n});
+})();
+
+/* ============================================================
+   MATRIX MODULE  (generic NMF explorer: Y ≈ XB)
+   ============================================================ */
+(function(){
+const PANEL=document.getElementById('panel-matrix');
+const $=s=>PANEL.querySelector(s);
+const $$=s=>PANEL.querySelectorAll(s);
+
+let DATA=null, RESULT=null, LAST=null;
+const CLU=['#4fd6c8','#e8a54b','#9d8cf0','#6fcf6f','#e06a9c','#5ba3e0','#d9d24b','#e07a5a','#4fd6a0','#b08cf0','#8ac6d1','#f0a868'];
+const cluColor=k=>CLU[k%CLU.length];
+
+const I18N={
+  ja:{
+    g_data:'データ', g_param:'階数', g_nmf:'NMF設定', g_constr:'制約・前処理', recalc:'↻ 再計算（シードを進めて解き直す）',
+    g_excl:'対象外の特徴量', excl_hint:'チェックした特徴量（行）は分解から除外されます。', toast_allexcl:'特徴量がすべて除外されています', meta_excl:'除外特徴量',
+    drop_big:'CSVをドロップ / クリック', drop_small:'rows = 特徴量(P) · cols = サンプル(N)',
+    cb_header:'1行目を列名として扱う', cb_rowname:'1列目を行名として扱う',
+    cb_transpose:'行列を転置してから分解', cb_transpose_sub:'Y → Yᵀ (行と列を入れ替え)',
+    demo_btn:'◇ デモデータを読み込む',
+    p_rank:'階数 Q (基底数=クラスタ数)', p_maxit:'最大反復回数', p_eps:'収束閾値 (相対)',
+    p_seed:'乱数シード', p_nstart:'再スタート回数 (nstart)', p_init:'Xの初期値',
+    init_kmeans:'k-means++ (Yの列の重心)', init_random:'一様乱数',
+    init_ref:'k-means++ は <a href="https://dl.acm.org/doi/10.5555/1283383.1283494" target="_blank" rel="noopener">Arthur &amp; Vassilvitskii (2007), SODA</a> による初期化。初期中心を距離²に比例した確率で選び、安定した開始点を得る。',
+    cb_xnorm:'Xの列和を1に制約', cb_xnorm_sub:'更新式内で正規化・各基底を確率分布化',
+    cb_logy:'前処理: log(1+Y) 変換', cb_logy_sub:'各要素を log(1+Y) に（[0,1]正規化より先に適用）',
+    cb_shifty:'前処理: Y − min(Y)（非負化）', cb_shifty_sub:'全体の最小値を引いて非負に（負データ対応・対数変換より前）',
+    cb_normcol:'前処理: 変数ごと(行)に[0,1]正規化', cb_normcol_sub:'各行を (x−min)/(max−min) で0〜1に（転置後に適用）',
+    run:'分解を実行', run_busy:'計算中…',
+    hint:'乗法更新則（Lee &amp; Seung, 二乗誤差版）で <span style="color:var(--amber)">X</span>·<span style="color:var(--violet)">B</span> を推定。各列は <span class="y">y</span> ≈ <span style="color:var(--amber)">X</span><span style="color:var(--violet)">b</span> という潜在変数による重回帰とみなせます。<span style="color:var(--amber)">X</span>の行を正規化すれば特徴量の、<span style="color:var(--violet)">B</span>の列を正規化すればサンプルの所属確率になります。計算はすべてブラウザ内で完結し、データは外部送信されません。',
+    ph_main:'左でCSVを読み込むか、デモデータを試してください。',
+    ph_sub:'行列 Y を Q 個の非負な基底 (X) と、その係数 (B) に分解し、両側からクラスタリングします。',
+    m_iters:'反復', m_size:'サイズ', m_conv:'収束', m_noconv:'未収束（最大反復に到達）',
+    c_conv:'収束曲線', c_conv_d:'反復ごとの残差平方和。単調減少していれば正常に収束しています。',
+    c_X:'基底行列', c_X_d_base:'各列が1つの基底パターン', c_X_d_norm:'（列和=1・確率分布）', c_X_d_end:'。',
+    c_B:'係数行列', c_B_d:'各列（サンプル）が基底をどれだけ混ぜて構成されるか。',
+    c_recon:'再構成', c_recon_d:'左：元データ Y ／ 右：近似 XB。パターンが一致していれば良い分解です。',
+    c_basis:'基底ベクトルの棒グラフ',
+    c_box:'基底ごとの所属確率（箱ひげ図）', c_box_leg:'箱=四分位・太線=中央値・ひげ=最小/最大・×=平均',
+    lab_orig:'Y (元データ)', lab_approx:'XB (近似)',
+    leg_low:'low', leg_high:'high',
+    sec_feat_badge:'基底 X の行', sec_feat:'特徴量のクラスタリング',
+    sec_samp_badge:'係数 B の列', sec_samp:'サンプルのクラスタリング',
+    cc_hard:'ハードクラスタリング', cc_hard_d:'各{n}を、最も所属確率の高い基底に割り当てた結果。',
+    cc_table_tag:'最適値 / 所属確率 / ハード', cc_table_d:'上段=最適値／中段=所属確率(合計1)／最下行=ハード割当。',
+    tbl_X:'X テーブル', tbl_B:'B テーブル',
+    cluster_word:'Cluster', items:'件',
+    tbl_head_feat:'行 \\ 特徴量', tbl_head_samp:'行 \\ サンプル',
+    noun_feat:'特徴量', noun_samp:'サンプル',
+    dl_title:'ダウンロード',
+    dl_log:'.log (設定・計算結果)',
+    dl_X:'X.csv (基底)', dl_B:'B.csv (係数)',
+    dl_Xmem:'X_membership.csv (特徴量所属)', dl_Xhard:'X_hard.csv (特徴量割当)',
+    dl_Bmem:'B_membership.csv (サンプル所属)', dl_Bhard:'B_hard.csv (サンプル割当)',
+    dl_XB:'XB.csv (再構成)', dl_log2:'ログ', dl_mem:'所属 CSV', dl_hard:'ハード CSV',
+    toast_demo:'デモデータを読み込みました (6×6 好み行列)',
+    toast_nonum:'数値データが読み取れませんでした',
+    toast_neg:'負の値が {n} 個あります。NMFは非負データ用です。',
+    toast_parsefail:'CSVの解析に失敗しました: {m}',
+    toast_calcerr:'計算エラー: {m}',
+    meta_file:'file', meta_loaded:'読込', meta_transposed:'転置後',
+    meta_nan:'非数値 {n} 個を 0 に置換'
+  },
+  en:{
+    g_data:'Data', g_param:'Rank', g_nmf:'NMF settings', g_constr:'Constraints & preprocessing', recalc:'↻ Recompute (advance seed & refit)',
+    g_excl:'Excluded features', excl_hint:'Checked features (rows) are removed before factorization.', toast_allexcl:'All features are excluded', meta_excl:'excluded',
+    drop_big:'Drop or click a CSV', drop_small:'rows = features (P) · cols = samples (N)',
+    cb_header:'Use first row as column names', cb_rowname:'Use first column as row names',
+    cb_transpose:'Transpose before factorization', cb_transpose_sub:'Y → Yᵀ (swap rows and columns)',
+    demo_btn:'◇ Load demo data',
+    p_rank:'Rank Q (bases = clusters)', p_maxit:'Max iterations', p_eps:'Convergence tol. (relative)',
+    p_seed:'Random seed', p_nstart:'Restarts (nstart)', p_init:'Initial value of X',
+    init_kmeans:'k-means++ (centroids of Y columns)', init_random:'Uniform random',
+    init_ref:'k-means++ initialization from <a href="https://dl.acm.org/doi/10.5555/1283383.1283494" target="_blank" rel="noopener">Arthur &amp; Vassilvitskii (2007), SODA</a>. Seeds are chosen with probability ∝ squared distance for a stable start.',
+    cb_xnorm:'Constrain columns of X to sum to 1', cb_xnorm_sub:'normalized within updates; each basis becomes a distribution',
+    cb_logy:'Preprocess: log(1+Y) transform', cb_logy_sub:'element-wise log(1+Y) (applied before [0,1] scaling)',
+    cb_shifty:'Preprocess: Y − min(Y) (make non-negative)', cb_shifty_sub:'subtract the global minimum (handles negative data; applied before log)',
+    cb_normcol:'Preprocess: min-max scale each variable (row) to [0,1]', cb_normcol_sub:'(x−min)/(max−min) per row (applied after transpose)',
+    run:'Run factorization', run_busy:'Computing…',
+    hint:'Estimates <span style="color:var(--amber)">X</span>·<span style="color:var(--violet)">B</span> via multiplicative updates (Lee &amp; Seung, squared error). Each column reads as a latent-variable regression <span class="y">y</span> ≈ <span style="color:var(--amber)">X</span><span style="color:var(--violet)">b</span>. Normalizing rows of <span style="color:var(--amber)">X</span> gives feature memberships; normalizing columns of <span style="color:var(--violet)">B</span> gives sample memberships. Everything runs in your browser; no data is uploaded.',
+    ph_main:'Load a CSV on the left, or try the demo data.',
+    ph_sub:'Factorize Y into Q non-negative bases (X) and coefficients (B), then cluster from both sides.',
+    m_iters:'iters', m_size:'size', m_conv:'converged', m_noconv:'not converged (reached max iterations)',
+    c_conv:'Convergence curve', c_conv_d:'Residual sum of squares per iteration. A monotone decrease means it is converging.',
+    c_X:'Basis matrix', c_X_d_base:'Each column is one basis pattern', c_X_d_norm:' (columns sum to 1; a distribution)', c_X_d_end:'.',
+    c_B:'Coefficient matrix', c_B_d:'How much each column (sample) mixes the bases.',
+    c_recon:'Reconstruction', c_recon_d:'Left: original Y. Right: approximation XB. Matching patterns indicate a good fit.',
+    c_basis:'Basis vector bar chart',
+    c_box:'Membership per basis (box plot)', c_box_leg:'box = quartiles, thick line = median, whiskers = min/max, × = mean',
+    lab_orig:'Y (original)', lab_approx:'XB (approx)',
+    leg_low:'low', leg_high:'high',
+    sec_feat_badge:'rows of X', sec_feat:'feature clustering',
+    sec_samp_badge:'columns of B', sec_samp:'sample clustering',
+    cc_hard:'Hard clustering', cc_hard_d:'Each {n} is assigned to the basis with the highest membership.',
+    cc_table_tag:'optimal / membership / hard', cc_table_d:'Top: optimal values. Middle: membership (sums to 1). Bottom: hard assignment.',
+    tbl_X:'X table', tbl_B:'B table',
+    cluster_word:'Cluster', items:'items',
+    tbl_head_feat:'row \\ feature', tbl_head_samp:'row \\ sample',
+    noun_feat:'feature', noun_samp:'sample',
+    dl_title:'Downloads',
+    dl_log:'.log (settings & metrics)',
+    dl_X:'X.csv (basis)', dl_B:'B.csv (coefficients)',
+    dl_Xmem:'X_membership.csv (feature membership)', dl_Xhard:'X_hard.csv (feature assignment)',
+    dl_Bmem:'B_membership.csv (sample membership)', dl_Bhard:'B_hard.csv (sample assignment)',
+    dl_XB:'XB.csv (reconstruction)', dl_log2:'log', dl_mem:'membership', dl_hard:'hard',
+    toast_demo:'Loaded demo data (6×6 preference matrix)',
+    toast_nonum:'Could not read numeric data',
+    toast_neg:'Found {n} negative values. NMF expects non-negative data.',
+    toast_parsefail:'Failed to parse CSV: {m}',
+    toast_calcerr:'Computation error: {m}',
+    meta_file:'file', meta_loaded:'loaded', meta_transposed:'transposed',
+    meta_nan:'replaced {n} non-numeric values with 0'
+  }
+};
+function t(k){ const d=I18N[LANG]; return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k); }
+function applyI18n(){
+  $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  $$('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  if(DATA) refreshMeta();
+  if(LAST) render(LAST.res,LAST.data);
+}
+
+function parseCSV(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim();
+  const firstLine=text.split('\n')[0];
+  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
+  const rows=[];let row=[];let cur='';let q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(r=>r.length&&!(r.length===1&&r[0].trim()===''));
+}
+function buildMatrix(rows,hasHeader,hasRowname){
+  let colnames=null,rownames=[];
+  if(hasHeader){const h=rows[0];colnames=hasRowname?h.slice(1):h.slice();rows=rows.slice(1);}
+  const matrix=[];
+  rows.forEach((r,ri)=>{
+    let cells=r;
+    if(hasRowname){rownames.push(r[0]===''?('r'+(ri+1)):r[0]);cells=r.slice(1);}else rownames.push('r'+(ri+1));
+    matrix.push(cells.map(x=>{const v=parseFloat(String(x).trim());return isFinite(v)?v:NaN;}));
+  });
+  const N=Math.max(...matrix.map(r=>r.length));
+  let nanCount=0,negCount=0;
+  for(const r of matrix){while(r.length<N)r.push(NaN);for(let j=0;j<N;j++){if(!isFinite(r[j])){r[j]=0;nanCount++;}else if(r[j]<0)negCount++;}}
+  if(!colnames)colnames=Array.from({length:N},(_,j)=>'c'+(j+1));
+  while(colnames.length<N)colnames.push('c'+(colnames.length+1));
+  return {matrix,rownames,colnames,P:matrix.length,N,nanCount,negCount};
+}
+function transposeData(d){
+  const T=Array.from({length:d.N},()=>new Array(d.P));
+  for(let i=0;i<d.P;i++)for(let j=0;j<d.N;j++)T[j][i]=d.matrix[i][j];
+  return {matrix:T,rownames:d.colnames.slice(),colnames:d.rownames.slice(),P:d.N,N:d.P,nanCount:d.nanCount,negCount:d.negCount};
+}
+
 function heatColor(t){
   t=Math.max(0,Math.min(1,t));
   const stops=[[22,30,34],[26,62,72],[30,110,110],[79,214,200],[190,220,150],[232,165,75],[250,230,180]];
@@ -530,7 +1071,6 @@ function heatColor(t){
   const a=stops[i],b=stops[Math.min(i+1,stops.length-1)];
   return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;
 }
-
 function drawHeatmap(canvas,M,opts){
   const {rows,maxCellsW=520,maxCellsH=360}=opts;
   const nr=M.length,nc=M[0].length;
@@ -546,7 +1086,6 @@ function drawHeatmap(canvas,M,opts){
   if(rows&&ch>=9){ctx.fillStyle=cssVar('--ink-dim');ctx.font='10px ui-monospace,monospace';ctx.textBaseline='middle';
     for(let i=0;i<nr;i++){let lab=String(rows[i]);if(lab.length>18)lab=lab.slice(0,17)+'…';ctx.fillText(lab,4,padT+i*ch+ch/2);}}
 }
-
 function drawConverge(canvas,hist){
   const W=520,H=180,padL=52,padB=26,padT=12,padR=12,dpr=window.devicePixelRatio||1;
   canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
@@ -565,11 +1104,62 @@ function drawConverge(canvas,hist){
   ctx.fillStyle=textC;ctx.textAlign='center';ctx.fillText(xmin+'',px(xmin),H-8);ctx.fillText(xmax+' iter',px(xmax)-6,H-8);ctx.textAlign='left';
 }
 
-function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
-function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888';}
-
-function clusteringHTML(prefix){
+// bar chart of one basis vector X_k over the P variables (rows); y-axis fixed to the global min..max of X (all bases)
+function basisBarSvg(X,P,Q,k,rowLabels){
+  let gmin=Infinity,gmax=-Infinity;
+  for(let i=0;i<P;i++)for(let j=0;j<Q;j++){const v=X[i][j];if(v<gmin)gmin=v;if(v>gmax)gmax=v;}
+  if(!isFinite(gmin)){gmin=0;gmax=1;}
+  if(gmax<=gmin)gmax=gmin+1e-9;
+  const step=P>60?12:(P>30?16:24),barW=Math.max(4,step-6);
+  const padL=58,padT=26,padR=16;
+  const maxLab=rowLabels.reduce((m,s)=>Math.max(m,String(s).length),1);
+  const padB=Math.min(170,Math.round(maxLab*6.4)+16);
+  const plotH=210;
+  const W=padL+P*step+padR,H=padT+plotH+padB;
+  const y=v=>padT+plotH-(v-gmin)/(gmax-gmin)*plotH;
+  const col=cluColor(k),lineC=cssVar('--line'),ink=cssVar('--ink-dim'),faint=cssVar('--ink-faint');
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace">`;
+  [gmin,(gmin+gmax)/2,gmax].forEach((tv,ti)=>{const yy=y(tv);s+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="${lineC}" stroke-width="1"/>`+(ti===1?'':`<text x="${padL-6}" y="${yy+3}" text-anchor="end" font-size="9" fill="${faint}">${tv.toFixed(3)}</text>`);});
+  for(let i=0;i<P;i++){
+    const cx=padL+i*step+step/2,v=X[i][k],yy=y(v),h=Math.max(0,y(gmin)-yy);
+    s+=`<rect x="${cx-barW/2}" y="${yy}" width="${barW}" height="${h}" fill="${col}" rx="1"/>`;
+    s+=`<text transform="translate(${cx} ${y(gmin)+6}) rotate(-90)" text-anchor="end" dy="0.32em" font-size="9.5" fill="${ink}">${esc(String(rowLabels[i]))}</text>`;
+  }
+  s+=`<text x="8" y="17" font-size="13" font-weight="700" fill="${col}">X${k+1}</text></svg>`;
+  return s;
+}
+// box plot of per-sample membership (column-normalized B) for each basis; y-axis fixed to [0,1]
+function membershipBoxSvg(membership,Q,N,basisLabels){
+  const padL=46,padT=16,padR=16,padB=28,plotH=220;
+  const slotW=Math.max(56,Math.min(96,Math.round(560/Q))),boxW=Math.min(42,slotW*0.5);
+  const W=padL+Q*slotW+padR,H=padT+plotH+padB;
+  const y=v=>padT+plotH-Math.max(0,Math.min(1,v))*plotH;
+  const lineC=cssVar('--line'),ink=cssVar('--ink-dim'),faint=cssVar('--ink-faint');
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace">`;
+  for(let g=0;g<=4;g++){const val=g/4,yy=y(val);s+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="${lineC}" stroke-width="1"/><text x="${padL-6}" y="${yy+3}" text-anchor="end" font-size="9" fill="${faint}">${val.toFixed(2)}</text>`;}
+  for(let k=0;k<Q;k++){
+    const arr=Array.from(membership[k]).sort((a,b)=>a-b),n=arr.length;
+    const qf=p=>{const idx=p*(n-1),lo=Math.floor(idx),hi=Math.ceil(idx);return lo===hi?arr[lo]:arr[lo]+(arr[hi]-arr[lo])*(idx-lo);};
+    const mn=arr[0],mx=arr[n-1],q1=qf(0.25),md=qf(0.5),q3=qf(0.75);
+    let sum=0;for(let j=0;j<n;j++)sum+=arr[j];const mean=sum/n;
+    const cx=padL+k*slotW+slotW/2,col=cluColor(k);
+    // whiskers: Q3 -> max (upper) and Q1 -> min (lower); they do not cross the box interior
+    s+=`<line x1="${cx}" y1="${y(q3)}" x2="${cx}" y2="${y(mx)}" stroke="${col}" stroke-width="1.3"/>`;
+    s+=`<line x1="${cx}" y1="${y(q1)}" x2="${cx}" y2="${y(mn)}" stroke="${col}" stroke-width="1.3"/>`;
+    s+=`<line x1="${cx-boxW*0.3}" y1="${y(mx)}" x2="${cx+boxW*0.3}" y2="${y(mx)}" stroke="${col}" stroke-width="1.3"/>`;
+    s+=`<line x1="${cx-boxW*0.3}" y1="${y(mn)}" x2="${cx+boxW*0.3}" y2="${y(mn)}" stroke="${col}" stroke-width="1.3"/>`;
+    const boxTop=y(q3),bh=Math.max(1,y(q1)-y(q3));
+    s+=`<rect x="${cx-boxW/2}" y="${boxTop}" width="${boxW}" height="${bh}" fill="${col}" fill-opacity="0.22" stroke="${col}" stroke-width="1.3"/>`;
+    s+=`<line x1="${cx-boxW/2}" y1="${y(md)}" x2="${cx+boxW/2}" y2="${y(md)}" stroke="${col}" stroke-width="2"/>`;
+    const my=y(mean),ms=4;
+    s+=`<path d="M${cx-ms} ${my-ms} L${cx+ms} ${my+ms} M${cx-ms} ${my+ms} L${cx+ms} ${my-ms}" stroke="${ink}" stroke-width="1.4"/>`;
+    s+=`<text x="${cx}" y="${padT+plotH+16}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${col}">${esc(basisLabels[k])}</text>`;
+  }
+  return s+`</svg>`;
+}
+function clusteringHTML(prefix,extra){
   const tag=prefix==='feat'?'x':'b';
+  const memDl=prefix==='feat'?'Xmem':'Bmem', hardDl=prefix==='feat'?'Xhard':'Bhard';
   return `
     <div class="card">
       <h3>${t('cc_hard')} <span class="tag ${tag}">argmax</span></h3>
@@ -577,13 +1167,13 @@ function clusteringHTML(prefix){
       <div class="clusum" id="${prefix}Sum"></div>
       <div class="chips" id="${prefix}Chips"></div>
     </div>
+    ${extra||''}
     <div class="card">
-      <h3>${prefix==='feat'?t('tbl_X'):t('tbl_B')} <span class="tag ${tag}">${t('cc_table_tag')}</span></h3>
+      <h3>${prefix==='feat'?t('tbl_X'):t('tbl_B')} <span class="tag ${tag}">${t('cc_table_tag')}</span><button class="dl" data-dl="${memDl}" style="margin-left:auto">${t('dl_mem')}</button><button class="dl" data-dl="${hardDl}">${t('dl_hard')}</button></h3>
       <p class="desc">${t('cc_table_d')}</p>
       <div class="tablewrap" id="${prefix}Table"></div>
     </div>`;
 }
-
 function fillClustering(prefix,itemLabels,cl,Q,basisLabels,rawRows,noun,headKey){
   $('#'+prefix+'HardDesc').textContent=t('cc_hard_d').replace('{n}',noun);
   const nItems=itemLabels.length;
@@ -610,7 +1200,12 @@ function render(res,data){
   const sampCl=clusterCols(res.B,res.rank,res.N);
   const rawRowsX=Array.from({length:res.rank},(_,k)=>Float64Array.from({length:res.P},(_,i)=>res.X[i][k]));
   const rawRowsB=res.B;
-  const cxd=t('c_X_d_base')+($('#wnorm').checked?t('c_X_d_norm'):'')+t('c_X_d_end');
+  const cxd=t('c_X_d_base')+t('c_X_d_norm')+t('c_X_d_end');
+  const boxCard=`<div class="card">
+      <h3>${t('c_box')} <span class="tag b">B</span><button class="dl" id="boxSvg" style="margin-left:auto;padding:5px 9px">SVG</button></h3>
+      <p class="desc">${t('c_box_leg')}</p>
+      <div class="canvas-scroll" id="boxBar"></div>
+    </div>`;
 
   stage.innerHTML=`
     <div class="metrics">
@@ -618,25 +1213,25 @@ function render(res,data){
       <div class="metric"><div class="k">R²</div><div class="v">${res.r2.toFixed(4)}</div></div>
       <div class="metric"><div class="k">RMSE</div><div class="v">${res.rmse.toPrecision(4)}</div></div>
       <div class="metric"><div class="k">RSS</div><div class="v">${res.rss.toPrecision(4)}</div></div>
-      <div class="metric"><div class="k">${t('m_iters')}</div><div class="v">${res.iters}<small> /it</small></div></div>
+      <div class="metric"><div class="k">${t('m_iters')}</div><div class="v">${res.iters}<small> / ${(res.meta&&res.meta.maxit)||res.iters}</small> <span title="${res.converged?t('m_conv'):t('m_noconv')}" style="font-size:13px;color:${res.converged?'var(--cyan)':'var(--amber)'}">${res.converged?'✓':'⚠'}</span></div></div>
       <div class="metric"><div class="k">${t('m_size')}</div><div class="v" style="font-size:15px">${res.P}×${res.N}</div></div>
     </div>
 
     <div class="card">
-      <h3>${t('c_conv')} <span class="tag y">RSS</span></h3>
+      <h3>${t('c_conv')} <span class="tag y">RSS</span><button class="dl" data-dl="log" style="margin-left:auto">${t('dl_log2')}</button></h3>
       <p class="desc">${t('c_conv_d')}</p>
       <div class="canvas-scroll"><canvas id="cvConv"></canvas></div>
     </div>
 
     <div class="twocol">
       <div class="card">
-        <h3>${t('c_X')} <span class="tag x">X · P×Q</span></h3>
+        <h3>${t('c_X')} <span class="tag x">X · P×Q</span><button class="dl" data-dl="X" style="margin-left:auto">X.csv</button></h3>
         <p class="desc">${cxd}</p>
         <div class="canvas-scroll"><canvas id="cvX"></canvas></div>
         <div class="legend"><span>${t('leg_low')}</span><div class="bar" id="legX"></div><span>${t('leg_high')}</span></div>
       </div>
       <div class="card">
-        <h3>${t('c_B')} <span class="tag b">B · Q×N</span></h3>
+        <h3>${t('c_B')} <span class="tag b">B · Q×N</span><button class="dl" data-dl="B" style="margin-left:auto">B.csv</button></h3>
         <p class="desc">${t('c_B_d')}</p>
         <div class="canvas-scroll"><canvas id="cvB"></canvas></div>
         <div class="legend"><span>${t('leg_low')}</span><div class="bar" id="legB"></div><span>${t('leg_high')}</span></div>
@@ -644,7 +1239,7 @@ function render(res,data){
     </div>
 
     <div class="card">
-      <h3>${t('c_recon')} <span class="tag y">Y ≈ XB</span></h3>
+      <h3>${t('c_recon')} <span class="tag y">Y ≈ XB</span><button class="dl" data-dl="XB" style="margin-left:auto">XB.csv</button></h3>
       <p class="desc">${t('c_recon_d')}</p>
       <div class="twocol" style="gap:16px">
         <div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-bottom:6px">${t('lab_orig')}</div><div class="canvas-scroll"><canvas id="cvY"></canvas></div></div>
@@ -652,25 +1247,16 @@ function render(res,data){
       </div>
     </div>
 
+    <div class="card">
+      <h3>${t('c_basis')} <span class="tag x">X</span><select id="basisSel" style="width:auto;margin-left:auto;padding:5px 9px"></select><button class="dl" id="basisSvg" style="padding:5px 9px">SVG</button></h3>
+      <div class="canvas-scroll" id="basisBar"></div>
+    </div>
+
     <div class="sechead"><span class="badge x">${t('sec_feat_badge')}</span> ${t('sec_feat')}</div>
     ${clusteringHTML('feat')}
 
     <div class="sechead"><span class="badge b">${t('sec_samp_badge')}</span> ${t('sec_samp')}</div>
-    ${clusteringHTML('samp')}
-
-    <div class="card">
-      <h3>${t('dl_title')}</h3>
-      <div class="downloads">
-        <button class="dl" data-dl="log">${t('dl_log')}</button>
-        <button class="dl" data-dl="X">${t('dl_X')}</button>
-        <button class="dl" data-dl="B">${t('dl_B')}</button>
-        <button class="dl" data-dl="Xmem">${t('dl_Xmem')}</button>
-        <button class="dl" data-dl="Xhard">${t('dl_Xhard')}</button>
-        <button class="dl" data-dl="Bmem">${t('dl_Bmem')}</button>
-        <button class="dl" data-dl="Bhard">${t('dl_Bhard')}</button>
-        <button class="dl" data-dl="XB">${t('dl_XB')}</button>
-      </div>
-    </div>
+    ${clusteringHTML('samp', boxCard)}
   `;
 
   drawConverge($('#cvConv'),res.objHist);
@@ -683,6 +1269,15 @@ function render(res,data){
 
   fillClustering('feat',rowLabels,featCl,res.rank,basisLabels,rawRowsX,t('noun_feat'),'tbl_head_feat');
   fillClustering('samp',colLabels,sampCl,res.rank,basisLabels,rawRowsB,t('noun_samp'),'tbl_head_samp');
+
+  const bsel=$('#basisSel');
+  bsel.innerHTML=Array.from({length:res.rank},(_,kk)=>`<option value="${kk}">X${kk+1}</option>`).join('');
+  const drawBasis=()=>{$('#basisBar').innerHTML=basisBarSvg(res.X,res.P,res.rank,+bsel.value,rowLabels);};
+  bsel.onchange=drawBasis;drawBasis();
+  $('#basisSvg').onclick=()=>{const kk=+bsel.value;saveText('basis_X'+(kk+1)+'.svg','<?xml version="1.0" encoding="UTF-8"?>\n'+basisBarSvg(res.X,res.P,res.rank,kk,rowLabels),'image/svg+xml');};
+
+  $('#boxBar').innerHTML=membershipBoxSvg(sampCl.membership,res.rank,res.N,basisLabels);
+  $('#boxSvg').onclick=()=>saveText('B_membership_box.svg','<?xml version="1.0" encoding="UTF-8"?>\n'+membershipBoxSvg(sampCl.membership,res.rank,res.N,basisLabels),'image/svg+xml');
 
   stage.querySelectorAll('[data-dl]').forEach(b=>b.onclick=()=>{
     const w=b.dataset.dl;
@@ -708,7 +1303,6 @@ function saveCSV(name,csv){saveText(name,csv,'text/csv');}
 function saveText(name,text,mime){const blob=new Blob([text],{type:mime||'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
 function downloadCSV(name,M,rlab,clab){let csv=','+clab.join(',')+'\n';M.forEach((r,i)=>{csv+=rlab[i]+','+Array.from(r).map(v=>(+v).toPrecision(8)).join(',')+'\n';});saveCSV(name,csv);}
 
-/* Reproducibility log: options + metrics only (NO Y/X/B matrices). */
 function buildLog(res,meta){
   meta=meta||{};
   const feat=clusterRows(res.X,res.P,res.rank);
@@ -726,7 +1320,11 @@ function buildLog(res,meta){
   L.push('[data]');
   L.push('file              = '+(meta.fname!=null?meta.fname:''));
   L.push('original_shape    = '+meta.origP+' x '+meta.origN+'   (P x N)');
+  L.push('first_row_header  = '+meta.hasHeader);
+  L.push('first_col_rowname = '+meta.hasRowname);
   L.push('transpose         = '+meta.transpose);
+  L.push('excluded_features = '+(meta.excluded||0));
+  L.push('excluded_names    = '+((meta.excludedNames&&meta.excludedNames.length)?meta.excludedNames.join(', '):'(none)'));
   L.push('effective_shape   = '+meta.effP+' x '+meta.effN);
   L.push('nonnumeric_to_0   = '+meta.nan);
   L.push('negative_values   = '+meta.neg);
@@ -739,6 +1337,8 @@ function buildLog(res,meta){
   L.push('nstart_multistart       = '+(meta.nstart||1)+' (best of; smallest RSS kept)');
   L.push('init_method             = '+meta.init);
   L.push('X_colsum1_constraint    = '+meta.xnorm);
+  L.push('Y_shift_minus_min       = '+meta.shiftY);
+  L.push('Y_log1p_preprocess      = '+meta.logY);
   L.push('Y_rowminmax_preprocess  = '+meta.normrow);
   L.push('');
   L.push('[results]');
@@ -764,28 +1364,53 @@ function ingest(text,fname){
     const d=buildMatrix(rows,$('#hasHeader').checked,$('#hasRowname').checked);
     if(d.P<1||d.N<1){toast(t('toast_nonum'));return;}
     if(d.negCount>0)toast(t('toast_neg').replace('{n}',d.negCount));
-    d.fname=fname||'demo';DATA=d;refreshMeta();$('#run').disabled=false;
-    $('#paramGroup').style.display='';$('#constrGroup').style.display='';$('#runGroup').style.display='';
+    d.fname=fname||'demo';DATA=d;refreshMeta();
+    $('#exclGroup').style.display='';$('#paramGroup').style.display='';$('#nmfGroup').style.display='';
+    compute();
   }catch(e){toast(t('toast_parsefail').replace('{m}',e.message));}
+}
+// features (rows of the working matrix) the user has ticked to exclude from the factorization
+function excludedRowSet(){const s=new Set();$$('#exclList input:checked').forEach(cb=>s.add(cb.value));return s;}
+function buildExclList(rn){
+  const box=$('#exclList');const prev=excludedRowSet();box.innerHTML='';
+  rn.forEach(name=>{
+    const lab=document.createElement('label');
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=name;cb.checked=prev.has(name);cb.onchange=()=>{onExclChange();compute();};
+    const sp=document.createElement('span');sp.textContent=name;
+    lab.appendChild(cb);lab.appendChild(sp);box.appendChild(lab);
+  });
+}
+// on toggle: only recompute effective feature count -> rank max + meta counter (no full rebuild)
+function onExclChange(){
+  const d=DATA;if(!d)return;
+  const tr=$('#transpose').checked;const P=tr?d.N:d.P,N=tr?d.P:d.N;
+  const nExcl=excludedRowSet().size,effP=Math.max(0,P-nExcl);
+  const em=$('#exclMeta');if(em)em.textContent=nExcl;
+  const rk=$('#rank');rk.max=Math.max(1,Math.min(10,effP,N));
+  if(+rk.value>+rk.max){rk.value=rk.max;$('#rankVal').textContent=rk.value;}
 }
 function refreshMeta(){
   const d=DATA;if(!d)return;
   const tr=$('#transpose').checked;
   const P=tr?d.N:d.P,N=tr?d.P:d.N;
+  const rn=tr?d.colnames:d.rownames;
+  buildExclList(rn);
+  const nExcl=excludedRowSet().size;
+  const effP=Math.max(0,P-nExcl);
   const m=$('#meta');
   m.innerHTML=`<div><span class="k">${t('meta_file')} </span><span class="v">${esc(d.fname)}</span></div>
     <div><span class="k">${t('meta_loaded')}</span> <span class="v">${d.P} × ${d.N}</span> <span class="k">(P×N)</span></div>
     ${tr?`<div><span class="k">→ ${t('meta_transposed')} </span><span class="v">${P} × ${N}</span></div>`:''}
-    ${d.nanCount?`<div><span class="k">→ </span>${t('meta_nan').replace('{n}',d.nanCount)}</div>`:''}`;
+    ${d.nanCount?`<div><span class="k">→ </span>${t('meta_nan').replace('{n}',d.nanCount)}</div>`:''}
+    <div><span class="k">${t('meta_excl')} </span><span class="v" id="exclMeta">${nExcl}</span> / <span class="v">${P}</span></div>`;
   m.classList.add('show');
-  const rk=$('#rank');rk.max=Math.max(1,Math.min(10,P,N));
+  const rk=$('#rank');rk.max=Math.max(1,Math.min(10,effP,N));
   if(+rk.value>+rk.max){rk.value=rk.max;$('#rankVal').textContent=rk.value;}
 }
 function workingData(){let d=DATA;if($('#transpose').checked)d=transposeData(d);return d;}
 
 function makeDemo(){
   // Food-preference matrix: rows = foods (features P), cols = people (samples N).
-  // Use the transpose option to swap orientation.
   return [
     'food,Akiko,Kenta,Hanako,Daisuke,Misaki,Taro',
     'Cake,1,0,1,0,1,0',
@@ -798,15 +1423,6 @@ function makeDemo(){
 }
 
 /* UI wiring */
-document.querySelectorAll('#langtog button').forEach(b=>b.onclick=()=>{LANG=b.dataset.lang;applyI18n();});
-let THEME='light';
-function applyTheme(){
-  document.documentElement.setAttribute('data-theme',THEME);
-  document.querySelectorAll('#themetog button').forEach(b=>b.classList.toggle('on',b.dataset.theme===THEME));
-  if(LAST) render(LAST.res,LAST.data);
-}
-document.querySelectorAll('#themetog button').forEach(b=>b.onclick=()=>{THEME=b.dataset.theme;applyTheme();});
-
 const drop=$('#drop'),fileInput=$('#file');
 drop.onclick=()=>fileInput.click();
 drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
@@ -816,19 +1432,43 @@ fileInput.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();
 $('#demo').onclick=()=>{ingest(makeDemo(),'demo_preferences.csv');toast(t('toast_demo'));};
 $('#hasHeader').onchange=()=>{if(lastRaw)ingest(lastRaw,lastName);};
 $('#hasRowname').onchange=()=>{if(lastRaw)ingest(lastRaw,lastName);};
-$('#transpose').onchange=refreshMeta;
+$('#transpose').onchange=()=>{refreshMeta();compute();};
 
 const bind=(id,valId,fmt)=>{const el=$('#'+id),v=$('#'+valId);el.oninput=()=>v.textContent=fmt?fmt(el.value):el.value;};
-bind('rank','rankVal');bind('maxit','maxitVal');bind('eps','epsVal',x=>'1e-'+x);
+bind('rank','rankVal');bind('seed','seedVal');bind('nstart','nstartVal');
+$('#rank').onchange=compute;
+$('#seed').onchange=compute;
+$('#nstart').onchange=compute;
+$('#init').onchange=compute;
+$('#maxit').onchange=compute;
+$('#eps').onchange=compute;
+$('#logY').onchange=compute;
+$('#shiftY').onchange=compute;
+$('#normrow').onchange=compute;
+// like the topic tab's 再計算: advance the seed (wrap at max) and refit
+$('#recalc').onclick=()=>{let s=+$('#seed').value+1;if(s>+$('#seed').max)s=1;$('#seed').value=s;$('#seedVal').textContent=s;compute();};
 
-$('#run').onclick=()=>{
+// full pipeline (exclude features -> row min-max -> NMF -> render); auto-invoked on load & on any change, like the topic tab
+function compute(){
   if(!DATA)return;
-  const btn=$('#run');btn.classList.add('busy');btn.innerHTML='<span class="spinner"></span> '+t('run_busy');btn.disabled=true;
-  const Q=+$('#rank').value,maxit=+$('#maxit').value,eps=Math.pow(10,-(+$('#eps').value)),seed=+$('#seed').value||1,nstart=+$('#nstart').value||1;
-  const base=workingData();
+  const base0=workingData();
+  const excl=excludedRowSet();
+  const keepIdx=[];for(let i=0;i<base0.P;i++)if(!excl.has(base0.rownames[i]))keepIdx.push(i);
+  if(keepIdx.length<1){toast(t('toast_allexcl'));return;}
+  const base={matrix:keepIdx.map(i=>base0.matrix[i]),rownames:keepIdx.map(i=>base0.rownames[i]),colnames:base0.colnames.slice(),P:keepIdx.length,N:base0.N,nanCount:base0.nanCount,negCount:base0.negCount};
+  let Q=+$('#rank').value;Q=Math.max(1,Math.min(Q,base.P));
+  const maxit=+$('#maxit').value,eps=+$('#eps').value,seed=+$('#seed').value||1,nstart=+$('#nstart').value||1;
   let Y=base.matrix.map(r=>r.slice());
+  if($('#shiftY').checked){
+    // shift by the global minimum so the smallest value becomes 0 (lets negative data be factorized), applied first
+    let mn=Infinity;
+    for(let i=0;i<base.P;i++)for(let j=0;j<base.N;j++){if(Y[i][j]<mn)mn=Y[i][j];}
+    if(isFinite(mn)&&mn!==0)for(let i=0;i<base.P;i++)for(let j=0;j<base.N;j++)Y[i][j]-=mn;
+  }
+  if($('#logY').checked){
+    for(let i=0;i<base.P;i++)for(let j=0;j<base.N;j++)Y[i][j]=Math.log1p(Math.max(0,Y[i][j]));
+  }
   if($('#normrow').checked){
-    // per-variable (row) min-max scaling to [0,1]: x -> (x-min)/(max-min)
     for(let i=0;i<base.P;i++){
       let a=Infinity,b=-Infinity;
       for(let j=0;j<base.N;j++){const v=Y[i][j];if(v<a)a=v;if(v>b)b=v;}
@@ -836,35 +1476,28 @@ $('#run').onclick=()=>{
       for(let j=0;j<base.N;j++)Y[i][j]=d>0?(Y[i][j]-a)/d:0;
     }
   }
-  setTimeout(()=>{
-    try{
-      const meta={fname:DATA.fname,origP:DATA.P,origN:DATA.N,transpose:$('#transpose').checked,
-        effP:base.P,effN:base.N,nan:DATA.nanCount,neg:DATA.negCount,
-        rank:Q,maxit,eps,seed,nstart,init:$('#init').value,xnorm:$('#wnorm').checked,normrow:$('#normrow').checked};
-      RESULT=nmfMulti(Y,Q,{maxit,eps,seed,xColNorm:$('#wnorm').checked,init:$('#init').value},nstart);
-      RESULT.meta=meta;
-      LAST={res:RESULT,data:{...base,matrix:Y}};
-      render(LAST.res,LAST.data);
-    }
-    catch(e){toast(t('toast_calcerr').replace('{m}',e.message));console.error(e);}
-    btn.classList.remove('busy');btn.textContent=t('run');btn.disabled=false;
-  },30);
-};
-
-applyTheme();
-// save this self-contained app to a local .html file (fetches its own pristine source)
-async function saveSelf(){
   try{
-    const res=await fetch(location.href.split('?')[0]);
-    const html=await res.text();
-    const name=(location.pathname.split('/').pop()||'nmf_app.html');
-    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  }catch(e){toast('保存に失敗しました: '+e.message);}
+    const meta={fname:DATA.fname,origP:DATA.P,origN:DATA.N,transpose:$('#transpose').checked,
+      hasHeader:$('#hasHeader').checked,hasRowname:$('#hasRowname').checked,
+      excluded:excl.size,excludedNames:[...excl],effP:base.P,effN:base.N,nan:DATA.nanCount,neg:DATA.negCount,
+      rank:Q,maxit,eps,seed,nstart,init:$('#init').value,xnorm:true,logY:$('#logY').checked,shiftY:$('#shiftY').checked,normrow:$('#normrow').checked};
+    RESULT=nmfMulti(Y,Q,{maxit,eps,seed,xColNorm:true,init:$('#init').value},nstart);
+    RESULT.meta=meta;
+    LAST={res:RESULT,data:{...base,matrix:Y}};
+    render(LAST.res,LAST.data);
+  }catch(e){toast(t('toast_calcerr').replace('{m}',e.message));console.error(e);}
 }
-$('#saveApp').onclick=saveSelf;
-// open in a given language via URL, e.g. ?lang=en (default: ja)
-(function(){try{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='ja')LANG=q;}catch(e){}})();
-applyI18n();
+
+MODULES.push({applyI18n});
+})();
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(function(){try{const p=new URLSearchParams(location.search);const q=p.get('lang');if(q==='en'||q==='ja')LANG=q;const tb=p.get('tab');if(tb==='matrix'||tb==='topic')ACTIVE=tb;}catch(e){}})();
+switchTab(ACTIVE);
+applyTheme();
+applyI18nAll();
 </script>
 </body>
 </html>

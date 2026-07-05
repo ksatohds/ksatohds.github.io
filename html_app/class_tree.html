@@ -577,7 +577,7 @@ function run(){
       for(let i=0;i<rows.length;i++)cm[yTrue[i]][preds[i]]++;
       // class distribution
       const dist={};classes.forEach(c=>dist[c]=0);yTrue.forEach(v=>dist[v]++);
-      LAST={model,stats,acc,cm,dist,classes,rows,target,features,preds,yTrue};
+      LAST={model,stats,acc,cm,dist,classes,rows,target,features,preds,yTrue,numAsCat};
       render(LAST);
     }catch(e){toast(t('toast_calcerr').replace('{m}',e.message));console.error(e);}
     btn.dataset.busy='';btn.textContent=t('run');btn.disabled=false;
@@ -899,7 +899,7 @@ function saveCSV(name,text){
 
 /* --- .log (settings + results) --- */
 function buildLog(R){
-  const {model,stats,acc,cm,dist,classes,rows,target,features}=R;
+  const {model,stats,acc,cm,dist,classes,rows,target,features,numAsCat}=R;
   const minbucket=$('#minbucket').value,maxdepth=$('#maxdepth').value;
   const total=rows.length;
   const correct=classes.reduce((s,c)=>s+cm[c][c],0);
@@ -912,6 +912,7 @@ function buildLog(R){
   L.push('features  : '+features.join(', '));
   L.push('minbucket : '+minbucket);
   L.push('maxdepth  : '+maxdepth);
+  L.push('numAsCat  : '+(numAsCat?'on':'off'));
   L.push('');
   L.push('[Results]');
   L.push('samples   : '+total);

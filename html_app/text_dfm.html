@@ -771,6 +771,10 @@ function downloadLog(R){
   L.push('documents      : '+R.D);
   L.push('total_tokens   : '+R.totalTok);
   L.push('vocabulary     : '+R.V);
+  L.push('collocations   : '+((R.adopted&&R.adopted.length)||0)+' adopted / '+((R.collocList&&R.collocList.length)||0)+' candidates');
+  L.push('nonzero_cells  : '+R.nonzero);
+  L.push('nonzero_rate   : '+(R.V*R.D?(100*R.nonzero/(R.V*R.D)).toFixed(1):'0.0')+'%');
+  L.push('metadata_cols  : '+((R.metaCols&&R.metaCols.length)||0)+((R.metaCols&&R.metaCols.length)?' ('+R.metaCols.join(', ')+')':''));
   L.push('');
   saveText('text_dfm.log',L.join('\n')+'\n');
 }

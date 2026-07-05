@@ -205,7 +205,7 @@ const I18N={
     m_cats:'カテゴリ数', m_words:'語数', m_docs:'文書数', m_dims:'次元数',
     sec_biplot:'バイプロット', sec_biplot_d:'●=属性カテゴリ（色）・小点=語。原点に近い語は平均的、外側の語は特定カテゴリと関連。',
     sec_inertia:'各次元の寄与率（慣性）', sec_inertia_d:'各次元が説明する総慣性の割合。上位2軸を既定で表示。',
-    dl_biplot:'バイプロット SVG',
+    dl_biplot:'バイプロット SVG', dl_log:'ログ（設定・結果）',
     toast_demo:'デモDFMを読み込みました（沖縄観光アンケート）', toast_parsefail:'CSVの解析に失敗しました',
     toast_nogroup:'グループ変数を1〜2個選択してください', toast_nocat:'カテゴリが2つ以上になりません。別の属性を選んでください。',
     toast_group_max:'グループ変数は最大2つまでです', toast_nocand:'カテゴリ属性（水準数 2〜20）が見つかりません',
@@ -227,7 +227,7 @@ const I18N={
     m_cats:'Categories', m_words:'Words', m_docs:'Documents', m_dims:'Dimensions',
     sec_biplot:'Biplot', sec_biplot_d:'●=attribute categories (colored), small dots=words. Words near the origin are average; outer words associate with specific categories.',
     sec_inertia:'Inertia explained per dimension', sec_inertia_d:'Share of total inertia each dimension explains. Top 2 axes shown by default.',
-    dl_biplot:'Biplot SVG',
+    dl_biplot:'Biplot SVG', dl_log:'log (settings & results)',
     toast_demo:'Loaded demo DFM (Okinawa tourism survey)', toast_parsefail:'Failed to parse CSV',
     toast_nogroup:'Select 1–2 group variables', toast_nocat:'Fewer than 2 categories result. Choose another attribute.',
     toast_group_max:'At most 2 group variables', toast_nocand:'No categorical attribute (2–20 levels) found',
@@ -450,10 +450,15 @@ function renderCA(){
   // biplot card
   const bc=el('div',{class:'card'});
   const h3=el('h3');h3.appendChild(el('span',{text:t('sec_biplot')}));
-  const dlb=el('button',{class:'dl',text:t('dl_biplot')});h3.appendChild(dlb);bc.appendChild(h3);
+  const btns=el('div',{style:'display:flex;gap:8px'});
+  const dllog=el('button',{class:'dl',text:t('dl_log')});btns.appendChild(dllog);
+  const dlb=el('button',{class:'dl',text:t('dl_biplot')});btns.appendChild(dlb);
+  h3.appendChild(btns);bc.appendChild(h3);
   bc.appendChild(el('div',{class:'desc',text:t('sec_biplot_d')}));
   const bw=el('div',{class:'svgscroll'});const bsvg=biplotSvg(ca,dimX,dimY,topN,catMul,wordMul);bw.appendChild(bsvg);bc.appendChild(bw);
   dlb.onclick=()=>downloadSvg(bsvg,'biplot.svg');
+  const stem=(LASTNAME||'dfm').replace(/\.[^.]+$/,'')||'dfm';
+  dllog.onclick=()=>downloadText(stem+'_ca.log',buildLog(ca,dimX,dimY,topN,catMul,wordMul));
   box.appendChild(bc);
   // inertia card
   const ic=el('div',{class:'card'});
@@ -477,6 +482,47 @@ function downloadSvg(svg,name){
   clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
   const s='<?xml version="1.0" encoding="UTF-8"?>\n'+clone.outerHTML; // transparent background
   const blob=new Blob([s],{type:'image/svg+xml;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function downloadText(name,text){
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+// Plain-text analysis log: settings + summary results. Large tables (crosstab N, row/col coordinates) are intentionally excluded.
+function buildLog(ca,dimX,dimY,topN,catMul,wordMul){
+  const total=ca.eval.reduce((a,b)=>a+b,0);          // total inertia = sum of eigenvalues
+  const chi2=total*ca.n;                              // chi-square = total inertia x grand total
+  const groups=groupSel().map(g=>g.name);
+  const L=[];
+  L.push('# Correspondence Analysis (dfm_ca) -- analysis log');
+  L.push('# model: attribute x word crosstab -> symmetric-map CA (both rows/cols in principal coordinates)');
+  L.push('# generated: '+new Date().toISOString());
+  L.push('# note: the contingency matrix and full row/column coordinate tables are intentionally excluded.');
+  L.push('#       Re-run with the same input file and the [Settings] below to reproduce [Results].');
+  L.push('');
+  L.push('[Settings]');
+  L.push('file                 = '+(LASTNAME||''));
+  L.push('group_variables      = '+(groups.length?groups.join(' x '):'(none)'));
+  L.push('words_shown_top_pct  = '+(+$('#wN').value)+'%  (topN = '+topN+' of '+ca.words.length+')');
+  L.push('category_text_x6pt   = '+(+$('#catSize').value).toFixed(1));
+  L.push('word_text_x6pt       = '+(+$('#wordSize').value).toFixed(1));
+  L.push('x_axis               = '+t('dim_label')+' '+(dimX+1));
+  L.push('y_axis               = '+t('dim_label')+' '+(dimY+1));
+  L.push('');
+  L.push('[Results]');
+  L.push('categories           = '+ca.catLabels.length);
+  L.push('words                = '+ca.words.length);
+  L.push('documents            = '+DATA.docN);
+  L.push('dimensions_kept      = '+ca.dims);
+  L.push('grand_total_n        = '+ca.n);
+  L.push('total_inertia        = '+total.toPrecision(8));
+  L.push('chi_square           = '+chi2.toPrecision(8));
+  L.push('');
+  L.push('# per-axis inertia');
+  L.push('dim  eigenvalue(inertia)  pct_explained');
+  for(let d=0;d<ca.dims;d++){
+    L.push(String(d+1).padStart(3,' ')+'  '+ca.eval[d].toPrecision(8).padStart(19,' ')+'  '+ca.pct[d].toFixed(2).padStart(6,' ')+'%');
+  }
+  L.push('');
+  return L.join('\n');
 }
 
 // ---------- group selection UI ----------

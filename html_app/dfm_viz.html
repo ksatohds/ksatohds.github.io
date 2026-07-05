@@ -194,6 +194,7 @@
       </label>
       <div class="hint" data-i18n="n_note">Jaccard類似度 = 共起文書数 / いずれかに出現する文書数。しきい値以上の語ペアを線で結びます。広げると重なりが減り、図は大きくなります（スクロール可）。</div>
       <button class="dl" id="relayout" style="width:100%;margin-top:10px" data-i18n="relayout">&#8635; 再配置</button>
+      <button class="dl" id="dlLog" style="width:100%;margin-top:8px" data-i18n="dl_log">&#128203; 設定・結果ログ (.txt)</button>
     </div>
 
   </aside>
@@ -233,7 +234,7 @@ const I18N={
     g_cloud:'ワードクラウド', c_num:'表示語数', c_metric:'大きさの基準', metric_total:'のべ出現回数', metric_df:'出現文書数', c_min:'最小サイズ (×12pt)', c_max:'最大サイズ (×12pt)',
     g_net:'共起ネットワーク', n_minfreq:'語の最小出現文書数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_spread:'ノード間の広がり（力のスケール）',
     n_note:'尺度: 有無(0/1)なら Jaccard（共起文書数/いずれかに出現）、頻度ならコサイン類似度（頻度ベクトルの向き）。しきい値以上の語ペアを線で結びます。',
-    n_stat:'この設定: {nodes} 語 / {edges} 本の線', relayout:'↻ 再配置',
+    n_stat:'この設定: {nodes} 語 / {edges} 本の線', relayout:'↻ 再配置', dl_log:'📋 設定・結果ログ (.txt)',
     ph_main:'左で文書単語行列CSVを読み込むか、デモを試してください。',
     ph_sub:'text_dfm アプリで作成したCSV（文書 × 語、属性列を含んでもよい）を読み込み、ワードクラウドと共起ネットワーク図を作成します。',
     f_model:'Jaccard 共起 · Fruchterman-Reingold', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
@@ -256,7 +257,7 @@ const I18N={
     g_cloud:'Word cloud', c_num:'Words shown', c_metric:'Size by', metric_total:'total count', metric_df:'document frequency', c_min:'Min size (×12pt)', c_max:'Max size (×12pt)',
     g_net:'Co-occurrence network', n_minfreq:'Min document frequency', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_spread:'Node spread (force scale)',
     n_note:'Measure: Jaccard (shared/either docs) for presence (0/1), or cosine similarity for frequency (count-vector angle). Pairs above the threshold are linked.',
-    n_stat:'this setting: {nodes} words / {edges} links', relayout:'↻ Re-layout',
+    n_stat:'this setting: {nodes} words / {edges} links', relayout:'↻ Re-layout', dl_log:'📋 Settings & results log (.txt)',
     ph_main:'Load a DFM CSV on the left, or try the demo.',
     ph_sub:'Load a CSV built by the text_dfm app (docs × words, attribute columns allowed) and draw a word cloud and a co-occurrence network.',
     f_model:'Jaccard co-occurrence · Fruchterman-Reingold', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
@@ -690,6 +691,50 @@ function downloadSvg(svg,name){
   const s='<?xml version="1.0" encoding="UTF-8"?>\n'+clone.outerHTML;
   const blob=new Blob([s],{type:'image/svg+xml;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
+function downloadText(text,name){
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+// build a plain-text log of all user settings + the main computed results (no per-node coords / edge list / freq table)
+function buildLog(){
+  const lbl=k=>({total:'total count / のべ出現回数',df:'document frequency / 出現文書数',jaccard:'Jaccard (presence)',cosine:'Cosine (frequency)',louvain:'Louvain',greedy:'Greedy modularity (CNM)',label:'Label propagation'}[k]||k);
+  const net=NET||computeNet(false);
+  // count of isolated nodes removed = nodes passing the min-doc-freq filter (capped at 80) minus nodes kept after removal
+  const minf=+$('#netMin').value,MAXN=80;
+  let preN=MODEL.names.map((_,i)=>i).filter(i=>MODEL.df[i]>=minf).length;if(preN>MAXN)preN=MAXN;
+  const removed=Math.max(0,preN-net.n);
+  const nComm=$('#netComm').checked?[...new Set(community(net.n,net.edges))].length:0;
+  const L=[];
+  L.push('# dfm_viz log');
+  L.push('# generated: '+new Date().toISOString());
+  L.push('');
+  L.push('[Settings / 設定]');
+  L.push('file / ファイル              : '+(LASTNAME||'demo'));
+  L.push('value type / 値の種類       : '+(MODEL.binary?'binary (0/1) / 2値':'frequency / 頻度'));
+  L.push('excluded attr cols / 属性列 : '+((MODEL.skipped&&MODEL.skipped.length)?MODEL.skipped.join(', '):'(none)'));
+  L.push('-- word cloud / ワードクラウド');
+  L.push('  words shown / 表示語数    : '+$('#cloudN').value);
+  L.push('  size by / 大きさの基準    : '+lbl($('#cloudMetric').value));
+  L.push('  min size / 最小サイズ     : '+(+$('#cloudMin').value).toFixed(1)+' ×12pt');
+  L.push('  max size / 最大サイズ     : '+(+$('#cloudMax').value).toFixed(1)+' ×12pt');
+  L.push('-- co-occurrence network / 共起ネットワーク');
+  L.push('  min doc freq / 最小文書数 : '+$('#netMin').value);
+  L.push('  measure / 尺度            : '+lbl($('#netMeasure').value));
+  L.push('  threshold / しきい値      : '+(+$('#netSim').value).toFixed(2));
+  L.push('  node spread / 広がり      : '+(+$('#netSpread').value).toFixed(1));
+  L.push('  color by community / 色分け: '+($('#netComm').checked?'on':'off'));
+  L.push('  community method / 検出法 : '+lbl($('#netCommMethod').value));
+  L.push('  layout seed / シード      : '+NETSEED);
+  L.push('');
+  L.push('[Results / 結果]');
+  L.push('words / 語数                : '+MODEL.names.length);
+  L.push('documents / 文書数          : '+MODEL.docN);
+  L.push('nodes / ノード数            : '+net.n);
+  L.push('edges / エッジ数            : '+net.edges.length);
+  L.push('isolated removed / 孤立除去 : '+removed);
+  L.push('communities / コミュニティ数: '+($('#netComm').checked?nComm:'(off)'));
+  L.push('');
+  return L.join('\n');
+}
 
 // ---------- events ----------
 function attrList(){return Array.from($$('#attrCols input:checked')).map(el=>el.value);}
@@ -738,6 +783,7 @@ $('#netSpread').onchange=()=>renderAll(true);
 $('#netComm').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#netCommMethod').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#relayout').onclick=()=>{NETSEED++;renderAll(true);};
+$('#dlLog').onclick=()=>{if(!MODEL){toast(t('toast_empty'));return;}const base=(LASTNAME||'dfm_viz').replace(/\.[^.]+$/,'');downloadText(buildLog(),base+'.log');};
 
 $('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
 $('#themetog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.setAttribute('data-theme',b.dataset.theme);$$('#themetog button').forEach(x=>x.classList.toggle('on',x===b));if(MODEL)renderAll();});
