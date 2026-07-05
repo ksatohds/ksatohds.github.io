@@ -56,8 +56,13 @@
   label.field{display:block;margin-bottom:14px}
   label.field .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--ink-dim);margin-bottom:6px;gap:8px}
   label.field .lab .val{font-family:var(--mono);color:var(--cyan);font-size:12.5px;flex-shrink:0}
-  select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
-  select:focus{border-color:var(--cyan-deep)}
+  select,input[type=text]{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
+  select:focus,input[type=text]:focus{border-color:var(--cyan-deep)}
+  .attrlist{max-height:150px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+  .attrlist label{display:flex;align-items:center;gap:7px;padding:3px 2px;margin:0;font-family:var(--mono);font-size:12.5px;color:var(--ink);cursor:pointer}
+  .attrlist label:hover{color:var(--cyan)}
+  .attrlist input[type=checkbox]{width:auto;margin:0;flex-shrink:0;accent-color:var(--cyan-deep);cursor:pointer}
+  .attrlist .empty{display:block;color:var(--ink-faint);font-size:11.5px;padding:4px 2px}
   input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--line);border-radius:2px;outline:none;margin:6px 0}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--cyan-deep)}
   input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg)}
@@ -81,7 +86,7 @@
   .card h3{font-size:14px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;justify-content:space-between;gap:10px}
   .card .desc{font-size:12px;color:var(--ink-dim);margin:0 0 14px;font-family:var(--mono)}
 
-  .svgscroll{overflow:auto;border-radius:6px;background:var(--panel-2);border:1px solid var(--line)}
+  .svgscroll{overflow:auto;border-radius:6px;background:transparent;border:1px solid var(--line)}
   svg{display:block}
   .netnode{cursor:grab}
   .netnode:active{cursor:grabbing}
@@ -118,19 +123,16 @@
       <h2 data-i18n="g_data">データ</h2>
       <div class="dropzone" id="drop">
         <div class="big" data-i18n="drop_big">文書単語行列CSVをドロップ / クリック</div>
-        <div class="small" data-i18n="drop_small">語×文書 または 文書×語（属性列可）</div>
+        <div class="small" data-i18n="drop_small">文書 × 語（行=文書, 属性列可）</div>
       </div>
       <input type="file" id="file" accept=".csv,.tsv,.txt">
       <div class="filemeta" id="meta"></div>
       <button class="dl" id="demo" style="width:100%;margin-top:10px" data-i18n="demo_btn">&#9671; デモ（注文の多い料理店 DFM）</button>
       <div class="hint" data-i18n-html="demo_credit" style="margin-top:8px;line-height:1.6"></div>
       <label class="field" style="margin-top:12px">
-        <span class="lab"><span data-i18n="orient">行列の向き</span></span>
-        <select id="orient">
-          <option value="auto" data-i18n="orient_auto">自動判定</option>
-          <option value="word" data-i18n="orient_word">語 × 文書（行=語）</option>
-          <option value="doc" data-i18n="orient_doc">文書 × 語（行=文書, 属性列可）</option>
-        </select>
+        <span class="lab"><span data-i18n="attr">属性の列（除外）</span></span>
+        <div class="attrlist" id="attrCols"><span class="empty" data-i18n="attr_empty">ファイルを読み込むと列名が一覧表示されます。</span></div>
+        <span class="hint" data-i18n="attr_hint">チェックした列は属性として除外し、それ以外を単語とみなします（1列目は文書ID）。</span>
       </label>
     </div>
 
@@ -176,8 +178,8 @@
       </label>
       <div class="hint" id="netStat" style="margin-top:0;margin-bottom:12px"></div>
       <label class="field" style="margin-top:12px">
-        <span class="lab"><span data-i18n="n_spread">ノード間の広がり（力のスケール）</span> <span class="val" id="netSpreadVal">2.0</span></span>
-        <input type="range" id="netSpread" min="0.6" max="3.5" value="2" step="0.1">
+        <span class="lab"><span data-i18n="n_spread">ノード間の広がり（力のスケール）</span> <span class="val" id="netSpreadVal">1.1</span></span>
+        <input type="range" id="netSpread" min="0.6" max="3.5" value="1.1" step="0.1">
       </label>
       <div class="classrow">
         <label><input type="checkbox" id="netComm" checked><span data-i18n="n_comm">コミュニティで色分け</span></label>
@@ -224,47 +226,47 @@ const I18N={
   ja:{
     h1:'ワードクラウド・共起ネットワーク',
     eq:'文書単語行列 &rarr; <span style="color:var(--amber)">ワードクラウド</span> &middot; <span style="color:var(--violet)">共起ネットワーク</span>',
-    g_data:'データ', drop_big:'文書単語行列CSVをドロップ / クリック', drop_small:'語×文書 または 文書×語（属性列可）',
+    g_data:'データ', drop_big:'文書単語行列CSVをドロップ / クリック', drop_small:'文書 × 語（行=文書, 属性列可）',
     demo_btn:'◇ デモ（注文の多い料理店 DFM）',
     demo_credit:'デモは宮沢賢治「注文の多い料理店」（<b>パブリックドメイン</b>・著者1933年没）から作成した文書単語行列です。出典: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">青空文庫</a>。',
-    orient:'行列の向き', orient_auto:'自動判定', orient_word:'語 × 文書（行=語）', orient_doc:'文書 × 語（行=文書, 属性列可）',
+    attr:'属性の列（除外）', attr_empty:'ファイルを読み込むと列名が一覧表示されます。', attr_hint:'チェックした列は属性として除外し、それ以外を単語とみなします（1列目は文書ID）。',
     g_cloud:'ワードクラウド', c_num:'表示語数', c_metric:'大きさの基準', metric_total:'のべ出現回数', metric_df:'出現文書数', c_min:'最小サイズ (×12pt)', c_max:'最大サイズ (×12pt)',
     g_net:'共起ネットワーク', n_minfreq:'語の最小出現文書数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_spread:'ノード間の広がり（力のスケール）',
     n_note:'尺度: 有無(0/1)なら Jaccard（共起文書数/いずれかに出現）、頻度ならコサイン類似度（頻度ベクトルの向き）。しきい値以上の語ペアを線で結びます。',
     n_stat:'この設定: {nodes} 語 / {edges} 本の線', relayout:'↻ 再配置',
     ph_main:'左で文書単語行列CSVを読み込むか、デモを試してください。',
-    ph_sub:'text_dfm アプリで作成したCSV（語×文書 / 文書×語）を読み込み、ワードクラウドと共起ネットワーク図を作成します。',
+    ph_sub:'text_dfm アプリで作成したCSV（文書 × 語、属性列を含んでもよい）を読み込み、ワードクラウドと共起ネットワーク図を作成します。',
     f_model:'Jaccard 共起 · Fruchterman-Reingold', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
     m_words:'語数', m_docs:'文書数', m_nodes:'ノード数', m_edges:'エッジ数',
     sec_cloud:'ワードクラウド', sec_cloud_d:'語の大きさは出現量に比例。色は総頻度の段階（凡例参照）。', cloud_freq:'頻度',
     sec_net:'共起ネットワーク', sec_net_d:'Jaccard類似度がしきい値以上の語ペアを線で結ぶ。丸の大きさ=つながりの数。',
     dl_cloud:'ワードクラウド SVG', dl_net:'ネットワーク SVG',
     toast_demo:'デモDFMを読み込みました（68語×147文書）', toast_parsefail:'CSVの解析に失敗しました',
-    toast_empty:'語が見つかりません。CSVの向きをご確認ください。',
-    meta_file:'file', meta_words:'語', meta_docs:'文書', meta_orient:'向き', meta_vals:'値', val_binary:'2値 (0/1)', val_freq:'頻度', meta_skip:'属性列（除外）',
+    toast_empty:'語が見つかりません。属性の列の指定をご確認ください。',
+    meta_file:'file', meta_words:'語', meta_docs:'文書', meta_vals:'値', val_binary:'2値 (0/1)', val_freq:'頻度', meta_skip:'属性列（除外）',
     net_none:'条件に合う共起がありません。しきい値を下げるか、最小出現文書数を下げてください。'
   },
   en:{
     h1:'Word Cloud & Co-occurrence Network',
     eq:'document-feature matrix &rarr; <span style="color:var(--amber)">word cloud</span> &middot; <span style="color:var(--violet)">co-occurrence network</span>',
-    g_data:'Data', drop_big:'Drop or click a DFM CSV', drop_small:'words×docs or docs×words (+attributes)',
+    g_data:'Data', drop_big:'Drop or click a DFM CSV', drop_small:'docs × words (rows=documents, +attributes)',
     demo_btn:'◇ Demo (Restaurant of Many Orders DFM)',
     demo_credit:'Demo: a document-feature matrix built from Kenji Miyazawa, "The Restaurant of Many Orders" (<b>public domain</b>, author d.1933). Source: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">Aozora Bunko</a>.',
-    orient:'Matrix orientation', orient_auto:'Auto-detect', orient_word:'words × docs (rows=words)', orient_doc:'docs × words (rows=docs, +attrs)',
+    attr:'Attribute columns (excluded)', attr_empty:'Column names appear here after a file is loaded.', attr_hint:'Checked columns are excluded as attributes; every other column is treated as a word (column 1 is the document id).',
     g_cloud:'Word cloud', c_num:'Words shown', c_metric:'Size by', metric_total:'total count', metric_df:'document frequency', c_min:'Min size (×12pt)', c_max:'Max size (×12pt)',
     g_net:'Co-occurrence network', n_minfreq:'Min document frequency', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_spread:'Node spread (force scale)',
     n_note:'Measure: Jaccard (shared/either docs) for presence (0/1), or cosine similarity for frequency (count-vector angle). Pairs above the threshold are linked.',
     n_stat:'this setting: {nodes} words / {edges} links', relayout:'↻ Re-layout',
     ph_main:'Load a DFM CSV on the left, or try the demo.',
-    ph_sub:'Load a CSV built by the text_dfm app (words×docs / docs×words) and draw a word cloud and a co-occurrence network.',
+    ph_sub:'Load a CSV built by the text_dfm app (docs × words, attribute columns allowed) and draw a word cloud and a co-occurrence network.',
     f_model:'Jaccard co-occurrence · Fruchterman-Reingold', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
     m_words:'Words', m_docs:'Documents', m_nodes:'Nodes', m_edges:'Edges',
     sec_cloud:'Word cloud', sec_cloud_d:'Word size ∝ occurrence; color = total-frequency band (see legend).', cloud_freq:'frequency',
     sec_net:'Co-occurrence network', sec_net_d:'Word pairs with Jaccard similarity above the threshold are linked. Node size = degree.',
     dl_cloud:'Word cloud SVG', dl_net:'Network SVG',
     toast_demo:'Loaded demo DFM (68 words × 147 docs)', toast_parsefail:'Failed to parse CSV',
-    toast_empty:'No words found. Please check the matrix orientation.',
-    meta_file:'file', meta_words:'words', meta_docs:'docs', meta_orient:'orientation', meta_vals:'values', val_binary:'binary (0/1)', val_freq:'frequency', meta_skip:'attribute columns (excluded)',
+    toast_empty:'No words found. Please check the attribute-column list.',
+    meta_file:'file', meta_words:'words', meta_docs:'docs', meta_vals:'values', val_binary:'binary (0/1)', val_freq:'frequency', meta_skip:'attribute columns (excluded)',
     net_none:'No co-occurrences match. Lower the threshold or the min document frequency.'
   }
 };
@@ -272,14 +274,15 @@ function t(k){const d=I18N[LANG];return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I
 function applyI18n(){
   $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
   $$('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  $$('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
   $$('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
   document.documentElement.lang=LANG;
   if(MODEL)renderAll();
 }
 
 // ---------- data model ----------
-// MODEL = {names:[], docs:[Set], total:[], df:[], docN, orient, skipped:[]}
-let MODEL=null;
+// MODEL = {names:[], docs:[Set], vec:[Map], norm:[], total:[], df:[], docN, orient, skipped:[]}
+let MODEL=null, LASTROWS=null, LASTNAME='';
 const DEMO_DFM={"docN":147,"words":{"二人":[[0,1],[18,1],[27,1],[30,1],[33,1],[35,1],[41,1],[45,1],[57,1],[59,2],[65,1],[70,1],[78,1],[84,2],[95,1],[99,1],[104,1],[126,1],[130,1],[136,1],[141,1],[144,1],[146,1]],"早く":[[1,1],[49,1],[59,1],[89,1],[93,1],[124,1],[128,1],[129,1],[142,1]],"クリーム":[[80,1],[81,1],[82,1],[84,1],[86,1],[87,1],[104,1],[128,1]],"注文":[[42,1],[46,1],[48,1],[101,1],[107,2],[121,1]],"紳士":[[0,1],[5,1],[7,2],[18,1],[47,1],[110,1]],"鉄砲":[[0,1],[3,1],[61,1],[63,1],[65,1]],"香水":[[93,1],[94,1],[95,1],[96,1],[97,1]],"塗り":[[38,1],[73,1],[84,1],[86,2]],"料理":[[44,1],[74,1],[91,1],[108,2]],"立派":[[19,1],[27,1],[73,1],[104,1]],"行き":[[38,1],[59,1],[79,1],[133,1]],"裏側":[[33,1],[45,1],[85,1],[100,1]],"西洋":[[19,1],[108,3]],"お客":[[52,1],[124,1],[129,1]],"二疋":[[0,1],[4,1],[132,1]],"大歓迎":[[34,1],[35,1],[36,1]],"帽子":[[67,1],[70,1],[143,1]],"廊下":[[33,1],[38,1],[89,1]],"料理店":[[31,1],[42,1],[108,1]],"木の葉":[[0,1],[13,1],[137,1]],"東京":[[44,1],[145,1],[146,1]],"泣き":[[118,1],[126,1],[130,1]],"白熊":[[0,1],[4,1],[132,1]],"硝子":[[28,1],[33,1],[79,1]],"見る":[[62,1],[75,1],[137,1]],"鳴り":[[13,1],[135,1],[137,1]],"山奥":[[0,1],[3,2]],"玄関":[[27,2],[55,1]],"カフスボタン":[[71,1],[78,1]],"ナイフ":[[111,1],[129,1]],"ネクタイピン":[[71,1],[137,1]],"ブラシ":[[51,1],[58,1]],"一つ":[[51,1],[79,1]],"一人":[[5,1],[110,1]],"二つ":[[111,1],[115,1]],"二千":[[5,1],[6,1]],"仕方":[[69,1],[89,1]],"偉い":[[56,1],[64,1]],"元気":[[59,1],[141,1]],"入り":[[29,1],[33,1]],"入れ":[[78,1],[98,1]],"分け":[[122,1],[143,1]],"切り":[[10,1],[111,1]],"向う":[[107,1],[134,1]],"多い":[[42,1],[46,1]],"寒い":[[40,1],[83,1]],"専門":[[3,1],[143,1]],"山鳥":[[10,1],[145,1]],"帰り":[[75,1],[145,1]],"振りかけ":[[93,1],[95,1]],"損害":[[5,1],[6,1]],"横っ腹":[[2,1],[14,1]],"気の毒":[[101,1],[121,1]],"決して":[[29,1],[32,1]],"瀬戸":[[27,1],[104,1]],"猟師":[[143,1],[145,1]],"眼玉":[[115,1],[132,1]],"若い":[[0,1],[34,1]],"見合せ":[[104,1],[126,1]],"財布":[[71,1],[137,1]],"遠慮":[[29,1],[32,1]],"金庫":[[73,1],[78,1]],"金文字":[[28,1],[33,1]],"青い":[[104,1],[115,1]],"黄いろ":[[2,1],[41,1]],"黒い":[[62,1],[66,1]],"旦那":[[140,2]],"菜っ葉":[[124,2]]}};
 
 function parseCSVRows(text){
@@ -296,48 +299,29 @@ function parseCSVRows(text){
   return rows.filter(r=>!(r.length===1&&r[0].trim()===''));
 }
 function isInt(v){return /^-?\d+$/.test(String(v).trim());}
-function detectOrient(rows){
-  const h0=(rows[0][0]||'').trim().toLowerCase();
-  if(h0==='word'||h0==='語'||h0==='term'||h0==='単語')return 'word';
-  if(h0==='doc'||h0==='文書'||h0==='id')return 'doc';
-  const col0=rows.slice(1).map(r=>(r[0]||'').trim());
-  if(col0.length&&col0.every(v=>/^d\d+$/i.test(v)))return 'doc';
-  return 'word';
-}
-function modelFromRows(rows,orient){
-  if(orient==='auto')orient=detectOrient(rows);
-  const names=[],docs=[],vec=[],norm=[],total=[],df=[],skipped=[];
-  let docN=0;
-  if(orient==='word'){
-    // rows = words; header[1..] = documents
-    docN=rows[0].length-1;
-    for(let i=1;i<rows.length;i++){
-      const r=rows[i];const nm=(r[0]||'').trim();if(!nm)continue;
-      const s=new Set(),vc=new Map();let tot=0,ss=0;
-      for(let j=1;j<=docN;j++){const v=(r[j]||'').trim();const n=v===''?0:(+v||0);if(n>0){s.add(j-1);vc.set(j-1,n);tot+=n;ss+=n*n;}}
-      names.push(nm);docs.push(s);vec.push(vc);norm.push(Math.sqrt(ss));total.push(tot);df.push(s.size);
-    }
-  }else{
-    // rows = documents; identify word columns (numeric + sparse); skip id / attribute columns
-    const header=rows[0],data=rows.slice(1);docN=data.length;
-    for(let c=1;c<header.length;c++){
-      let numeric=true,hasZero=false,hasPos=false;
-      for(const r of data){
-        const v=(r[c]||'').trim();
-        if(v===''){hasZero=true;continue;}
-        if(!isInt(v)){numeric=false;break;}
-        const n=+v;if(n===0)hasZero=true;else if(n>0)hasPos=true;
-      }
-      if(numeric&&hasZero&&hasPos){
-        const s=new Set(),vc=new Map();let tot=0,ss=0;
-        data.forEach((r,di)=>{const v=(r[c]||'').trim();const n=v===''?0:(+v||0);if(n>0){s.add(di);vc.set(di,n);tot+=n;ss+=n*n;}});
-        names.push((header[c]||'').trim());docs.push(s);vec.push(vc);norm.push(Math.sqrt(ss));total.push(tot);df.push(s.size);
-      }else if((header[c]||'').trim()){
-        skipped.push((header[c]||'').trim());
-      }
-    }
+// suggest which columns look like attributes (non-numeric, dense/id-like, or all-zero) — used only to pre-fill the box
+function guessAttrCols(rows){
+  const header=rows[0],data=rows.slice(1),attrs=[];
+  for(let c=1;c<header.length;c++){
+    let numeric=true,hasZero=false,hasPos=false;
+    for(const r of data){const v=(r[c]||'').trim();if(v===''){hasZero=true;continue;}if(!isInt(v)){numeric=false;break;}const n=+v;if(n===0)hasZero=true;else if(n>0)hasPos=true;}
+    if(!numeric||!hasZero||!hasPos)attrs.push((header[c]||'').trim());
   }
-  return {names,docs,vec,norm,total,df,docN,orient,skipped};
+  return attrs.filter(Boolean);
+}
+// doc×word CSV: column 0 = document id (row label); columns named in attrCols are excluded; every other column is a word
+function modelFromRows(rows,attrCols){
+  const header=rows[0],data=rows.slice(1),docN=data.length;
+  const attrSet=new Set((attrCols||[]).map(s=>s.trim()).filter(Boolean));
+  const names=[],docs=[],vec=[],norm=[],total=[],df=[],skipped=[];
+  for(let c=1;c<header.length;c++){
+    const colName=(header[c]||'').trim();
+    if(attrSet.has(colName)){skipped.push(colName);continue;} // attribute -> excluded
+    const s=new Set(),vc=new Map();let tot=0,ss=0;
+    data.forEach((r,di)=>{const v=(r[c]||'').trim();const n=v===''?0:(+v||0);if(n>0){s.add(di);vc.set(di,n);tot+=n;ss+=n*n;}});
+    names.push(colName);docs.push(s);vec.push(vc);norm.push(Math.sqrt(ss));total.push(tot);df.push(s.size);
+  }
+  return {names,docs,vec,norm,total,df,docN,orient:'doc',skipped};
 }
 
 function setModel(m,filename){
@@ -351,9 +335,8 @@ function setModel(m,filename){
   $('#netMeasure').value=isBinary?'jaccard':'cosine';
   $('#meta').classList.add('show');
   $('#meta').innerHTML='<span class="k">'+t('meta_file')+'</span> <span class="v">'+(filename||'demo')+'</span><br>'+
-    '<span class="k">'+t('meta_orient')+'</span> <span class="v">'+(m.orient==='word'?'word×doc':'doc×word')+'</span> · '+
     '<span class="k">'+t('meta_words')+'</span> <span class="v">'+m.names.length+'</span> · '+
-    '<span class="k">'+t('meta_docs')+'</span> <span class="v">'+m.docN+'</span><br>'+
+    '<span class="k">'+t('meta_docs')+'</span> <span class="v">'+m.docN+'</span> · '+
     '<span class="k">'+t('meta_vals')+'</span> <span class="v">'+(isBinary?t('val_binary'):t('val_freq'))+'</span>'+
     (m.skipped&&m.skipped.length?('<br><span class="k">'+t('meta_skip')+'</span> <span class="v">'+m.skipped.join(', ')+'</span>'):'');
   ['#cloudGroup','#netGroup'].forEach(s=>$(s).style.display='');
@@ -447,11 +430,11 @@ function cloudToSvg(c){
   });
   // legend inside the figure (top-left)
   const L=c.legendLayout,g=svgEl('g',{});
-  g.appendChild(svgEl('rect',{x:L.box.x,y:L.box.y,width:L.box.w,height:L.box.h,rx:6,fill:cssv('--panel'),'fill-opacity':0.9,stroke:cssv('--line'),'stroke-width':1}));
-  const tt=svgEl('text',{x:L.title.x,y:L.title.y,'font-size':11,'font-family':cssv('--mono'),fill:cssv('--ink-dim')});tt.textContent=L.title.text;g.appendChild(tt);
+  g.appendChild(svgEl('rect',{x:L.box.x,y:L.box.y,width:L.box.w,height:L.box.h,rx:6,fill:'#fff','fill-opacity':0.9,stroke:'#ccc','stroke-width':1}));
+  const tt=svgEl('text',{x:L.title.x,y:L.title.y,'font-size':11,'font-family':cssv('--mono'),fill:'#000'});tt.textContent=L.title.text;g.appendChild(tt);
   L.rows.forEach(row=>{
     g.appendChild(svgEl('rect',{x:row.sx,y:row.sy,width:row.sw,height:row.sh,rx:2,fill:row.color}));
-    const tx=svgEl('text',{x:row.tx,y:row.ty,'font-size':11,'font-family':cssv('--mono'),fill:cssv('--ink')});tx.textContent=row.text;g.appendChild(tx);
+    const tx=svgEl('text',{x:row.tx,y:row.ty,'font-size':11,'font-family':cssv('--mono'),fill:'#000'});tx.textContent=row.text;g.appendChild(tx);
   });
   svg.appendChild(g);
   return svg;
@@ -601,7 +584,7 @@ function community(n,edges){
 }
 function computeNet(relayout){
   const b=buildNet();
-  const sp=+(($('#netSpread')&&$('#netSpread').value)||1.5)||1.5; // node spread = force scale (bigger k)
+  const sp=+(($('#netSpread')&&$('#netSpread').value)||1.1)||1.1; // node spread = force scale (bigger k)
   const W=Math.round(780*sp),H=Math.round(520*sp);
   const pos=(relayout||!NET||NET.n!==b.n||NET.W!==W)?layoutFR(b.n,b.edges,W,H,400,NETSEED):NET.pos;
   NET={...b,pos,W,H}; // community computed at paint time (so switching method only repaints)
@@ -635,7 +618,7 @@ function paintNet(svg){
   N.nodesIdx.forEach((wi,i)=>{
     const r=6+11*N.deg[i]/maxdeg;
     const g=svgEl('g',{class:'netlabel',transform:'translate('+N.pos[i].x+','+N.pos[i].y+')'});g.dataset.i=i;
-    const tx=svgEl('text',{x:0,y:-r-4,'text-anchor':'middle','font-size':11,'font-family':cssv('--sans'),fill:ink,'paint-order':'stroke',stroke:cssv('--panel-2'),'stroke-width':3,'stroke-linejoin':'round'});
+    const tx=svgEl('text',{x:0,y:-r-4,'text-anchor':'middle','font-size':11,'font-family':cssv('--sans'),fill:'#000'});
     tx.textContent=MODEL.names[wi];g.appendChild(tx);
     gL.appendChild(g);
   });
@@ -703,17 +686,33 @@ function renderAll(relayout){
 function downloadSvg(svg,name){
   const clone=svg.cloneNode(true);
   clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
-  const bg=cssv('--panel-2');
-  const rect='<rect width="100%" height="100%" fill="'+bg+'"/>';
-  const s='<?xml version="1.0" encoding="UTF-8"?>\n'+clone.outerHTML.replace('>',' >').replace(/^(<svg[^>]*>)/,'$1'+rect);
+  // no background rect -> transparent SVG (shows white on paper/slides, blends anywhere)
+  const s='<?xml version="1.0" encoding="UTF-8"?>\n'+clone.outerHTML;
   const blob=new Blob([s],{type:'image/svg+xml;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 // ---------- events ----------
+function attrList(){return Array.from($$('#attrCols input:checked')).map(el=>el.value);}
+function clearAttrChecks(){$('#attrCols').innerHTML='<span class="empty" data-i18n="attr_empty">'+t('attr_empty')+'</span>';}
+// build one checkbox per column (col 0 = document id, excluded); checkedSet = auto-suggested attributes
+function buildAttrChecks(rows,checkedSet){
+  const header=rows[0],box=$('#attrCols');box.innerHTML='';let n=0;
+  for(let c=1;c<header.length;c++){
+    const name=(header[c]||'').trim();if(!name)continue;
+    const lab=document.createElement('label');
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=name;cb.checked=checkedSet.has(name);cb.onchange=reparse;
+    const sp=document.createElement('span');sp.textContent=name;
+    lab.appendChild(cb);lab.appendChild(sp);box.appendChild(lab);n++;
+  }
+  if(!n)clearAttrChecks();
+}
+function reparse(){if(LASTROWS)setModel(modelFromRows(LASTROWS,attrList()),LASTNAME);}
 function ingest(text,filename){
   const rows=parseCSVRows(text);
   if(!rows.length){toast(t('toast_parsefail'));return;}
-  setModel(modelFromRows(rows,$('#orient').value),filename);
+  LASTROWS=rows;LASTNAME=filename;
+  buildAttrChecks(rows,new Set(guessAttrCols(rows))); // auto-suggested, user can toggle
+  reparse();
 }
 const drop=$('#drop'),fileInput=$('#file');
 drop.onclick=()=>fileInput.click();
@@ -721,8 +720,7 @@ drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
 drop.ondragleave=()=>drop.classList.remove('drag');
 drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
 fileInput.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
-$('#demo').onclick=()=>{setModel(modelFromDemo(),'chumonno_dfm.csv');toast(t('toast_demo'));};
-$('#orient').onchange=()=>{if(MODEL&&$('#meta').classList.contains('show')){/* re-parse only on new load */}};
+$('#demo').onclick=()=>{LASTROWS=null;clearAttrChecks();setModel(modelFromDemo(),'chumonno_dfm.csv');toast(t('toast_demo'));};
 
 $('#cloudN').oninput=e=>$('#cloudNVal').textContent=e.target.value;
 $('#cloudN').onchange=()=>renderAll();

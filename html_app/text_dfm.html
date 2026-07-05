@@ -193,13 +193,6 @@
     <div class="group" id="paramGroup" style="display:none">
       <h2 data-i18n="g_dfm">文書単語行列</h2>
       <label class="field">
-        <span class="lab"><span data-i18n="p_orient">出力の向き</span></span>
-        <select id="orient" size="1">
-          <option value="doc" data-i18n="orient_doc">文書 × 単語（行=文書, 属性付き）</option>
-          <option value="word" data-i18n="orient_word">単語 × 文書（行=単語, NMF用）</option>
-        </select>
-      </label>
-      <label class="field">
         <span class="lab"><span data-i18n="p_val">値</span></span>
         <select id="valtype" size="1">
           <option value="count" data-i18n="val_count">出現回数</option>
@@ -285,7 +278,6 @@ const I18N={
     col_ref:'Blaheta, D., & Johnson, M. (2001). Unsupervised learning of multi-word verbs. Proc. 39th ACL, 54–60.',
     col_word:'複合語', col_use:'採用', col_none:'候補がありません。min_count を下げてください。',
     dl_colloc:'複合語候補 CSV（複合語・count・z・p）',
-    p_orient:'出力の向き', orient_doc:'文書 × 単語（行=文書, 属性付き）', orient_word:'単語 × 文書（行=単語, NMF用）',
     p_nchar:'最小文字数 (min_nchar)', p_nchar_ex:'例: 扉は1、注文は2', p_freq:'最小出現回数 (min_termfreq)',
     sz_label:'この設定での行列サイズ', sz_docs:'文書', sz_words:'語',
     p_val:'値', val_count:'出現回数', val_binary:'有無（含むなら1, 含まないなら0）',
@@ -297,12 +289,12 @@ const I18N={
     m_docs:'文書数', m_tokens:'総トークン数', m_vocab:'語彙数', m_density:'非ゼロ率',
     sec_ex:'分かち書きの例', sec_ex_d:'先頭の文書に、フィルタ・置換を適用した結果のトークン。',
     sec_top:'頻出語', sec_top_d:'のべ出現回数の多い語（上位）。',
-    sec_dfm:'文書単語行列（プレビュー）', sec_dfm_d:'行=語, 列=文書。値は各文書での出現回数。先頭の一部を表示。',
+    sec_dfm:'文書単語行列（プレビュー）', sec_dfm_d:'行=文書, 列=語（出力CSVと同じ向き）。値は各文書での出現量。左上の一部を表示（属性列付き）。',
     dl_title:'ダウンロード',
-    dl_dfm:'文書単語行列 CSV（選択した向き）',
+    dl_dfm:'文書単語行列 CSV（行=文書, 属性付き）',
     dl_freq:'頻出語 CSV（単語・のべ出現回数・出現文書数）',
     dl_log:'text_dfm.log（全設定）',
-    word_head:'語 / 文書', total:'計',
+    word_head:'文書 / 語', total:'計',
     toast_nofile:'CSVを読み込んでください', toast_notext:'テキスト列を選んでください',
     toast_empty:'条件に合う語がありません。フィルタや最小出現文書数を緩めてください。',
     toast_parsefail:'CSVの解析に失敗しました', toast_demo:'デモを読み込みました（注文の多い料理店・147段落／青空文庫）',
@@ -329,7 +321,6 @@ const I18N={
     col_ref:'Blaheta, D., & Johnson, M. (2001). Unsupervised learning of multi-word verbs. Proc. 39th ACL, 54–60.',
     col_word:'compound', col_use:'use', col_none:'No candidates. Lower min_count.',
     dl_colloc:'Compound candidates CSV (compound, count, z, p)',
-    p_orient:'Matrix orientation', orient_doc:'documents × words (rows=docs, +metadata)', orient_word:'words × documents (rows=words, for NMF)',
     p_nchar:'Min characters (min_nchar)', p_nchar_ex:'e.g. 扉=1, 注文=2', p_freq:'Min term frequency (min_termfreq)',
     sz_label:'Matrix size with these settings', sz_docs:'docs', sz_words:'words',
     p_val:'Values', val_count:'occurrence counts', val_binary:'presence (1 if contains, else 0)',
@@ -341,12 +332,12 @@ const I18N={
     m_docs:'Documents', m_tokens:'Total tokens', m_vocab:'Vocabulary', m_density:'Non-zero',
     sec_ex:'Tokenization example', sec_ex_d:'Tokens of the first document after filters and replacements.',
     sec_top:'Frequent words', sec_top_d:'Words with the highest total occurrence count (top).',
-    sec_dfm:'Document-feature matrix (preview)', sec_dfm_d:'rows = words, cols = documents; values are counts. Showing the top-left part.',
+    sec_dfm:'Document-feature matrix (preview)', sec_dfm_d:'rows = documents, cols = words (same as the output CSV); values are occurrence counts. Showing the top-left part (with attribute columns).',
     dl_title:'Downloads',
-    dl_dfm:'Document-feature matrix CSV (selected orientation)',
+    dl_dfm:'Document-feature matrix CSV (rows=documents, +metadata)',
     dl_freq:'Frequent words CSV (word, total count, doc freq)',
     dl_log:'text_dfm.log (all settings)',
-    word_head:'word / doc', total:'total',
+    word_head:'doc / word', total:'total',
     toast_nofile:'Please load a CSV first', toast_notext:'Please choose a text column',
     toast_empty:'No words matched. Relax the filters or min document frequency.',
     toast_parsefail:'Failed to parse CSV', toast_demo:'Loaded demo (Restaurant of Many Orders, 147 paragraphs / Aozora Bunko)',
@@ -719,25 +710,23 @@ function dfmWordOrder(R){
   return vc.map((_,i)=>i).sort((a,b)=>df[vc[b]]-df[vc[a]]||tc[vc[b]]-tc[vc[a]]||(vc[a]<vc[b]?-1:1));
 }
 function renderPreview(R){
-  const ord=dfmWordOrder(R);
-  const nw=Math.min(25,R.V), nd=Math.min(8,R.D);
+  // mirror the actual output CSV (rows = documents, cols = metadata + words): show the top-left corner
+  const ord=dfmWordOrder(R); // word column order (matches the CSV)
+  const meta=R.metaCols;
+  const nw=Math.min(20,R.V), nd=Math.min(12,R.D);
   const wrap=el('div',{class:'tablewrap'});
   const table=document.createElement('table');
   const thead=document.createElement('thead');const htr=document.createElement('tr');
   const th0=document.createElement('th');th0.textContent=t('word_head');htr.appendChild(th0);
-  for(let j=0;j<nd;j++){const th=document.createElement('th');th.textContent='d'+(j+1);htr.appendChild(th);}
-  const tht=document.createElement('th');tht.textContent=t('total');htr.appendChild(tht);
+  meta.forEach(c=>{const th=document.createElement('th');th.textContent=c;htr.appendChild(th);});
+  for(let k=0;k<nw;k++){const th=document.createElement('th');th.textContent=R.vocab[ord[k]];htr.appendChild(th);}
   thead.appendChild(htr);table.appendChild(thead);
   const tbody=document.createElement('tbody');
-  for(let k=0;k<nw;k++){
-    const i=ord[k];
+  for(let j=0;j<nd;j++){
     const tr=document.createElement('tr');
-    const w=R.vocab[i];
-    const td0=document.createElement('td');td0.textContent=w;tr.appendChild(td0);
-    let rowSum=0;
-    for(let j=0;j<R.D;j++)rowSum+=cellVal(R.dfm[i][j]);
-    for(let j=0;j<nd;j++){const td=document.createElement('td');const v=cellVal(R.dfm[i][j]);td.textContent=v===0?'·':v;tr.appendChild(td);}
-    const tdt=document.createElement('td');tdt.textContent=rowSum;tdt.style.color='var(--cyan)';tr.appendChild(tdt);
+    const td0=document.createElement('td');td0.textContent='d'+(j+1);tr.appendChild(td0);
+    meta.forEach(c=>{const td=document.createElement('td');td.textContent=DATA.rows[j][c];tr.appendChild(td);});
+    for(let k=0;k<nw;k++){const td=document.createElement('td');const v=cellVal(R.dfm[ord[k]][j]);td.textContent=v===0?'·':v;tr.appendChild(td);}
     tbody.appendChild(tr);
   }
   table.appendChild(tbody);wrap.appendChild(table);return wrap;
@@ -746,30 +735,21 @@ function renderPreview(R){
 function csvCell(v){if(v==null)v='';v=String(v);if(/[",\n]/.test(v))return '"'+v.replace(/"/g,'""')+'"';return v;}
 function saveText(name,text,mime){const blob=new Blob([text],{type:(mime||'text/plain')+';charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 function downloadDFM(R){
-  const orient=$('#orient').value;
   const bin=$('#valtype').value==='binary';
   const suffix=bin?'01':'';
-  const ord=dfmWordOrder(R); // words ordered by column/row sum (count -> totalCount, binary -> docFreq)
-  if(orient==='word'){
-    // words (rows) × documents (cols) — for the NMF app
-    let csv='﻿'+'word,'+Array.from({length:R.D},(_,j)=>'d'+(j+1)).join(',')+'\n';
-    for(let k=0;k<R.V;k++){const i=ord[k];csv+=csvCell(R.vocab[i])+','+R.dfm[i].map(cellVal).join(',')+'\n';}
-    saveText('dfm_word_doc'+suffix+'.csv',csv,'text/csv');
-  }else{
-    // documents (rows) × words (cols) + metadata — for the classification tree app
-    const meta=R.metaCols;
-    let csv='﻿'+['doc'].concat(meta.map(csvCell),ord.map(k=>csvCell(R.vocab[k]))).join(',')+'\n';
-    for(let j=0;j<R.D;j++){
-      const row=['d'+(j+1)].concat(meta.map(c=>csvCell(DATA.rows[j][c])));
-      for(let k=0;k<R.V;k++)row.push(cellVal(R.dfm[ord[k]][j]));
-      csv+=row.join(',')+'\n';
-    }
-    saveText('dfm_doc_word'+suffix+'.csv',csv,'text/csv');
+  const ord=dfmWordOrder(R); // words ordered by column sum (count -> totalCount, binary -> docFreq)
+  // documents (rows) × words (cols) + metadata
+  const meta=R.metaCols;
+  let csv='﻿'+['doc'].concat(meta.map(csvCell),ord.map(k=>csvCell(R.vocab[k]))).join(',')+'\n';
+  for(let j=0;j<R.D;j++){
+    const row=['d'+(j+1)].concat(meta.map(c=>csvCell(DATA.rows[j][c])));
+    for(let k=0;k<R.V;k++)row.push(cellVal(R.dfm[ord[k]][j]));
+    csv+=row.join(',')+'\n';
   }
+  saveText('dfm_doc_word'+suffix+'.csv',csv,'text/csv');
 }
 function downloadLog(R){
-  // reflect the current live settings (orientation / values can change after run)
-  const orient=$('#orient').value;
+  // reflect the current live settings (values can change after run)
   const valtype=$('#valtype').value;
   const L=[];
   L.push('# text -> document-feature matrix — log');L.push('');
@@ -784,7 +764,7 @@ function downloadLog(R){
   L.push('synonyms       : '+(Object.entries(R.opts.syn).map(([f,to])=>to+'<-'+f).join(', ')||'(none)'));
   L.push('min_nchar      : '+R.opts.nchar);
   L.push('min_termfreq   : '+R.minfreq);
-  L.push('orientation    : '+(orient==='word'?'word x doc (rows=words, for NMF)':'doc x word (rows=docs, +metadata)'));
+  L.push('orientation    : doc x word (rows=docs, +metadata)');
   L.push('values         : '+(valtype==='binary'?'binary (0/1 presence)':'count (occurrences)'));
   L.push('');
   L.push('[Results]');

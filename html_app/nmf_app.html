@@ -202,12 +202,17 @@
         <span class="lab"><span data-i18n="p_seed">乱数シード</span></span>
         <input type="number" id="seed" value="1" min="0" step="1">
       </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="p_nstart">再スタート回数 (nstart)</span></span>
+        <input type="number" id="nstart" value="5" min="1" max="20" step="1">
+      </label>
       <label class="field" style="margin-bottom:8px">
         <span class="lab"><span data-i18n="p_init">Xの初期値</span></span>
         <select id="init">
-          <option value="kmeans" data-i18n="init_kmeans">k-means (Yの列の重心)</option>
+          <option value="kmeans" data-i18n="init_kmeans">k-means++ (Yの列の重心)</option>
           <option value="random" data-i18n="init_random">一様乱数</option>
         </select>
+        <span class="hint" data-i18n-html="init_ref"></span>
       </label>
     </div>
 
@@ -268,8 +273,9 @@ const I18N={
     cb_transpose:'行列を転置してから分解', cb_transpose_sub:'Y → Yᵀ (行と列を入れ替え)',
     demo_btn:'◇ デモデータを読み込む',
     p_rank:'階数 Q (基底数=クラスタ数)', p_maxit:'最大反復回数', p_eps:'収束閾値 (相対)',
-    p_seed:'乱数シード', p_init:'Xの初期値',
-    init_kmeans:'k-means (Yの列の重心)', init_random:'一様乱数',
+    p_seed:'乱数シード', p_nstart:'再スタート回数 (nstart)', p_init:'Xの初期値',
+    init_kmeans:'k-means++ (Yの列の重心)', init_random:'一様乱数',
+    init_ref:'k-means++ は <a href="https://dl.acm.org/doi/10.5555/1283383.1283494" target="_blank" rel="noopener">Arthur &amp; Vassilvitskii (2007), SODA</a> による初期化。初期中心を距離²に比例した確率で選び、安定した開始点を得る。',
     cb_xnorm:'Xの列和を1に制約', cb_xnorm_sub:'更新式内で正規化・各基底を確率分布化',
     cb_normcol:'前処理: 変数ごと(行)に[0,1]正規化', cb_normcol_sub:'各行を (x−min)/(max−min) で0〜1に（転置後に適用）',
     run:'分解を実行', run_busy:'計算中…',
@@ -317,8 +323,9 @@ const I18N={
     cb_transpose:'Transpose before factorization', cb_transpose_sub:'Y → Yᵀ (swap rows and columns)',
     demo_btn:'◇ Load demo data',
     p_rank:'Rank Q (bases = clusters)', p_maxit:'Max iterations', p_eps:'Convergence tol. (relative)',
-    p_seed:'Random seed', p_init:'Initial value of X',
-    init_kmeans:'k-means (centroids of Y columns)', init_random:'Uniform random',
+    p_seed:'Random seed', p_nstart:'Restarts (nstart)', p_init:'Initial value of X',
+    init_kmeans:'k-means++ (centroids of Y columns)', init_random:'Uniform random',
+    init_ref:'k-means++ initialization from <a href="https://dl.acm.org/doi/10.5555/1283383.1283494" target="_blank" rel="noopener">Arthur &amp; Vassilvitskii (2007), SODA</a>. Seeds are chosen with probability ∝ squared distance for a stable start.',
     cb_xnorm:'Constrain columns of X to sum to 1', cb_xnorm_sub:'normalized within updates; each basis becomes a distribution',
     cb_normcol:'Preprocess: min-max scale each variable (row) to [0,1]', cb_normcol_sub:'(x−min)/(max−min) per row (applied after transpose)',
     run:'Run factorization', run_busy:'Computing…',
@@ -448,7 +455,7 @@ function nmf(Y,Q,opts){
   const mean=sum/cnt||1;const sc=Math.sqrt(mean/Q)||1;
   const X=(init==='kmeans')?kmeansInitX(Y,P,N,Q,rand):Array.from({length:P},()=>Array.from({length:Q},()=>rand()*sc+1e-4));
   const B=Array.from({length:Q},()=>Array.from({length:N},()=>rand()*sc+1e-4));
-  const EPS=1e-10;const objHist=[];let prevObj=Infinity;
+  const EPS=1e-10;const objHist=[];let prevObj=Infinity,iters=maxit,converged=false;
 
   for(let it=1;it<=maxit;it++){
     const XtY=Array.from({length:Q},()=>new Float64Array(N));
@@ -466,15 +473,30 @@ function nmf(Y,Q,opts){
     if(xColNorm){
       for(let k=0;k<Q;k++){let s=0;for(let i=0;i<P;i++)s+=X[i][k];if(s>EPS){for(let i=0;i<P;i++)X[i][k]/=s;for(let j=0;j<N;j++)B[k][j]*=s;}}
     }
-    if(it%2===0||it===maxit||it===1){
-      const XB=matmul(X,B,P,Q,N);let rss=0;
-      for(let i=0;i<P;i++)for(let j=0;j<N;j++){const d=Y[i][j]-XB[i][j];rss+=d*d;}
-      objHist.push({it,rss});
-      const rel=Math.abs(prevObj-rss)/(prevObj+EPS);prevObj=rss;
-      if(rel<eps&&it>10)return finish(X,B,Y,P,Q,N,objHist,it,true);
-    }
+    // objective (RSS) every iteration -> nmfkc-style convergence |Δobj|/max(|obj|,1) <= eps
+    const XB=matmul(X,B,P,Q,N);let rss=0;
+    for(let i=0;i<P;i++)for(let j=0;j<N;j++){const d=Y[i][j]-XB[i][j];rss+=d*d;}
+    objHist.push({it,rss});
+    if(it>=10){const rel=Math.abs(prevObj-rss)/Math.max(Math.abs(rss),1);if(rel<=eps){iters=it;converged=true;prevObj=rss;break;}}
+    prevObj=rss;
   }
-  return finish(X,B,Y,P,Q,N,objHist,maxit,false);
+  // reorder bases by their centroid (weighted mean of the row index) -> consistent, reproducible order
+  if(Q>1){
+    const cent=new Array(Q);for(let k=0;k<Q;k++){let s=0;for(let i=0;i<P;i++)s+=((i+1)/P)*X[i][k];cent[k]=s;}
+    const idx=Array.from({length:Q},(_,k)=>k).sort((a,b)=>cent[a]-cent[b]);
+    const Xn=X.map(row=>idx.map(k=>row[k]));for(let i=0;i<P;i++)for(let k=0;k<Q;k++)X[i][k]=Xn[i][k];
+    const Bn=idx.map(k=>B[k]);for(let k=0;k<Q;k++)B[k]=Bn[k];
+  }
+  return finish(X,B,Y,P,Q,N,objHist,iters,converged);
+}
+// multi-start: run nstart fits from consecutive seeds, keep the one with smallest RSS (like nmfkc's nstart)
+function nmfMulti(Y,Q,opts,nstart){
+  let best=null,tried=0;
+  for(let s=0;s<Math.max(1,nstart|0);s++){
+    const r=nmf(Y,Q,Object.assign({},opts,{seed:(opts.seed|0)+s}));tried++;
+    if(!best||r.rss<best.rss)best=r;
+  }
+  best.nstart=tried;return best;
 }
 
 function finish(X,B,Y,P,Q,N,objHist,iters,converged){
@@ -714,6 +736,7 @@ function buildLog(res,meta){
   L.push('max_iterations          = '+meta.maxit);
   L.push('convergence_tol_rel     = '+epsStr);
   L.push('random_seed             = '+meta.seed);
+  L.push('nstart_multistart       = '+(meta.nstart||1)+' (best of; smallest RSS kept)');
   L.push('init_method             = '+meta.init);
   L.push('X_colsum1_constraint    = '+meta.xnorm);
   L.push('Y_rowminmax_preprocess  = '+meta.normrow);
@@ -801,7 +824,7 @@ bind('rank','rankVal');bind('maxit','maxitVal');bind('eps','epsVal',x=>'1e-'+x);
 $('#run').onclick=()=>{
   if(!DATA)return;
   const btn=$('#run');btn.classList.add('busy');btn.innerHTML='<span class="spinner"></span> '+t('run_busy');btn.disabled=true;
-  const Q=+$('#rank').value,maxit=+$('#maxit').value,eps=Math.pow(10,-(+$('#eps').value)),seed=+$('#seed').value||1;
+  const Q=+$('#rank').value,maxit=+$('#maxit').value,eps=Math.pow(10,-(+$('#eps').value)),seed=+$('#seed').value||1,nstart=+$('#nstart').value||1;
   const base=workingData();
   let Y=base.matrix.map(r=>r.slice());
   if($('#normrow').checked){
@@ -817,8 +840,8 @@ $('#run').onclick=()=>{
     try{
       const meta={fname:DATA.fname,origP:DATA.P,origN:DATA.N,transpose:$('#transpose').checked,
         effP:base.P,effN:base.N,nan:DATA.nanCount,neg:DATA.negCount,
-        rank:Q,maxit,eps,seed,init:$('#init').value,xnorm:$('#wnorm').checked,normrow:$('#normrow').checked};
-      RESULT=nmf(Y,Q,{maxit,eps,seed,xColNorm:$('#wnorm').checked,init:$('#init').value});
+        rank:Q,maxit,eps,seed,nstart,init:$('#init').value,xnorm:$('#wnorm').checked,normrow:$('#normrow').checked};
+      RESULT=nmfMulti(Y,Q,{maxit,eps,seed,xColNorm:$('#wnorm').checked,init:$('#init').value},nstart);
       RESULT.meta=meta;
       LAST={res:RESULT,data:{...base,matrix:Y}};
       render(LAST.res,LAST.data);

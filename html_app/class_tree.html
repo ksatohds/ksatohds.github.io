@@ -61,8 +61,11 @@
   input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg)}
   select,input[type=number]{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
   select:focus,input[type=number]:focus{border-color:var(--cyan-deep)}
-  select[multiple]{height:auto;padding:4px}
-  select[multiple] option{padding:3px 6px;border-radius:3px}
+  .checklist{max-height:184px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+  .checklist label{display:flex;align-items:center;gap:7px;padding:3px 2px;margin:0;font-family:var(--mono);font-size:12.5px;color:var(--ink);cursor:pointer}
+  .checklist label:hover{color:var(--cyan)}
+  .checklist input[type=checkbox]{width:auto;margin:0;flex-shrink:0;accent-color:var(--cyan);cursor:pointer}
+  .checklist .empty{display:block;color:var(--ink-faint);font-size:11.5px;padding:4px 2px}
   .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.45}
   .checkline input{accent-color:var(--cyan);margin-top:2px}
   .checkline .sub{display:block;color:var(--ink-faint);font-size:11px;font-family:var(--mono)}
@@ -88,12 +91,12 @@
   .card h3{font-size:14px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:9px}
   .card .desc{font-size:12px;color:var(--ink-dim);margin:0 0 14px;font-family:var(--mono)}
 
-  .svgscroll{overflow:auto;border-radius:6px;background:var(--panel-2);border:1px solid var(--line)}
+  .svgscroll{overflow:auto;border-radius:6px;background:transparent;border:1px solid var(--line)}
   svg{display:block}
   .treenode rect,.treenode circle{stroke-width:1.5}
-  .treelink{fill:none;stroke:var(--ink-faint);stroke-width:1.5;opacity:.5}
-  .treelabel{font-family:var(--mono);font-size:11px;fill:var(--ink)}
-  .treesub{font-family:var(--mono);font-size:10px;fill:var(--ink-dim)}
+  .treelink{fill:none;stroke:#999;stroke-width:1.5;opacity:.5}
+  .treelabel{font-family:var(--mono);font-size:11px;fill:#000}
+  .treesub{font-family:var(--mono);font-size:10px;fill:#000}
 
   .legendrow{display:flex;flex-wrap:wrap;gap:8px 16px;margin-bottom:14px}
   .legitem{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
@@ -162,9 +165,9 @@
       </label>
       <label class="field">
         <span class="lab"><span data-i18n="v_features">説明変数 (複数選択可)</span> <span class="val" id="featCount">0</span></span>
-        <select id="features" multiple size="8"></select>
+        <div class="checklist" id="features"></div>
       </label>
-      <div class="hint" data-i18n="v_hint">Ctrl/Shift クリックで複数選択。連続・カテゴリの両方を扱えます。</div>
+      <div class="hint" data-i18n="v_hint">チェックした変数を説明変数に使います。連続・カテゴリの両方を扱えます。</div>
       <div class="checkline" style="margin-top:10px">
         <input type="checkbox" id="numAsCat" checked>
         <label for="numAsCat"><span data-i18n="cb_numcat">少数水準の数値をカテゴリとして扱う</span>
@@ -225,7 +228,7 @@ const I18N={
     drop_big:'CSVをドロップ / クリック', drop_small:'1行=1標本 · 列=変数',
     demo_btn:'◇ デモデータ (iris)',
     v_target:'目的変数 (カテゴリ)', v_features:'説明変数 (複数選択可)',
-    v_hint:'Ctrl/Shift クリックで複数選択。連続・カテゴリの両方を扱えます。カテゴリは頻度上位5水準＋その他(misc.)として扱います。',
+    v_hint:'チェックした変数を説明変数に使います。連続・カテゴリの両方を扱えます。カテゴリは頻度上位5水準＋その他(misc.)として扱います。',
     cb_numcat:'少数水準の数値をカテゴリとして扱う', cb_numcat_sub:'OFFで順序数値（しきい値分岐）として扱う',
     p_minbucket:'minbucket (葉の最小標本数)', p_maxdepth:'maxdepth (木の最大深さ)',
     p_minbucket_hint:'目安は n/20〜n/10（例: n=200→10〜20, n=1000→50〜100）',
@@ -261,7 +264,7 @@ const I18N={
     drop_big:'Drop or click a CSV', drop_small:'1 row = 1 sample · columns = variables',
     demo_btn:'◇ Demo data (iris)',
     v_target:'Target (categorical)', v_features:'Features (multi-select)',
-    v_hint:'Ctrl/Shift-click for multiple. Both continuous and categorical are supported. Categoricals use the top-5 levels + others (misc.).',
+    v_hint:'Checked variables are used as features. Both continuous and categorical are supported. Categoricals use the top-5 levels + others (misc.).',
     cb_numcat:'Treat low-level numerics as categorical', cb_numcat_sub:'OFF = ordered numeric (threshold splits)',
     p_minbucket:'minbucket (min samples per leaf)', p_maxdepth:'maxdepth (max tree depth)',
     p_minbucket_hint:'rule of thumb: n/20–n/10 (e.g. n=200→10–20, n=1000→50–100)',
@@ -366,7 +369,8 @@ function typeTag(col){
   return ' ·cat('+u+')';
 }
 function refreshTypeTags(){
-  ['#target','#features'].forEach(sel=>{const s=$(sel);if(s)[...s.options].forEach(o=>o.textContent=o.value+typeTag(o.value));});
+  const t=$('#target');if(t)[...t.options].forEach(o=>o.textContent=o.value+typeTag(o.value));
+  $$('#features label').forEach(l=>{const cb=l.querySelector('input'),sp=l.querySelector('span');if(cb&&sp)sp.textContent=cb.value+typeTag(cb.value);});
 }
 
 function buildVarUI(){
@@ -404,16 +408,15 @@ function rebuildFeatureList(){
   fsel.innerHTML='';
   DATA.cols.forEach(c=>{
     if(c===target)return;
-    const o=document.createElement('option');o.value=c;
-    o.textContent=c+typeTag(c);
-    o.selected=true;
-    fsel.appendChild(o);
+    const lab=document.createElement('label');
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=c;cb.checked=true;cb.onchange=updateFeatCount;
+    const sp=document.createElement('span');sp.textContent=c+typeTag(c);
+    lab.appendChild(cb);lab.appendChild(sp);fsel.appendChild(lab);
   });
   updateFeatCount();
-  fsel.onchange=updateFeatCount;
 }
 function updateFeatCount(){
-  const n=[...$('#features').selectedOptions].length;
+  const n=$$('#features input:checked').length;
   $('#featCount').textContent=n;
 }
 
@@ -551,7 +554,7 @@ function run(){
   if(!DATA){toast(t('toast_nofile'));return;}
   const target=$('#target').value;
   if(!target){toast(t('toast_notarget'));return;}
-  const features=[...$('#features').selectedOptions].map(o=>o.value);
+  const features=[...$$('#features input:checked')].map(el=>el.value);
   if(features.length===0){toast(t('toast_nofeat'));return;}
   // filter rows with valid target
   const rows=DATA.rows.filter(r=>r[target]!=null&&String(r[target]).trim()!=='');
@@ -669,16 +672,10 @@ function render(R){
 /* --- figure export (SVG / PNG) --- */
 function svgStandalone(svgEl){
   const clone=svgEl.cloneNode(true);
-  const cs=getComputedStyle(document.documentElement);
-  const g=(v,d)=>cs.getPropertyValue(v).trim()||d;
-  const ink=g('--ink','#141c20'),inkDim=g('--ink-dim','#4e5d63'),inkFaint=g('--ink-faint','#7f8d93'),bg=g('--panel','#ffffff');
-  const w=svgEl.getAttribute('width'),h=svgEl.getAttribute('height');
   const NS='http://www.w3.org/2000/svg';
+  // theme-independent: black text, light-grey links, transparent background (no bg rect)
   const style=document.createElementNS(NS,'style');
-  style.textContent=`text{font-family:ui-monospace,Menlo,monospace}.treelabel{font-size:11px;fill:${ink}}.treesub{font-size:10px;fill:${inkDim}}.treelink{fill:none;stroke:${inkFaint};stroke-width:1.5;opacity:.5}`;
-  const bgRect=document.createElementNS(NS,'rect');
-  bgRect.setAttribute('x',0);bgRect.setAttribute('y',0);bgRect.setAttribute('width',w);bgRect.setAttribute('height',h);bgRect.setAttribute('fill',bg);
-  clone.insertBefore(bgRect,clone.firstChild);
+  style.textContent=`text{font-family:ui-monospace,Menlo,monospace}.treelabel{font-size:11px;fill:#000}.treesub{font-size:10px;fill:#000}.treelink{fill:none;stroke:#999;stroke-width:1.5;opacity:.5}`;
   clone.insertBefore(style,clone.firstChild);
   clone.setAttribute('xmlns',NS);
   return '<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
@@ -736,12 +733,8 @@ function renderTree(model,classes){
   const gLinks=el('g',{});const gNodes=el('g',{});
   svg.appendChild(gLinks);svg.appendChild(gNodes);
 
-  const inkFaint=getComputedStyle(document.documentElement).getPropertyValue('--ink-faint').trim();
-  const inkDim=getComputedStyle(document.documentElement).getPropertyValue('--ink-dim').trim();
-  const ink=getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
-  const panel=getComputedStyle(document.documentElement).getPropertyValue('--panel-2').trim();
-  const line=getComputedStyle(document.documentElement).getPropertyValue('--line').trim();
-  const amber=getComputedStyle(document.documentElement).getPropertyValue('--amber').trim();
+  // theme-independent figure colors: black text, white node boxes, light-grey borders/links
+  const inkFaint='#999',inkDim='#000',ink='#000',panel='#fff',line='#ccc',amber='#000';
 
   // legend inside the figure (top-left)
   const gLeg=el('g',{});let lgx=12;
@@ -792,7 +785,7 @@ function renderTree(model,classes){
     const t2=el('tspan',{});t2.textContent='n='+n.n;t2.style.fill=inkDim;
     lbl.appendChild(t1);lbl.appendChild(t2);g.appendChild(lbl);
     const c2=el('text',{class:'treesub',x:NODE_W/2,y:y2,'text-anchor':'middle'});c2.style.fill=inkDim;c2.textContent=L.counts;g.appendChild(c2);
-    const c3=el('text',{class:'treesub',x:NODE_W/2,y:y3,'text-anchor':'middle'});c3.style.fill=inkFaint;c3.textContent=L.probs;g.appendChild(c3);
+    const c3=el('text',{class:'treesub',x:NODE_W/2,y:y3,'text-anchor':'middle'});c3.style.fill='#000';c3.textContent=L.probs;g.appendChild(c3);
     gNodes.appendChild(g);
 
     // split condition label (above children midpoint)
@@ -820,8 +813,8 @@ function renderImportance(impDrop){
   const max=entries[0][1];
   const W=440,rowH=26,pad=8,H=entries.length*rowH+16,labelW=120,barMax=W-labelW-70;
   const svg=el('svg',{width:W,height:H,viewBox:`0 0 ${W} ${H}`});
-  const inkDim=getComputedStyle(document.documentElement).getPropertyValue('--ink-dim').trim();
-  const cyan=getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();
+  const inkDim='#000';
+  const cyan='#0f9a8d';
   entries.forEach(([f,v],i)=>{
     const y=pad+i*rowH;
     const lt=el('text',{x:labelW-6,y:y+13,'text-anchor':'end',class:'treelabel'});lt.style.fill=inkDim;lt.textContent=f.length>14?f.slice(0,13)+'…':f;svg.appendChild(lt);

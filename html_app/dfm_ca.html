@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dfm_ca</title>
+<style>
+  :root{
+    --bg:#0f1417; --panel:#161d21; --panel-2:#1c252a; --line:#2a353b;
+    --ink:#e8eef0; --ink-dim:#8b9ba1; --ink-faint:#5b6a70;
+    --cyan:#4fd6c8; --cyan-deep:#2a9e93; --amber:#e8a54b; --violet:#9d8cf0; --danger:#e06a6a;
+    --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Menlo",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  }
+  html[data-theme="light"]{
+    --bg:#ffffff; --panel:#f6f8f9; --panel-2:#edf1f3; --line:#d8e0e3;
+    --ink:#141c20; --ink-dim:#4e5d63; --ink-faint:#7f8d93;
+    --cyan:#0f9a8d; --cyan-deep:#0b7468; --amber:#b07617; --violet:#6250c8; --danger:#cf4a4a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--cyan)}
+
+  header{border-bottom:1px solid var(--line);padding:22px 28px 20px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+  .langtog{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-family:var(--mono);font-size:11px;align-self:center;flex-shrink:0}
+  .langtog button{background:transparent;color:var(--ink-dim);border:none;padding:5px 11px;cursor:pointer;letter-spacing:.06em;transition:background .12s,color .12s}
+  .langtog button:hover{color:var(--ink)}
+  .langtog button.on{background:var(--cyan);color:#062522;font-weight:700}
+  .brand{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:10px}
+  .brand .glyph{font-size:17px;letter-spacing:0;color:var(--ink)}
+  h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .eq{font-family:var(--mono);color:var(--ink-dim);font-size:13px;margin-left:auto}
+
+  .wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:calc(100vh - 64px)}
+  .control{border-right:1px solid var(--line);padding:22px;background:var(--panel)}
+  .stage{padding:22px 28px;overflow:auto}
+  @media (max-width:860px){.wrap{grid-template-columns:1fr}.control{border-right:none;border-bottom:1px solid var(--line)}}
+
+  .group{margin-bottom:22px}
+  .group h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 11px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .group h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .dropzone{border:1px dashed var(--line);border-radius:8px;padding:20px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:var(--panel-2)}
+  .dropzone:hover{border-color:var(--cyan-deep)}
+  .dropzone.drag{border-color:var(--cyan);background:#17272a}
+  .dropzone .big{font-size:13px;color:var(--ink);margin-bottom:4px}
+  .dropzone .small{font-size:11.5px;color:var(--ink-faint);font-family:var(--mono)}
+  input[type=file]{display:none}
+
+  .filemeta{margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);line-height:1.7;background:var(--panel-2);border-radius:6px;padding:8px 10px;display:none}
+  .filemeta.show{display:block}
+  .filemeta .k{color:var(--ink-faint)}
+  .filemeta .v{color:var(--cyan)}
+
+  label.field{display:block;margin-bottom:14px}
+  label.field .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--ink-dim);margin-bottom:6px;gap:8px}
+  label.field .lab .val{font-family:var(--mono);color:var(--cyan);font-size:12.5px;flex-shrink:0}
+  select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
+  select:focus{border-color:var(--cyan-deep)}
+  .checklist{max-height:184px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+  .checklist label{display:flex;align-items:center;gap:7px;padding:3px 2px;margin:0;font-family:var(--mono);font-size:12.5px;color:var(--ink);cursor:pointer}
+  .checklist label:hover{color:var(--cyan)}
+  .checklist input[type=checkbox]{width:auto;margin:0;flex-shrink:0;accent-color:var(--cyan-deep);cursor:pointer}
+  .checklist .empty{display:block;color:var(--ink-faint);font-size:11.5px;padding:4px 2px}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--line);border-radius:2px;outline:none;margin:6px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--cyan-deep)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid var(--bg)}
+
+  .hint{font-size:11.5px;color:var(--ink-faint);margin-top:8px;line-height:1.6}
+
+  .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-faint);text-align:center;gap:14px;padding:40px}
+  .placeholder .mark{font-family:var(--mono);font-size:40px;color:var(--line)}
+  .placeholder .mark .a{color:var(--cyan-deep)}
+  .placeholder p{max-width:440px;font-size:13.5px;line-height:1.7}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:22px}
+  .metric{background:var(--panel);padding:13px 15px}
+  .metric .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .metric .v{font-family:var(--mono);font-size:20px;color:var(--ink);margin-top:3px;font-weight:600}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:20px}
+  .card h3{font-size:14px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .card .desc{font-size:12px;color:var(--ink-dim);margin:0 0 14px;font-family:var(--mono)}
+
+  .svgscroll{overflow:auto;border-radius:6px;background:transparent;border:1px solid var(--line)}
+  svg{display:block}
+
+  .inertia{display:flex;flex-direction:column;gap:7px}
+  .inertia .row{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px}
+  .inertia .row .dk{width:52px;color:var(--ink-dim);flex-shrink:0}
+  .inertia .row .bar{height:11px;background:var(--cyan);border-radius:2px;min-width:2px}
+  .inertia .row .pv{color:var(--ink);flex-shrink:0}
+  .inertia .row.on .dk{color:var(--cyan)}
+
+  .dl{font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);color:var(--cyan);cursor:pointer;transition:border-color .15s}
+  .dl:hover{border-color:var(--cyan-deep)}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:11px 18px;border-radius:7px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:50;display:none;max-width:90vw}
+  footer{border-top:1px solid var(--line);padding:16px 28px;color:var(--ink-faint);font-size:12px;font-family:var(--mono);display:flex;gap:10px 20px;flex-wrap:wrap;align-items:center}
+  footer .credit{color:var(--ink-dim)}
+  footer .credit b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="langtog" id="langtog">
+    <button data-lang="ja" class="on">JA</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <div class="langtog" id="themetog">
+    <button data-theme="dark" title="Dark">&#9790;</button>
+    <button data-theme="light" class="on" title="Light">&#9728;</button>
+  </div>
+  <div class="brand"><span class="glyph">&#8853;</span>DFM&nbsp;&rarr;&nbsp;CA</div>
+  <h1 data-i18n="h1">対応分析（コレスポンデンス分析）</h1>
+  <div class="eq" data-i18n-html="eq"></div>
+</header>
+
+<div class="wrap">
+  <aside class="control">
+
+    <div class="group">
+      <h2 data-i18n="g_data">データ</h2>
+      <div class="dropzone" id="drop">
+        <div class="big" data-i18n="drop_big">文書単語行列CSVをドロップ / クリック</div>
+        <div class="small" data-i18n="drop_small">文書 × 語（属性列を含む）</div>
+      </div>
+      <input type="file" id="file" accept=".csv,.tsv,.txt">
+      <div class="filemeta" id="meta"></div>
+      <button class="dl" id="demo" style="width:100%;margin-top:10px" data-i18n="demo_btn">&#9671; デモ（沖縄観光アンケート DFM）</button>
+      <div class="hint" data-i18n-html="demo_credit" style="margin-top:8px;line-height:1.6"></div>
+    </div>
+
+    <div class="group" id="groupGroup" style="display:none">
+      <h2 data-i18n="g_group">グループ変数（カテゴリ）</h2>
+      <div class="checklist" id="groupList"><span class="empty" data-i18n="group_empty">ファイルを読み込むと候補が表示されます。</span></div>
+      <div class="hint" data-i18n="group_hint">カテゴリ属性（水準数 2〜20）を最大2つ選べます。2つ選ぶと交互作用（例: 男性_20代）を内部で作成します。</div>
+    </div>
+
+    <div class="group" id="dispGroup" style="display:none">
+      <h2 data-i18n="g_disp">表示</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_words">表示する語（頻度上位%）</span> <span class="val" id="wNVal">30%</span></span>
+        <input type="range" id="wN" min="5" max="100" value="30" step="5">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_catsize">グループ変数の文字 (×6pt)</span> <span class="val" id="catSizeVal">2.0</span></span>
+        <input type="range" id="catSize" min="1" max="5" value="2" step="0.5">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="c_wordsize">単語の文字 (×6pt)</span> <span class="val" id="wordSizeVal">2.0</span></span>
+        <input type="range" id="wordSize" min="1" max="5" value="2" step="0.5">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="dim_x">横軸</span></span>
+        <select id="dimX"></select>
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="dim_y">縦軸</span></span>
+        <select id="dimY"></select>
+      </label>
+    </div>
+
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="placeholder" id="placeholder">
+      <div class="mark"><span class="a">&#8853;</span></div>
+      <p data-i18n="ph_main">左で属性列付きの文書単語行列CSVを読み込むか、デモを試してください。</p>
+      <p data-i18n="ph_sub" style="font-size:12px;color:var(--ink-faint)">カテゴリ属性と語のクロス集計に対応分析を適用し、属性カテゴリと語を同一平面に布置するバイプロットを描きます。</p>
+    </div>
+    <div id="results" style="display:none"></div>
+  </main>
+</div>
+
+<footer>
+  <span class="credit" data-i18n-html="f_model">Correspondence analysis · biplot</span>
+  <span class="credit"><b data-i18n="f_org">滋賀大学データサイエンス学系</b> · <span data-i18n="f_name">佐藤健一</span></span>
+  <button class="dl" id="saveApp" style="margin-left:auto" data-i18n="save_app">&#128190; GitHubから最新版を保存</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+let LANG='ja', toastTimer=null;
+function toast(msg){const el=$('#toast');el.textContent=msg;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',3800);}
+
+const I18N={
+  ja:{
+    h1:'対応分析（コレスポンデンス分析）',
+    eq:'文書単語行列 &rarr; <span style="color:var(--amber)">属性×語 クロス集計</span> &middot; <span style="color:var(--violet)">バイプロット</span>',
+    g_data:'データ', drop_big:'文書単語行列CSVをドロップ / クリック', drop_small:'文書 × 語（属性列を含む）',
+    demo_btn:'◇ デモ（沖縄観光アンケート DFM）',
+    demo_credit:'デモは沖縄県観光商工部「<b>平成18年度観光統計実態調査「沖縄観光客満足度調査」</b>」（別冊『観光客の声』・<b>第4回調査</b>）の自由記述の<b>一部</b>から作成した文書単語行列です（属性: 居住地・性別・年代・満足度、値は語の出現頻度）。出典: <a href="https://www.pref.okinawa.jp/shigoto/kankotokusan/1011671/1011816/1011825/1020290.html" target="_blank" rel="noopener">沖縄県</a>（&copy; 沖縄県）。',
+    g_group:'グループ変数（カテゴリ）', group_empty:'ファイルを読み込むと候補が表示されます。',
+    group_hint:'カテゴリ属性（水準数 2〜20）を最大2つ選べます。2つ選ぶと交互作用（例: 男性_20代）を内部で作成します。',
+    g_disp:'表示', c_words:'表示する語（頻度上位%）', freq_ge:'頻度 ≥ {x}', c_catsize:'グループ変数の文字 (×6pt)', c_wordsize:'単語の文字 (×6pt)', dim_x:'横軸', dim_y:'縦軸',
+    ph_main:'左で属性列付きの文書単語行列CSVを読み込むか、デモを試してください。',
+    ph_sub:'カテゴリ属性と語のクロス集計に対応分析を適用し、属性カテゴリと語を同一平面に布置するバイプロットを描きます。',
+    f_model:'対応分析 · バイプロット（symmetric map）', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
+    m_cats:'カテゴリ数', m_words:'語数', m_docs:'文書数', m_dims:'次元数',
+    sec_biplot:'バイプロット', sec_biplot_d:'●=属性カテゴリ（色）・小点=語。原点に近い語は平均的、外側の語は特定カテゴリと関連。',
+    sec_inertia:'各次元の寄与率（慣性）', sec_inertia_d:'各次元が説明する総慣性の割合。上位2軸を既定で表示。',
+    dl_biplot:'バイプロット SVG',
+    toast_demo:'デモDFMを読み込みました（沖縄観光アンケート）', toast_parsefail:'CSVの解析に失敗しました',
+    toast_nogroup:'グループ変数を1〜2個選択してください', toast_nocat:'カテゴリが2つ以上になりません。別の属性を選んでください。',
+    toast_group_max:'グループ変数は最大2つまでです', toast_nocand:'カテゴリ属性（水準数 2〜20）が見つかりません',
+    meta_file:'file', meta_cats:'カテゴリ', meta_words:'語', meta_docs:'文書', meta_group:'グループ変数', meta_none:'（未選択）',
+    dim_label:'次元'
+  },
+  en:{
+    h1:'Correspondence Analysis',
+    eq:'document-feature matrix &rarr; <span style="color:var(--amber)">attribute×word crosstab</span> &middot; <span style="color:var(--violet)">biplot</span>',
+    g_data:'Data', drop_big:'Drop or click a DFM CSV', drop_small:'docs × words (with attribute columns)',
+    demo_btn:'◇ Demo (Okinawa tourism survey DFM)',
+    demo_credit:'Demo: a document-feature matrix built from <b>part</b> of the free-text answers in the "Okinawa Tourist Satisfaction Survey" (<b>FY2006 Tourism Statistics Survey</b>, supplement "Voices of Tourists", 4th-round survey), Dept. of Tourism &amp; Commerce, Okinawa Prefecture. Attributes: residence, sex, age, satisfaction; values are word counts. Source: <a href="https://www.pref.okinawa.jp/shigoto/kankotokusan/1011671/1011816/1011825/1020290.html" target="_blank" rel="noopener">Okinawa Prefecture</a> (&copy; Okinawa Prefectural Government).',
+    g_group:'Group variables (categorical)', group_empty:'Candidates appear here after a file is loaded.',
+    group_hint:'Pick up to 2 categorical attributes (2–20 levels). Picking 2 builds their interaction internally (e.g. male_20s).',
+    g_disp:'Display', c_words:'Words shown (top freq %)', freq_ge:'freq ≥ {x}', c_catsize:'Category text (×6pt)', c_wordsize:'Word text (×6pt)', dim_x:'X axis', dim_y:'Y axis',
+    ph_main:'Load a DFM CSV that has attribute columns on the left, or try the demo.',
+    ph_sub:'Correspondence analysis on the attribute×word crosstab, drawing a biplot that places categories and words on one plane.',
+    f_model:'Correspondence analysis · biplot (symmetric map)', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
+    m_cats:'Categories', m_words:'Words', m_docs:'Documents', m_dims:'Dimensions',
+    sec_biplot:'Biplot', sec_biplot_d:'●=attribute categories (colored), small dots=words. Words near the origin are average; outer words associate with specific categories.',
+    sec_inertia:'Inertia explained per dimension', sec_inertia_d:'Share of total inertia each dimension explains. Top 2 axes shown by default.',
+    dl_biplot:'Biplot SVG',
+    toast_demo:'Loaded demo DFM (Okinawa tourism survey)', toast_parsefail:'Failed to parse CSV',
+    toast_nogroup:'Select 1–2 group variables', toast_nocat:'Fewer than 2 categories result. Choose another attribute.',
+    toast_group_max:'At most 2 group variables', toast_nocand:'No categorical attribute (2–20 levels) found',
+    meta_file:'file', meta_cats:'categories', meta_words:'words', meta_docs:'docs', meta_group:'group', meta_none:'(none)',
+    dim_label:'Dim'
+  }
+};
+function t(k){const d=I18N[LANG];return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k);}
+function applyI18n(){
+  $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  $$('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  $$('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  document.documentElement.lang=LANG;
+  if(DATA)renderCA();
+}
+
+// ---------- helpers ----------
+function el(tag,attrs,children){const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==='text')e.textContent=attrs[k];else e.setAttribute(k,attrs[k]);}if(children)children.forEach(c=>e.appendChild(c));return e;}
+function svgEl(tag,attrs){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function cssv(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+// categorical palette (theme-independent), reused for category colors
+const CLU=['#4fd6c8','#e8a54b','#9d8cf0','#e06a6a','#6fb1e0','#7fce8f','#d98cc0','#c9b45a','#5ac0b0','#b08fe0','#4f9dd6','#e8894b','#5fbf7f','#c86ac8','#e6c34b','#7570d6','#d9646a','#3fb6a8','#b08a4d','#8a9bb0'];
+
+function parseCSVRows(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(text.endsWith('\n'))text=text.slice(0,-1);
+  const firstLine=text.split('\n')[0]||'';
+  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(r=>!(r.length===1&&r[0].trim()===''));
+}
+function isInt(v){return /^-?\d+$/.test(String(v).trim());}
+// a column is an attribute if it is non-numeric, or not a proper 0/positive count column
+function guessAttrCols(rows){
+  const header=rows[0],data=rows.slice(1),attrs=new Set();
+  for(let c=1;c<header.length;c++){
+    let numeric=true,hasZero=false,hasPos=false;
+    for(const r of data){const v=(r[c]||'').trim();if(v===''){hasZero=true;continue;}if(!isInt(v)){numeric=false;break;}const n=+v;if(n===0)hasZero=true;else if(n>0)hasPos=true;}
+    if(!numeric||!hasZero||!hasPos)attrs.add((header[c]||'').trim());
+  }
+  return attrs;
+}
+function isBlank(v){return v===''||v==='NA'||v==='na'||v==='NaN';}
+
+// ---------- data model ----------
+// DATA = {header, rows(data), attrCols:[{name,colIdx,nlev,levels}], wordCols:[{name,colIdx}], docN}
+let DATA=null, CA=null, LASTNAME='';
+function buildData(rows){
+  const header=rows[0],data=rows.slice(1);
+  const attrNames=guessAttrCols(rows);
+  const attrCols=[],wordCols=[];
+  for(let c=1;c<header.length;c++){
+    const name=(header[c]||'').trim();if(!name)continue;
+    if(attrNames.has(name)){
+      const lv=new Set();
+      data.forEach(r=>{const v=(r[c]||'').trim();if(!isBlank(v))lv.add(v);});
+      attrCols.push({name,colIdx:c,nlev:lv.size,levels:[...lv]});
+    }else{
+      wordCols.push({name,colIdx:c});
+    }
+  }
+  return {header,rows:data,attrCols,wordCols,docN:data.length};
+}
+
+// ---------- crosstab (category x word) ----------
+function groupSel(){const names=Array.from($$('#groupList input:checked')).map(x=>x.value);return DATA.attrCols.filter(a=>names.includes(a.name));}
+function buildCT(groups){
+  const cats=new Map(),catLabels=[],docCat=new Array(DATA.docN).fill(-1);
+  DATA.rows.forEach((r,di)=>{
+    const vals=groups.map(g=>(r[g.colIdx]||'').trim());
+    if(vals.some(isBlank))return;               // drop docs with missing group value
+    const key=vals.join('_');
+    if(!cats.has(key)){cats.set(key,catLabels.length);catLabels.push(key);}
+    docCat[di]=cats.get(key);
+  });
+  const R=catLabels.length,C=DATA.wordCols.length;
+  const N=Array.from({length:R},()=>new Array(C).fill(0));
+  DATA.rows.forEach((r,di)=>{const ci=docCat[di];if(ci<0)return;DATA.wordCols.forEach((wc,wj)=>{const v=(r[wc.colIdx]||'').trim();const n=v===''?0:(+v||0);if(n>0)N[ci][wj]+=n;});});
+  return {catLabels,words:DATA.wordCols.map(w=>w.name),N,R,C};
+}
+
+// ---------- correspondence analysis ----------
+// Jacobi eigenvalue decomposition of a symmetric matrix. Returns eigenvalues (desc) and eigenvectors (columns).
+function jacobiEigen(A){
+  const n=A.length;
+  const a=A.map(r=>r.slice());
+  const V=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<120;sweep++){
+    let off=0;for(let p=0;p<n;p++)for(let q=p+1;q<n;q++)off+=a[p][q]*a[p][q];
+    if(off<1e-20)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){
+      if(Math.abs(a[p][q])<1e-300)continue;
+      const app=a[p][p],aqq=a[q][q],apq=a[p][q];
+      const phi=0.5*Math.atan2(2*apq,app-aqq);
+      const c=Math.cos(phi),s=Math.sin(phi);
+      for(let i=0;i<n;i++){const aip=a[i][p],aiq=a[i][q];a[i][p]=c*aip-s*aiq;a[i][q]=s*aip+c*aiq;}
+      for(let i=0;i<n;i++){const api=a[p][i],aqi=a[q][i];a[p][i]=c*api-s*aqi;a[q][i]=s*api+c*aqi;}
+      for(let i=0;i<n;i++){const vip=V[i][p],viq=V[i][q];V[i][p]=c*vip-s*viq;V[i][q]=s*vip+c*viq;}
+    }
+  }
+  const raw=[];for(let i=0;i<n;i++)raw.push(a[i][i]);
+  const order=raw.map((v,i)=>i).sort((x,y)=>raw[y]-raw[x]);
+  return {evals:order.map(i=>raw[i]),evecs:order.map(i=>V.map(row=>row[i]))};
+}
+// N: R x C frequency crosstab. Symmetric-map CA (both rows/cols in principal coordinates).
+function correspondence(N,catLabels,words){
+  let R=N.length,C=N[0]?N[0].length:0;
+  const rowSum=N.map(r=>r.reduce((a,b)=>a+b,0));
+  const colSum=new Array(C).fill(0);for(let i=0;i<R;i++)for(let j=0;j<C;j++)colSum[j]+=N[i][j];
+  const keepR=[],keepC=[];
+  for(let i=0;i<R;i++)if(rowSum[i]>0)keepR.push(i);
+  for(let j=0;j<C;j++)if(colSum[j]>0)keepC.push(j);
+  const cats=keepR.map(i=>catLabels[i]),wds=keepC.map(j=>words[j]);
+  const M=keepR.map(i=>keepC.map(j=>N[i][j]));
+  R=keepR.length;C=keepC.length;
+  if(R<2||C<2)return null;
+  let n=0;for(let i=0;i<R;i++)for(let j=0;j<C;j++)n+=M[i][j];
+  const rS=new Array(R).fill(0),cS=new Array(C).fill(0);
+  for(let i=0;i<R;i++)for(let j=0;j<C;j++){rS[i]+=M[i][j];cS[j]+=M[i][j];}
+  const r=rS.map(v=>v/n),c=cS.map(v=>v/n);
+  // standardized residuals S_ij = (P_ij - r_i c_j)/sqrt(r_i c_j)
+  const S=[];for(let i=0;i<R;i++){S.push([]);for(let j=0;j<C;j++){const p=M[i][j]/n;S[i][j]=(p-r[i]*c[j])/Math.sqrt(r[i]*c[j]);}}
+  // B = S S^T (R x R), R is small
+  const B=Array.from({length:R},()=>new Array(R).fill(0));
+  for(let i=0;i<R;i++)for(let k=i;k<R;k++){let s=0;for(let j=0;j<C;j++)s+=S[i][j]*S[k][j];B[i][k]=s;B[k][i]=s;}
+  const {evals,evecs}=jacobiEigen(B);
+  const maxE=Math.max(...evals.map(v=>Math.abs(v)),1e-12);
+  const idx=[];for(let k=0;k<evals.length;k++)if(evals[k]>1e-9*maxE&&evals[k]>1e-12)idx.push(k);
+  const maxDim=Math.min(R-1,C-1);if(idx.length>maxDim)idx.length=maxDim; // cap at min(R-1,C-1); drops the trivial dimension
+  const D=idx.length;
+  if(D<1)return null;
+  const total=idx.reduce((a,k)=>a+evals[k],0);
+  const sv=idx.map(k=>Math.sqrt(evals[k]));
+  const pct=idx.map(k=>100*evals[k]/total);
+  const rowCoord=[];
+  for(let i=0;i<R;i++){const row=[];for(let d=0;d<D;d++)row.push(evecs[idx[d]][i]/Math.sqrt(r[i])*sv[d]);rowCoord.push(row);}
+  const colCoord=[];
+  for(let j=0;j<C;j++){const row=[];for(let d=0;d<D;d++){const k=idx[d];let s=0;for(let i=0;i<R;i++)s+=S[i][j]*evecs[k][i];const vjk=s/sv[d];row.push(vjk/Math.sqrt(c[j])*sv[d]);}colCoord.push(row);}
+  return {catLabels:cats,words:wds,rowCoord,colCoord,rowMass:r,colMass:c,colCount:cS,eval:idx.map(k=>evals[k]),pct,dims:D,n};
+}
+
+// ---------- biplot ----------
+function biplotSvg(ca,dimX,dimY,topN,catMul,wordMul){
+  const W=720,H=720,pad=60,RED='#dc2626'; // square canvas + equal data range on both axes -> distances read correctly
+  const catFs=6*(catMul||1),wordFs=6*(wordMul||1); // font size = multiplier x 6pt
+  const F=ca.rowCoord,G=ca.colCoord,cats=ca.catLabels,words=ca.words;
+  const wIdx=words.map((_,j)=>j).sort((a,b)=>ca.colCount[b]-ca.colCount[a]).slice(0,topN); // highest frequency first
+  let minX=0,maxX=0,minY=0,maxY=0;
+  const upd=(x,y)=>{if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;};
+  cats.forEach((_,i)=>upd(F[i][dimX],F[i][dimY]));
+  wIdx.forEach(j=>upd(G[j][dimX],G[j][dimY]));
+  const cX=(minX+maxX)/2,cY=(minY+maxY)/2;
+  const half=(Math.max(maxX-minX,maxY-minY)/2||1)*1.08; // same half-range on X and Y (+8% margin)
+  const sc=(W-2*pad)/(2*half);
+  const mx=W/2-cX*sc,my=H/2+cY*sc;
+  const X=x=>mx+x*sc,Y=y=>my-y*sc;
+  const svg=svgEl('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
+  // origin cross
+  svg.appendChild(svgEl('line',{x1:X(cX-half),y1:Y(0),x2:X(cX+half),y2:Y(0),stroke:'#ddd','stroke-width':1}));
+  svg.appendChild(svgEl('line',{x1:X(0),y1:Y(cY-half),x2:X(0),y2:Y(cY+half),stroke:'#ddd','stroke-width':1}));
+  // words: small grey points + black labels
+  const gW=svgEl('g',{});
+  wIdx.forEach(j=>{
+    const px=X(G[j][dimX]),py=Y(G[j][dimY]);
+    gW.appendChild(svgEl('circle',{cx:px,cy:py,r:2.5,fill:'#888'}));
+    const tx=svgEl('text',{x:px+4,y:py+wordFs*0.32,'font-size':wordFs,'font-family':cssv('--sans'),fill:'#000'});tx.textContent=words[j];gW.appendChild(tx);
+  });
+  svg.appendChild(gW);
+  // categories: small red dots + bold red labels (drawn on top)
+  const gC=svgEl('g',{});
+  cats.forEach((c,i)=>{
+    const px=X(F[i][dimX]),py=Y(F[i][dimY]);
+    gC.appendChild(svgEl('circle',{cx:px,cy:py,r:3.5,fill:RED}));
+    const tx=svgEl('text',{x:px+6,y:py+catFs*0.34,'font-size':catFs,'font-family':cssv('--sans'),'font-weight':700,fill:RED});tx.textContent=c;gC.appendChild(tx);
+  });
+  svg.appendChild(gC);
+  // axis labels with inertia %
+  const xl=svgEl('text',{x:W/2,y:H-16,'font-size':12,'font-family':cssv('--sans'),fill:'#000','text-anchor':'middle'});
+  xl.textContent=t('dim_label')+' '+(dimX+1)+' ('+ca.pct[dimX].toFixed(1)+'%)';svg.appendChild(xl);
+  const yl=svgEl('text',{x:18,y:H/2,'font-size':12,'font-family':cssv('--sans'),fill:'#000','text-anchor':'middle',transform:'rotate(-90 18 '+(H/2)+')'});
+  yl.textContent=t('dim_label')+' '+(dimY+1)+' ('+ca.pct[dimY].toFixed(1)+'%)';svg.appendChild(yl);
+  // min raw frequency among the drawn words (top-left)
+  const minFreq=wIdx.length?ca.colCount[wIdx[wIdx.length-1]]:0;
+  const fl=svgEl('text',{x:pad,y:26,'font-size':13,'font-family':cssv('--sans'),'font-weight':700,fill:'#000'});
+  fl.textContent=t('freq_ge').replace('{x}',minFreq);svg.appendChild(fl);
+  return svg;
+}
+
+// ---------- render ----------
+function updateDimSelects(dims){
+  const opts=(sel,def)=>{const cur=+sel.value||def;sel.innerHTML='';for(let d=1;d<=dims;d++){const o=document.createElement('option');o.value=d;o.textContent=t('dim_label')+' '+d;sel.appendChild(o);}sel.value=Math.min(Math.max(1,cur),dims);};
+  opts($('#dimX'),1);
+  opts($('#dimY'),Math.min(2,dims));
+  if($('#dimX').value===$('#dimY').value&&dims>=2)$('#dimY').value=(+$('#dimX').value===1)?2:1;
+}
+function renderCA(){
+  if(!DATA)return;
+  const groups=groupSel();
+  const box=$('#results');
+  if(!groups.length){$('#placeholder').style.display='';box.style.display='none';return;}
+  const ct=buildCT(groups);
+  const ca=correspondence(ct.N,ct.catLabels,ct.words);
+  if(!ca){toast(t('toast_nocat'));return;}
+  CA=ca;
+  updateDimSelects(ca.dims);
+  const dimX=(+$('#dimX').value||1)-1, dimY=(+$('#dimY').value||2)-1;
+  const pctW=+$('#wN').value; const topN=Math.max(1,Math.round(ca.words.length*pctW/100)); // % of vocabulary, 100% = all words
+  const catMul=+$('#catSize').value||1, wordMul=+$('#wordSize').value||1;
+  $('#placeholder').style.display='none';box.style.display='';box.innerHTML='';
+  // metrics
+  const met=el('div',{class:'metrics'});
+  const addM=(k,v)=>{const m=el('div',{class:'metric'});m.appendChild(el('div',{class:'k',text:k}));m.appendChild(el('div',{class:'v',text:v}));met.appendChild(m);};
+  addM(t('m_cats'),ca.catLabels.length);addM(t('m_words'),ca.words.length);addM(t('m_docs'),DATA.docN);addM(t('m_dims'),ca.dims);
+  box.appendChild(met);
+  // biplot card
+  const bc=el('div',{class:'card'});
+  const h3=el('h3');h3.appendChild(el('span',{text:t('sec_biplot')}));
+  const dlb=el('button',{class:'dl',text:t('dl_biplot')});h3.appendChild(dlb);bc.appendChild(h3);
+  bc.appendChild(el('div',{class:'desc',text:t('sec_biplot_d')}));
+  const bw=el('div',{class:'svgscroll'});const bsvg=biplotSvg(ca,dimX,dimY,topN,catMul,wordMul);bw.appendChild(bsvg);bc.appendChild(bw);
+  dlb.onclick=()=>downloadSvg(bsvg,'biplot.svg');
+  box.appendChild(bc);
+  // inertia card
+  const ic=el('div',{class:'card'});
+  const h3i=el('h3');h3i.appendChild(el('span',{text:t('sec_inertia')}));ic.appendChild(h3i);
+  ic.appendChild(el('div',{class:'desc',text:t('sec_inertia_d')}));
+  const inx=el('div',{class:'inertia'});
+  const maxPct=Math.max(...ca.pct,1);
+  const showN=Math.min(ca.dims,8);
+  for(let d=0;d<showN;d++){
+    const on=(d===dimX||d===dimY);
+    const row=el('div',{class:'row'+(on?' on':'')});
+    row.appendChild(el('div',{class:'dk',text:t('dim_label')+' '+(d+1)}));
+    const bar=el('div',{class:'bar'});bar.style.width=(Math.max(2,ca.pct[d]/maxPct*180))+'px';if(!on)bar.style.background='var(--ink-faint)';row.appendChild(bar);
+    row.appendChild(el('div',{class:'pv',text:ca.pct[d].toFixed(1)+'%'}));
+    inx.appendChild(row);
+  }
+  ic.appendChild(inx);box.appendChild(ic);
+}
+function downloadSvg(svg,name){
+  const clone=svg.cloneNode(true);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  const s='<?xml version="1.0" encoding="UTF-8"?>\n'+clone.outerHTML; // transparent background
+  const blob=new Blob([s],{type:'image/svg+xml;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+// ---------- group selection UI ----------
+function onGroupToggle(e){
+  const checked=Array.from($$('#groupList input:checked'));
+  if(checked.length>2){e.target.checked=false;toast(t('toast_group_max'));return;}
+  renderCA();
+}
+function buildGroupChecks(preferred){
+  const box=$('#groupList');box.innerHTML='';
+  const cands=DATA.attrCols.filter(a=>a.nlev>=2&&a.nlev<=20);
+  if(!cands.length){box.innerHTML='<span class="empty">'+t('toast_nocand')+'</span>';return false;}
+  cands.forEach(a=>{
+    const lab=document.createElement('label');
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=a.name;cb.onchange=onGroupToggle;
+    if(preferred&&preferred.includes(a.name))cb.checked=true;
+    const sp=document.createElement('span');sp.textContent=a.name+' ('+a.nlev+')';
+    lab.appendChild(cb);lab.appendChild(sp);box.appendChild(lab);
+  });
+  // if nothing preselected, select the first candidate
+  if(!Array.from($$('#groupList input:checked')).length)box.querySelector('input').checked=true;
+  return true;
+}
+function setMeta(filename,cats){
+  $('#meta').classList.add('show');
+  const grp=groupSel().map(g=>g.name).join(' × ')||t('meta_none');
+  $('#meta').innerHTML='<span class="k">'+t('meta_file')+'</span> <span class="v">'+(filename||'demo')+'</span><br>'+
+    '<span class="k">'+t('meta_cats')+'</span> <span class="v">'+cats+'</span> · '+
+    '<span class="k">'+t('meta_words')+'</span> <span class="v">'+DATA.wordCols.length+'</span> · '+
+    '<span class="k">'+t('meta_docs')+'</span> <span class="v">'+DATA.docN+'</span><br>'+
+    '<span class="k">'+t('meta_group')+'</span> <span class="v">'+grp+'</span>';
+}
+function loadRows(rows,filename,preferred){
+  DATA=buildData(rows);LASTNAME=filename;
+  const ok=buildGroupChecks(preferred);
+  ['#groupGroup','#dispGroup'].forEach(s=>$(s).style.display='');
+  // #wN is a percentage (5–100%); it does not depend on the vocabulary size
+  if(!ok){$('#placeholder').style.display='';$('#results').style.display='none';$('#meta').classList.remove('show');return;}
+  renderCA();
+  const cats=CA?CA.catLabels.length:0;
+  setMeta(filename,cats);
+}
+function ingest(text,filename,preferred){
+  const rows=parseCSVRows(text);
+  if(!rows.length){toast(t('toast_parsefail'));return;}
+  loadRows(rows,filename,preferred);
+}
+
+// ---------- demo (Okinawa tourism survey DFM, sparse) ----------
+const DEMO_OKINAWA={"attrCols":["居住地","性別","年代","満足度"],"attrs":[["関東","男性","３０代","やや満足"],["関東","女性","６０代","やや満足"],["関東","男性","５０代","やや満足"],["中部","女性","２０代","大変満足"],["近畿","男性","６０代","大変満足"],["関東","女性","２０代","やや満足"],["中部","男性","７０代","やや満足"],["九州","男性","７０代","大変満足"],["北海道・東北","女性","５０代","大変満足"],["九州","男性","６０代","大変満足"],["関東","男性","４０代","やや満足"],["中国・四国","女性","５０代","やや満足"],["中国・四国","女性","４０代","やや満足"],["九州","男性","７０代","やや満足"],["関東","女性","３０代","やや満足"],["関東","男性","６０代","大変満足"],["関東","男性","７０代","やや不満"],["中国・四国","女性","６０代","やや満足"],["関東","男性","７０代","やや満足"],["九州","女性","２０代","やや満足"],["関東","男性","３０代","やや満足"],["関東","女性","６０代","大変満足"],["関東","男性","７０代","やや満足"],["関東","男性","３０代","大変満足"],["関東","男性","４０代","やや不満"],["関東","女性","３０代","やや満足"],["近畿","女性","２０代","大変満足"],["関東","女性","３０代","大変満足"],["関東","女性","６０代","大変満足"],["関東","男性","５０代","大変満足"],["九州","女性","６０代","NA"],["中部","女性","６０代","やや満足"],["中部","女性","６０代","大変不満"],["中部","女性","５０代","大変満足"],["中部","男性","７０代","大変満足"],["中部","女性","２０代","やや満足"],["近畿","男性","７０代","やや満足"],["関東","女性","４０代","やや満足"],["近畿","女性","５０代","やや満足"],["九州","男性","２０代","やや満足"],["中国・四国","女性","５０代","やや満足"],["中国・四国","女性","５０代","やや満足"],["関東","男性","７０代","やや満足"],["関東","男性","６０代","大変満足"],["関東","女性","２０代","やや満足"],["近畿","男性","５０代","やや満足"],["中部","男性","７０代","NA"],["九州","女性","５０代","大変満足"],["関東","男性","５０代","やや満足"],["関東","男性","４０代","やや満足"],["近畿","男性","６０代","やや満足"],["北海道・東北","女性","３０代","大変満足"],["北海道・東北","女性","５０代","やや満足"],["中部","女性","６０代","大変満足"],["近畿","男性","２０代","大変不満"],["北海道・東北","男性","６０代","大変満足"],["近畿","女性","４０代","大変満足"],["関東","女性","３０代","やや満足"],["中部","男性","６０代","やや満足"],["中部","女性","６０代","やや満足"],["近畿","女性","４０代","大変満足"],["北海道・東北","女性","６０代","やや満足"],["関東","女性","３０代","大変満足"],["九州","男性","３０代","やや満足"],["九州","男性","４０代","NA"],["中部","男性","３０代","大変満足"],["近畿","女性","２０代","やや満足"],["九州","女性","６０代","大変満足"],["近畿","男性","４０代","やや満足"],["関東","男性","６０代","やや満足"],["関東","女性","６０代","大変満足"],["関東","女性","５０代","やや満足"],["中部","男性","３０代","大変満足"],["中部","女性","５０代","大変満足"],["中部","男性","４０代","やや不満"],["関東","男性","３０代","大変満足"],["関東","男性","５０代","やや満足"],["関東","男性","６０代","やや満足"],["関東","女性","５０代","やや満足"],["九州","男性","３０代","やや満足"],["中部","女性","３０代","やや満足"],["九州","女性","４０代","大変満足"],["中部","男性","４０代","やや満足"],["関東","男性","６０代","やや満足"],["関東","男性","６０代","やや満足"],["近畿","男性","４０代","該当しない"],["中部","男性","２０代","大変満足"],["中部","男性","４０代","やや満足"],["近畿","女性","５０代","NA"],["近畿","女性","７０代","やや満足"],["北海道・東北","女性","４０代","やや満足"],["中部","女性","２０代","大変満足"],["北海道・東北","女性","５０代","やや満足"],["近畿","女性","３０代","やや満足"],["関東","男性","６０代","やや満足"],["九州","女性","５０代","大変満足"],["九州","男性","３０代","大変満足"],["近畿","女性","３０代","やや満足"],["関東","男性","６０代","大変満足"],["中部","女性","２０代","やや満足"],["NA","NA","３０代","やや満足"],["近畿","女性","３０代","大変満足"],["九州","男性","６０代","やや満足"],["中国・四国","女性","４０代","やや満足"],["関東","男性","５０代","NA"],["中部","男性","４０代","大変満足"],["近畿","女性","４０代","NA"],["九州","女性","４０代","大変満足"],["中部","女性","５０代","やや満足"],["北海道・東北","男性","７０代","大変満足"],["北海道・東北","男性","３０代","大変満足"],["中部","男性","５０代","大変満足"],["関東","女性","３０代","やや満足"],["近畿","女性","６０代","やや満足"],["北海道・東北","女性","５０代","大変満足"],["関東","女性","２０代","やや満足"],["近畿","男性","６０代","やや満足"],["近畿","女性","３０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","男性","５０代","やや満足"],["NA","女性","７０代","大変満足"],["中国・四国","男性","７０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","女性","５０代","大変満足"],["関東","男性","５０代","やや満足"],["近畿","男性","６０代","やや満足"],["関東","女性","６０代","大変満足"],["中国・四国","男性","３０代","大変満足"],["近畿","男性","６０代","やや満足"],["北海道・東北","男性","６０代","やや満足"],["関東","女性","３０代","やや満足"],["関東","男性","４０代","やや満足"],["中国・四国","男性","２０代","大変満足"],["関東","男性","５０代","大変満足"],["九州","女性","２０代","大変満足"],["関東","男性","４０代","やや満足"],["関東","女性","６０代","やや不満"],["九州","男性","４０代","やや満足"],["中国・四国","女性","６０代","やや満足"],["中部","女性","５０代","大変満足"],["中国・四国","男性","６０代","大変満足"],["近畿","女性","６０代","大変満足"],["中部","男性","５０代","やや満足"],["中部","男性","５０代","やや満足"],["九州","女性","６０代","大変満足"],["近畿","男性","４０代","やや満足"],["中部","女性","５０代","大変満足"],["関東","女性","３０代","やや満足"],["近畿","女性","６０代","大変満足"],["九州","女性","５０代","やや満足"],["関東","女性","７０代","やや満足"],["関東","男性","４０代","大変満足"],["北海道・東北","女性","３０代","大変満足"],["中国・四国","女性","６０代","NA"],["関東","男性","４０代","大変満足"],["中部","男性","６０代","やや満足"],["近畿","女性","６０代","大変満足"],["北海道・東北","男性","３０代","NA"],["近畿","男性","５０代","やや満足"],["関東","女性","４０代","やや満足"],["関東","女性","３０代","やや満足"],["九州","男性","５０代","大変満足"],["中国・四国","男性","３０代","やや満足"],["近畿","女性","６０代","大変満足"],["関東","女性","７０代","大変満足"],["関東","女性","３０代","やや満足"],["関東","女性","３０代","大変満足"],["中国・四国","男性","４０代","やや満足"],["中部","男性","５０代","やや満足"],["関東","男性","４０代","やや満足"],["近畿","男性","６０代","やや満足"],["中国・四国","女性","５０代","やや不満"],["関東","女性","５０代","やや満足"],["関東","男性","６０代","大変満足"],["中部","女性","２０代","大変満足"],["中部","女性","５０代","やや満足"],["中国・四国","女性","６０代","やや不満"],["北海道・東北","女性","２０代","やや満足"],["北海道・東北","女性","３０代","やや満足"],["九州","女性","２０代","やや満足"],["関東","男性","３０代","該当しない"],["関東","女性","６０代","やや満足"],["近畿","女性","２０代","大変満足"],["中部","男性","６０代","やや満足"],["九州","男性","５０代","NA"],["近畿","男性","５０代","やや不満"],["中国・四国","男性","５０代","大変満足"],["中部","女性","３０代","大変満足"],["中部","女性","２０代","やや満足"],["北海道・東北","男性","５０代","NA"],["関東","女性","２０代","やや満足"],["中部","女性","６０代","やや満足"],["中国・四国","女性","５０代","やや満足"],["中国・四国","男性","６０代","NA"],["関東","男性","６０代","やや満足"],["近畿","女性","６０代","やや満足"],["九州","女性","３０代","大変満足"],["関東","女性","３０代","大変満足"],["関東","女性","６０代","大変満足"],["関東","女性","５０代","やや満足"],["関東","女性","２０代","大変満足"],["近畿","男性","４０代","大変満足"],["近畿","女性","７０代","大変満足"],["関東","女性","２０代","大変満足"],["中部","男性","４０代","大変満足"],["中部","女性","６０代","大変満足"],["関東","女性","５０代","大変満足"],["中部","男性","４０代","やや満足"],["中部","女性","５０代","やや不満"],["近畿","男性","２０代","大変満足"],["関東","男性","５０代","NA"],["関東","男性","２０代","大変満足"],["関東","女性","５０代","大変満足"],["中国・四国","女性","５０代","やや満足"],["関東","男性","６０代","やや不満"],["九州","男性","５０代","大変満足"],["関東","女性","６０代","やや満足"],["関東","男性","５０代","大変満足"],["近畿","女性","５０代","大変満足"],["関東","女性","３０代","大変満足"],["北海道・東北","女性","４０代","やや満足"],["関東","女性","６０代","やや満足"],["九州","女性","６０代","大変満足"],["近畿","女性","２０代","大変満足"],["関東","女性","５０代","大変満足"],["中部","男性","４０代","やや不満"],["九州","女性","６０代","やや満足"],["関東","女性","６０代","大変満足"],["近畿","男性","３０代","大変満足"],["関東","女性","６０代","NA"],["関東","女性","２０代","大変満足"],["近畿","女性","５０代","やや満足"],["近畿","男性","５０代","やや満足"],["九州","男性","５０代","大変満足"],["九州","女性","５０代","大変満足"],["関東","男性","４０代","やや満足"],["近畿","男性","３０代","やや満足"],["関東","男性","３０代","やや満足"],["関東","女性","６０代","やや満足"],["中部","男性","５０代","やや満足"],["九州","女性","６０代","やや満足"],["関東","男性","５０代","大変満足"],["近畿","女性","５０代","大変満足"],["関東","女性","６０代","NA"],["中国・四国","女性","２０代","大変満足"],["関東","女性","２０代","大変満足"],["中部","男性","５０代","大変満足"],["九州","男性","６０代","NA"],["北海道・東北","女性","５０代","大変満足"],["関東","男性","２０代","やや満足"],["関東","男性","６０代","大変満足"],["近畿","女性","６０代","やや満足"],["関東","女性","３０代","大変満足"],["近畿","女性","３０代","大変満足"],["関東","男性","６０代","大変満足"],["九州","男性","６０代","やや満足"],["近畿","男性","６０代","やや満足"],["近畿","女性","３０代","やや不満"],["中部","男性","４０代","大変満足"],["中国・四国","女性","４０代","大変満足"],["関東","女性","３０代","大変満足"],["関東","男性","３０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","女性","３０代","大変満足"],["近畿","女性","４０代","やや満足"],["九州","男性","３０代","大変満足"],["関東","女性","２０代","大変満足"],["近畿","女性","２０代","やや満足"],["近畿","女性","５０代","やや満足"],["関東","男性","７０代","大変満足"],["中部","女性","２０代","やや満足"],["北海道・東北","女性","３０代","やや満足"],["中国・四国","女性","６０代","大変満足"],["近畿","男性","２０代","大変満足"],["中国・四国","女性","５０代","やや満足"],["関東","男性","４０代","大変満足"],["関東","女性","４０代","大変満足"],["中国・四国","男性","６０代","大変満足"],["近畿","男性","３０代","大変満足"],["中部","男性","３０代","やや満足"],["関東","男性","７０代","やや満足"],["中国・四国","男性","３０代","やや満足"],["関東","女性","４０代","大変満足"],["関東","女性","３０代","やや満足"],["関東","女性","６０代","NA"],["中部","男性","７０代","やや不満"],["近畿","女性","６０代","NA"],["関東","女性","２０代","やや満足"],["関東","女性","２０代","やや満足"],["九州","女性","６０代","やや満足"],["北海道・東北","女性","５０代","大変満足"],["関東","男性","４０代","やや満足"],["関東","男性","２０代","大変満足"],["九州","女性","２０代","やや不満"],["中部","男性","５０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","女性","３０代","大変満足"],["北海道・東北","女性","３０代","大変満足"],["近畿","女性","５０代","やや満足"],["近畿","女性","２０代","大変満足"],["北海道・東北","女性","２０代","大変満足"],["中部","男性","４０代","大変満足"],["関東","女性","３０代","やや満足"],["関東","男性","６０代","大変満足"],["関東","女性","２０代","大変満足"],["関東","女性","３０代","大変満足"],["近畿","男性","６０代","NA"],["中部","女性","５０代","大変満足"],["九州","男性","５０代","やや満足"],["近畿","女性","７０代","大変満足"],["九州","女性","５０代","大変満足"],["関東","男性","６０代","やや不満"],["近畿","NA","７０代","大変満足"],["近畿","女性","７０代","大変満足"],["関東","女性","５０代","大変満足"],["中国・四国","男性","６０代","大変満足"],["九州","女性","２０代","大変満足"],["関東","女性","６０代","NA"],["中部","男性","７０代","NA"],["中部","男性","４０代","やや満足"],["中部","女性","４０代","やや満足"],["中部","女性","３０代","やや満足"],["中部","女性","５０代","大変満足"]],"words":["沖縄","思い","観光","思う","自然","ホテル","今回","バス","旅行","感じ","欲しい","良い","観光地","時間","道路","多く","整備","レンタカー","多い","行き","親切","案内","食事","タクシー","残念","行く","利用","必要","考え","もう少し","運転","モノレール","大変","情報","料理","渋滞","空港","離島","観光客","大切","ツアー","以上","場所","対応","施設","次回","特に","良く","印象","本島","説明","運転手","充実","移動","ガイド","出来","少し","感動","料金","楽しみ","満足","文化","沖縄料理","自分","体験","少ない","改善","海水族館","美しい海","観光バス","トイレ","マナー","北部","好き","是非","期待","環境","市内","首里城","イメージ","キレイ","ゴミ","交通","同じ","国際通り","多か","天気","悪い","素晴","開発","飛行機","標識","美しい自然","駐車場","以外"],"docN":323,"data":[[2,1,1],[6,1,1],[26,1,1],[28,1,1],[33,1,1],[2,2,1],[11,2,1],[23,2,1],[26,2,1],[36,2,1],[84,2,1],[0,3,1],[6,3,1],[19,3,1],[30,3,1],[45,3,1],[0,4,1],[6,4,1],[8,4,1],[21,4,1],[26,4,1],[43,4,1],[54,4,1],[69,4,1],[79,4,1],[88,4,1],[35,5,1],[53,5,1],[18,6,1],[24,6,1],[86,6,1],[2,7,1],[12,7,1],[44,7,1],[45,7,1],[60,7,1],[1,8,1],[4,9,1],[0,10,1],[47,10,1],[62,10,1],[73,10,1],[0,11,3],[1,11,2],[0,12,1],[7,12,1],[9,12,1],[51,12,1],[8,13,1],[20,13,2],[0,14,1],[8,14,1],[29,14,1],[46,14,1],[79,14,1],[4,15,1],[32,15,1],[90,16,1],[17,17,2],[20,17,1],[18,18,1],[82,18,1],[0,19,1],[0,20,1],[18,20,1],[25,20,1],[28,20,1],[89,20,1],[90,20,1],[1,21,1],[38,21,1],[2,22,1],[10,22,1],[0,23,1],[2,23,1],[35,23,1],[46,23,1],[59,23,1],[7,24,1],[31,24,1],[76,24,1],[82,24,1],[1,25,1],[29,25,1],[0,26,1],[1,26,2],[9,26,1],[30,26,1],[42,26,1],[66,26,1],[85,26,1],[15,27,1],[19,27,1],[37,27,1],[38,27,2],[41,27,1],[71,27,1],[30,28,1],[0,29,1],[1,29,1],[2,29,1],[7,29,1],[14,29,1],[16,29,1],[17,29,1],[93,29,1],[2,30,1],[5,30,2],[6,30,1],[7,30,1],[8,30,2],[9,30,1],[15,30,1],[22,30,2],[46,30,1],[51,30,2],[60,30,1],[1,31,1],[41,31,1],[0,32,1],[8,32,1],[13,32,2],[26,32,1],[33,32,1],[45,32,1],[53,32,1],[9,33,1],[15,33,1],[38,33,1],[0,34,1],[1,34,1],[9,34,1],[16,34,2],[24,34,1],[38,34,1],[39,34,1],[60,34,1],[37,35,1],[0,37,1],[2,37,1],[6,37,1],[8,37,2],[13,37,1],[19,37,1],[24,37,2],[28,37,2],[35,37,1],[41,37,1],[59,37,1],[67,37,1],[86,37,1],[1,38,1],[17,38,1],[20,38,1],[30,38,1],[53,38,1],[77,38,1],[30,39,1],[20,40,1],[1,41,1],[49,41,1],[0,42,1],[1,42,1],[3,42,1],[4,42,1],[21,42,1],[28,42,1],[38,42,1],[65,42,1],[91,42,1],[1,43,1],[8,43,1],[10,43,1],[27,43,1],[28,43,1],[47,43,1],[71,43,1],[81,43,1],[92,43,1],[13,44,1],[44,44,1],[56,44,1],[87,44,1],[0,45,3],[2,45,1],[18,45,1],[34,45,1],[41,45,1],[68,45,1],[74,45,2],[31,46,1],[6,47,1],[14,48,1],[0,49,1],[37,49,1],[58,49,1],[20,50,1],[46,50,1],[57,50,1],[0,51,1],[17,51,2],[19,51,1],[20,51,1],[23,51,2],[26,51,2],[30,51,1],[42,52,1],[0,53,1],[1,53,1],[2,53,1],[5,53,2],[6,53,1],[11,53,1],[22,53,1],[34,53,1],[17,54,2],[18,54,1],[0,55,1],[1,55,1],[25,55,1],[39,55,1],[59,55,1],[61,55,2],[10,56,1],[40,56,1],[22,57,1],[66,57,1],[0,58,1],[8,58,1],[17,58,1],[54,58,1],[57,58,1],[68,58,1],[69,58,1],[72,58,1],[0,59,1],[2,59,1],[5,59,3],[6,59,1],[7,59,1],[17,59,1],[25,59,1],[28,59,1],[53,59,1],[58,59,1],[69,59,1],[83,59,1],[2,60,2],[4,60,1],[7,60,1],[23,60,1],[35,60,1],[51,60,1],[72,60,1],[77,60,3],[4,61,1],[29,61,1],[62,61,1],[1,62,1],[9,62,1],[14,62,1],[16,62,1],[28,62,1],[47,62,1],[76,62,1],[1,63,1],[8,63,2],[12,63,1],[42,63,1],[73,63,1],[43,64,1],[58,64,1],[3,65,1],[16,65,1],[35,65,1],[43,65,1],[77,65,1],[82,65,1],[0,66,1],[1,66,1],[4,66,1],[23,66,1],[46,66,1],[56,66,1],[80,66,1],[87,66,1],[1,67,1],[7,67,1],[51,67,1],[7,68,1],[16,69,1],[66,69,1],[93,69,1],[4,70,1],[8,70,1],[10,70,1],[12,70,1],[39,70,1],[0,71,1],[1,71,2],[8,71,1],[60,71,1],[0,72,1],[1,72,1],[19,72,1],[39,72,1],[61,72,1],[0,73,1],[18,73,1],[46,73,1],[57,73,1],[64,73,2],[27,74,1],[40,74,2],[42,74,1],[58,74,1],[26,75,1],[70,75,1],[0,76,1],[2,76,1],[8,76,1],[20,76,1],[21,76,1],[24,76,1],[34,76,1],[49,76,1],[58,76,1],[3,77,1],[16,77,1],[27,77,1],[47,77,1],[84,77,1],[8,78,1],[17,78,1],[80,78,1],[72,79,1],[1,80,2],[5,80,1],[8,80,1],[13,80,1],[15,80,1],[17,80,1],[29,80,1],[79,80,1],[0,81,2],[1,81,4],[2,81,1],[21,81,1],[25,81,1],[35,81,1],[36,81,1],[58,83,1],[5,84,1],[0,86,3],[1,86,1],[2,86,1],[3,86,2],[5,86,1],[7,86,2],[16,86,1],[21,86,1],[26,86,1],[27,86,1],[31,86,1],[34,86,1],[38,86,1],[47,86,1],[51,86,1],[52,86,3],[59,86,1],[65,86,1],[74,86,1],[75,86,1],[4,87,1],[81,87,1],[0,88,1],[1,88,3],[2,88,1],[3,88,1],[12,88,1],[34,88,1],[61,88,1],[64,88,2],[74,88,1],[94,88,1],[6,89,1],[14,89,1],[15,89,1],[21,89,1],[63,89,1],[85,89,1],[2,90,1],[12,90,1],[0,91,2],[2,92,1],[8,92,1],[24,92,1],[1,93,1],[9,93,1],[10,93,1],[14,93,1],[16,93,1],[27,93,1],[67,93,1],[72,93,2],[88,93,1],[0,94,1],[11,94,1],[1,95,4],[2,95,1],[5,95,1],[10,95,1],[11,95,1],[48,95,1],[49,95,1],[68,95,1],[83,95,1],[0,96,1],[1,96,1],[7,96,4],[9,96,1],[13,96,1],[23,96,2],[42,96,1],[45,96,1],[73,96,1],[74,96,1],[0,97,1],[1,97,1],[3,97,1],[6,97,1],[22,97,1],[29,97,1],[38,97,1],[89,97,1],[21,98,1],[27,98,2],[33,98,1],[10,99,1],[10,100,3],[17,100,1],[58,100,1],[70,100,1],[76,100,1],[80,100,1],[84,100,1],[93,100,2],[1,101,1],[5,101,1],[22,101,1],[29,101,1],[34,101,1],[62,101,3],[94,101,3],[0,102,1],[23,102,1],[26,102,2],[46,102,1],[48,102,1],[87,102,1],[2,103,1],[16,103,1],[19,103,2],[30,103,1],[36,103,1],[52,103,1],[63,103,1],[69,103,1],[75,103,1],[22,104,1],[56,106,1],[7,107,1],[54,107,1],[59,107,1],[74,109,1],[75,109,1],[12,110,1],[70,110,1],[1,111,1],[44,111,1],[1,113,1],[19,113,1],[36,113,1],[1,114,2],[5,114,2],[6,114,1],[19,114,1],[41,114,1],[63,114,2],[87,114,1],[94,114,1],[5,115,1],[20,115,1],[24,115,1],[33,115,1],[1,116,1],[2,116,1],[9,116,1],[12,116,1],[28,116,1],[3,117,4],[5,117,3],[6,117,1],[7,117,1],[11,117,1],[29,117,1],[43,117,1],[67,117,1],[77,117,1],[1,118,2],[32,118,1],[71,118,1],[2,119,2],[5,119,2],[21,119,1],[65,119,1],[0,120,1],[0,121,1],[4,121,1],[0,122,2],[25,122,1],[34,122,1],[37,122,1],[5,123,1],[7,123,1],[9,123,1],[12,123,1],[52,123,1],[83,123,1],[10,124,1],[12,124,1],[13,124,1],[1,125,1],[31,125,2],[0,126,1],[4,126,1],[39,126,1],[57,126,1],[0,128,1],[16,128,1],[25,128,1],[56,128,1],[84,128,1],[15,129,1],[44,129,1],[58,129,1],[83,129,1],[68,130,1],[0,131,1],[4,131,1],[12,131,1],[25,131,1],[7,132,1],[10,132,1],[1,133,1],[6,133,1],[32,133,2],[42,133,1],[45,133,1],[50,133,1],[54,133,1],[60,133,1],[69,133,1],[86,133,1],[1,134,1],[28,134,1],[63,134,2],[0,135,2],[1,135,2],[14,135,1],[16,135,1],[24,135,1],[2,136,1],[6,136,2],[8,136,1],[13,136,2],[18,136,1],[27,136,1],[40,136,1],[9,137,1],[10,137,1],[25,137,1],[27,137,1],[31,137,2],[78,137,2],[5,138,1],[36,138,1],[69,138,1],[21,139,1],[88,139,1],[4,140,1],[8,140,1],[10,140,1],[11,140,1],[15,140,1],[43,140,1],[74,140,1],[2,142,1],[5,142,1],[17,142,1],[22,142,2],[30,142,1],[32,142,1],[44,142,1],[46,142,1],[48,142,1],[52,142,1],[60,142,1],[62,142,1],[82,142,1],[14,143,1],[1,144,2],[4,144,2],[5,144,1],[7,144,1],[45,144,1],[49,144,1],[50,144,1],[51,144,1],[54,144,1],[57,144,1],[59,144,1],[79,144,1],[2,145,1],[10,145,1],[31,145,1],[80,145,1],[1,146,2],[15,146,1],[17,146,1],[18,146,1],[21,146,1],[57,146,1],[88,146,1],[91,146,1],[0,147,1],[3,147,1],[6,147,1],[26,147,1],[33,147,1],[5,148,1],[7,148,1],[25,148,1],[36,148,1],[65,148,1],[3,149,1],[4,149,1],[11,149,1],[47,149,1],[81,149,1],[9,150,1],[23,150,1],[51,150,1],[0,151,3],[1,151,1],[2,151,1],[4,151,1],[9,151,1],[10,151,1],[11,151,1],[28,151,2],[61,151,2],[2,152,1],[3,152,2],[9,152,1],[10,152,2],[12,152,1],[20,152,2],[33,152,1],[39,152,1],[68,152,1],[1,153,1],[19,153,1],[22,153,1],[41,153,1],[0,154,1],[4,154,1],[10,154,1],[1,155,2],[11,155,1],[12,155,1],[16,155,1],[37,155,1],[75,155,1],[81,155,1],[11,156,1],[66,157,1],[67,157,1],[93,157,1],[4,158,2],[10,158,1],[12,158,1],[14,158,2],[16,158,1],[27,158,1],[76,158,2],[81,158,1],[1,159,1],[14,159,1],[16,159,1],[67,159,1],[10,160,1],[13,160,1],[0,161,1],[14,161,1],[30,161,1],[6,162,1],[86,162,1],[2,163,1],[6,163,1],[13,163,1],[24,163,1],[55,163,1],[63,163,1],[73,163,1],[7,164,1],[9,164,1],[13,164,1],[20,164,1],[32,164,1],[41,164,1],[53,164,3],[90,164,1],[0,165,1],[25,165,1],[36,165,1],[0,166,2],[3,166,1],[41,166,1],[59,166,1],[20,168,1],[43,168,1],[60,168,1],[11,169,1],[18,169,1],[44,169,1],[49,169,1],[16,170,1],[31,170,1],[3,171,1],[18,171,1],[22,171,1],[24,171,1],[38,171,1],[56,171,1],[3,172,1],[11,172,1],[90,172,1],[3,173,1],[76,173,1],[0,174,1],[55,174,1],[57,174,1],[80,174,1],[86,174,1],[4,175,1],[87,176,1],[2,177,1],[23,177,1],[44,177,1],[30,178,1],[71,178,1],[42,179,1],[91,179,1],[21,180,1],[0,181,1],[26,181,1],[29,181,1],[92,181,1],[0,182,1],[37,182,1],[49,182,1],[73,182,2],[11,183,1],[69,185,1],[31,186,1],[46,187,1],[66,187,1],[82,187,1],[2,188,1],[23,188,2],[39,188,1],[51,188,1],[82,188,1],[87,188,1],[7,189,2],[25,189,1],[31,189,1],[63,189,1],[78,189,2],[0,190,1],[55,190,1],[0,191,1],[10,191,1],[39,191,1],[50,191,1],[2,192,1],[9,192,1],[12,192,1],[0,193,1],[47,193,1],[55,193,1],[89,193,1],[2,194,1],[8,194,1],[44,194,1],[52,194,1],[36,195,1],[3,196,1],[12,196,1],[48,196,1],[53,196,1],[70,196,2],[0,197,1],[2,197,1],[3,197,1],[18,197,2],[25,197,1],[7,198,1],[43,198,1],[54,198,1],[1,199,1],[36,199,1],[59,199,1],[0,200,1],[1,200,1],[81,200,1],[0,201,1],[4,201,1],[45,201,1],[61,201,1],[75,201,1],[79,201,1],[4,202,1],[6,202,1],[45,202,1],[56,202,1],[64,202,2],[0,203,1],[1,203,1],[7,203,1],[15,203,1],[20,203,1],[47,203,1],[63,203,1],[80,203,1],[3,204,2],[11,204,1],[18,204,1],[29,204,1],[35,204,1],[66,204,1],[11,205,2],[12,205,1],[49,205,1],[0,206,2],[1,206,1],[5,206,1],[24,206,1],[32,206,2],[68,206,1],[76,206,1],[89,206,1],[32,207,1],[43,207,1],[0,208,2],[1,208,2],[2,208,2],[4,208,1],[6,208,1],[10,208,1],[13,208,1],[39,208,1],[68,208,1],[0,209,1],[0,211,1],[1,212,1],[14,212,2],[20,212,1],[36,212,1],[48,212,1],[85,212,1],[3,213,2],[20,213,1],[64,213,1],[6,214,1],[8,214,1],[24,214,1],[25,214,1],[90,214,1],[4,215,1],[92,215,1],[3,216,1],[13,216,1],[40,216,1],[65,216,1],[78,216,1],[0,217,1],[2,218,1],[7,218,1],[35,219,1],[70,219,1],[0,220,1],[5,220,1],[40,220,1],[58,220,1],[6,221,1],[9,221,1],[40,221,1],[53,221,1],[4,223,1],[89,223,1],[15,224,1],[35,224,1],[0,225,2],[2,225,1],[14,225,1],[67,225,1],[77,225,1],[79,225,1],[87,225,1],[2,226,1],[40,226,1],[3,227,1],[11,227,1],[24,227,1],[57,227,1],[55,228,1],[72,228,1],[3,229,2],[13,229,1],[29,229,1],[40,229,1],[42,229,1],[84,229,1],[24,231,1],[86,231,1],[3,232,1],[9,232,1],[22,232,1],[42,232,1],[65,232,1],[9,233,1],[73,234,1],[0,235,1],[11,235,1],[0,236,1],[11,236,1],[72,236,1],[59,237,1],[0,238,1],[6,240,1],[4,241,1],[9,241,1],[16,241,1],[37,241,1],[0,242,1],[15,242,1],[24,242,1],[83,242,1],[84,242,1],[0,243,1],[4,243,1],[5,243,1],[34,243,1],[57,243,1],[88,243,1],[17,244,1],[23,244,2],[30,244,2],[0,246,1],[4,246,1],[28,246,1],[2,247,1],[3,247,3],[9,247,1],[11,247,1],[12,247,1],[14,247,2],[18,247,1],[26,247,1],[44,247,1],[30,249,1],[20,250,1],[71,250,1],[85,250,1],[2,251,1],[24,251,1],[34,251,1],[35,252,1],[65,252,1],[0,253,2],[4,253,1],[7,253,1],[39,253,1],[56,253,1],[0,254,1],[2,254,1],[3,254,1],[12,254,1],[27,254,2],[83,254,1],[2,255,1],[13,255,1],[2,256,1],[29,256,1],[15,257,1],[21,257,1],[25,257,1],[62,257,1],[20,258,1],[38,258,1],[32,259,1],[67,259,1],[88,259,1],[74,261,1],[92,261,1],[7,262,1],[85,262,1],[6,263,1],[9,264,1],[12,264,1],[35,265,1],[11,266,1],[17,267,1],[33,267,1],[94,267,2],[10,268,1],[12,269,1],[18,269,2],[93,269,1],[15,270,1],[33,270,1],[56,270,1],[14,271,1],[15,271,1],[35,271,1],[71,271,1],[81,271,1],[55,272,1],[7,273,1],[11,273,1],[70,273,1],[41,274,1],[4,275,1],[3,276,1],[6,276,1],[16,276,1],[38,276,2],[41,276,1],[89,276,1],[91,276,1],[14,277,1],[66,277,1],[82,277,1],[91,277,2],[0,278,1],[1,278,3],[2,278,1],[4,278,1],[9,278,1],[15,278,1],[28,278,1],[34,278,1],[44,278,1],[52,278,1],[88,278,1],[26,279,1],[37,279,1],[83,280,1],[84,280,1],[0,282,3],[1,282,5],[2,282,1],[4,282,1],[6,282,2],[8,282,1],[16,282,1],[26,282,1],[90,282,1],[29,283,1],[33,283,1],[37,283,1],[5,284,1],[9,284,1],[13,284,1],[22,284,1],[36,284,1],[40,284,1],[3,285,1],[6,285,1],[43,285,1],[49,285,2],[0,286,1],[5,286,1],[6,286,2],[8,286,1],[12,286,2],[13,286,1],[21,286,3],[22,286,1],[40,286,1],[50,286,1],[54,286,1],[62,286,1],[67,286,1],[78,286,1],[15,287,1],[18,287,1],[29,287,1],[37,287,1],[93,287,1],[0,288,1],[1,288,1],[4,288,1],[19,288,1],[39,288,1],[42,288,1],[76,288,1],[5,289,2],[22,289,1],[28,289,1],[47,289,1],[70,289,1],[0,290,3],[2,290,3],[8,290,1],[19,290,1],[45,290,1],[69,290,1],[75,290,2],[85,290,1],[7,291,1],[23,291,1],[31,291,1],[4,292,1],[1,293,1],[13,293,1],[23,293,2],[43,293,1],[51,293,1],[66,293,1],[0,294,1],[1,294,1],[8,294,1],[19,294,2],[32,294,1],[24,295,1],[37,295,1],[49,295,1],[80,295,1],[0,296,1],[5,296,1],[10,296,1],[0,297,1],[4,297,1],[45,297,1],[68,298,1],[73,298,1],[25,299,1],[72,299,1],[0,300,1],[6,301,1],[8,301,1],[86,301,1],[0,302,1],[4,302,1],[9,302,1],[22,302,1],[48,302,1],[56,302,1],[79,302,1],[6,303,1],[55,303,1],[64,303,1],[85,303,1],[90,303,1],[0,304,1],[0,305,1],[3,305,1],[11,305,1],[12,305,1],[18,305,1],[21,305,1],[33,305,1],[36,305,1],[48,305,2],[61,305,1],[52,306,1],[11,307,1],[15,307,1],[92,307,2],[14,308,1],[65,308,1],[77,309,1],[0,310,1],[19,310,1],[13,311,1],[29,311,1],[48,311,1],[78,311,1],[0,312,2],[1,312,1],[0,313,1],[50,313,2],[54,313,1],[61,313,1],[78,313,1],[5,315,1],[27,315,1],[0,316,1],[1,316,1],[5,316,1],[9,316,2],[12,316,1],[19,316,1],[33,316,1],[37,316,1],[53,316,1],[60,316,1],[6,317,1],[32,317,1],[46,317,1],[71,317,2],[0,318,1],[3,318,3],[22,318,2],[34,318,1],[47,318,1],[50,318,1],[55,318,1],[62,318,1],[0,319,1],[3,319,1],[4,319,1],[10,319,1],[64,319,1],[15,320,1],[13,321,1],[19,321,1],[23,321,1],[25,321,1],[27,321,1],[33,321,1],[52,321,1],[8,322,1],[19,322,1],[21,322,2],[34,322,1],[50,322,1],[55,322,1],[60,322,1],[75,322,1]]};
+function rowsFromDemo(){
+  const d=DEMO_OKINAWA,wN=d.words.length;
+  const mat=Array.from({length:d.docN},()=>new Array(wN).fill(0));
+  d.data.forEach(([wi,di,c])=>{mat[di][wi]=c;});
+  const rows=[['doc',...d.attrCols,...d.words]];
+  for(let di=0;di<d.docN;di++)rows.push(['d'+(di+1),...d.attrs[di],...mat[di].map(String)]); // stringify like a real CSV
+  return rows;
+}
+
+// ---------- events ----------
+const drop=$('#drop'),fileInput=$('#file');
+drop.onclick=()=>fileInput.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
+fileInput.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
+$('#demo').onclick=()=>{loadRows(rowsFromDemo(),'okinawa_dfm.csv',['性別','年代']);toast(t('toast_demo'));};
+
+$('#wN').oninput=e=>$('#wNVal').textContent=e.target.value+'%';
+$('#wN').onchange=()=>renderCA();
+$('#catSize').oninput=e=>$('#catSizeVal').textContent=(+e.target.value).toFixed(1);
+$('#catSize').onchange=()=>renderCA();
+$('#wordSize').oninput=e=>$('#wordSizeVal').textContent=(+e.target.value).toFixed(1);
+$('#wordSize').onchange=()=>renderCA();
+$('#dimX').onchange=()=>renderCA();
+$('#dimY').onchange=()=>renderCA();
+
+$('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
+$('#themetog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.setAttribute('data-theme',b.dataset.theme);$$('#themetog button').forEach(x=>x.classList.toggle('on',x===b));if(DATA)renderCA();});
+
+async function saveSelf(){
+  try{const res=await fetch(location.href.split('?')[0]);const html=await res.text();
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=location.pathname.split('/').pop()||'dfm_ca.html';a.click();
+  }catch(e){toast('保存に失敗しました: '+e.message);}
+}
+$('#saveApp').onclick=saveSelf;
+
+(function(){try{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='ja')LANG=q;}catch(e){}})();
+applyI18n();
+</script>
+</body>
+</html>
