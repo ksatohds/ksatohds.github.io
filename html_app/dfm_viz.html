@@ -40,6 +40,12 @@
   .group{margin-bottom:22px}
   .group h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 11px;font-weight:600;display:flex;align-items:center;gap:8px}
   .group h2::after{content:"";flex:1;height:1px;background:var(--line)}
+  /* boxed settings sections so word-cloud vs network controls are clearly separated */
+  .group.sect{border:1px solid var(--line);border-left:3px solid var(--sect,var(--cyan));border-radius:8px;padding:14px 15px 4px;margin-bottom:18px}
+  .group.sect > h2{color:var(--sect,var(--cyan));text-transform:none;font-size:12.5px;letter-spacing:.02em;font-weight:700}
+  .group.sect > h2::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--sect,var(--cyan));flex-shrink:0}
+  #cloudGroup{--sect:var(--amber)}
+  #netGroup{--sect:var(--violet)}
 
   .dropzone{border:1px dashed var(--line);border-radius:8px;padding:20px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:var(--panel-2)}
   .dropzone:hover{border-color:var(--cyan-deep)}
@@ -136,7 +142,7 @@
       </label>
     </div>
 
-    <div class="group" id="cloudGroup" style="display:none">
+    <div class="group sect" id="cloudGroup" style="display:none">
       <h2 data-i18n="g_cloud">ワードクラウド</h2>
       <label class="field">
         <span class="lab"><span data-i18n="c_num">表示語数</span> <span class="val" id="cloudNVal">60</span></span>
@@ -159,11 +165,11 @@
       </label>
     </div>
 
-    <div class="group" id="netGroup" style="display:none">
+    <div class="group sect" id="netGroup" style="display:none">
       <h2 data-i18n="g_net">共起ネットワーク</h2>
       <label class="field">
-        <span class="lab"><span data-i18n="n_minfreq">語の最小出現文書数</span> <span class="val" id="netMinVal">2</span></span>
-        <input type="range" id="netMin" min="1" max="10" value="2" step="1">
+        <span class="lab"><span data-i18n="n_num">表示語数</span> <span class="val" id="netNVal">60</span></span>
+        <input type="range" id="netN" min="10" max="120" value="60" step="5">
       </label>
       <label class="field">
         <span class="lab"><span data-i18n="n_measure">共起の尺度</span></span>
@@ -195,6 +201,19 @@
         <span class="lab"><span data-i18n="n_spread">ノード間の広がり（力のスケール）</span> <span class="val" id="netSpreadVal">1.1</span></span>
         <input type="range" id="netSpread" min="0.6" max="3.5" value="1.1" step="0.1">
       </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="n_nodescale">ノードの大きさ（×倍）</span> <span class="val" id="netNodeScaleVal">1.0</span></span>
+        <input type="range" id="netNodeScale" min="1" max="5" value="1" step="0.5">
+      </label>
+      <label class="field" style="margin-bottom:4px">
+        <span class="lab"><span data-i18n="n_textscale">テキストサイズ（6pt×倍）</span> <span class="val" id="netTextScaleVal">2.0</span></span>
+        <input type="range" id="netTextScale" min="1" max="5" value="2" step="0.5">
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="n_legend">大きさの凡例（左上に表示）</span></span>
+        <input type="text" id="netLegend" value="5,10,15" placeholder="5,10,15">
+      </label>
+      <div class="hint" data-i18n="n_legend_hint" style="margin-top:4px">カンマ区切りの値を入力すると、選択中の基準（次数／頻度）で中抜きの丸と値の凡例を左上に表示します。</div>
       <div class="classrow">
         <label><input type="checkbox" id="netComm" checked><span data-i18n="n_comm">コミュニティで色分け</span></label>
       </div>
@@ -208,8 +227,9 @@
       </label>
       <div class="hint" data-i18n="n_note">Jaccard類似度 = 共起文書数 / いずれかに出現する文書数。しきい値以上の語ペアを線で結びます。広げると重なりが減り、図は大きくなります（スクロール可）。</div>
       <button class="dl" id="relayout" style="width:100%;margin-top:10px" data-i18n="relayout">&#8635; 再配置</button>
-      <button class="dl" id="dlLog" style="width:100%;margin-top:8px" data-i18n="dl_log">&#128203; 設定・結果ログ (.txt)</button>
     </div>
+
+    <button class="dl" id="dlLog" style="width:100%;display:none" data-i18n="dl_log">&#128203; 設定・結果ログ (.txt)</button>
 
   </aside>
 
@@ -246,7 +266,7 @@ const I18N={
     demo_credit:'デモは宮沢賢治「注文の多い料理店」（<b>パブリックドメイン</b>・著者1933年没）から作成した文書単語行列です。出典: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">青空文庫</a>。',
     attr:'属性の列（除外）', attr_empty:'ファイルを読み込むと列名が一覧表示されます。', attr_hint:'チェックした列は属性として除外し、それ以外を単語とみなします（1列目は文書ID）。',
     g_cloud:'ワードクラウド', c_num:'表示語数', c_metric:'大きさの基準', metric_total:'のべ出現回数', metric_df:'出現文書数', c_min:'最小サイズ (×12pt)', c_max:'最大サイズ (×12pt)',
-    g_net:'共起ネットワーク', n_minfreq:'語の最小出現文書数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_layout:'配置（レイアウト）', lay_fr:'力学モデル (Fruchterman-Reingold)', lay_spectral:'スペクトル配置 (Laplacian)', n_sizeby:'ノードの大きさ', size_deg:'次数（つながりの数）', size_freq:'出現頻度（のべ出現回数）', n_spread:'ノード間の広がり（力のスケール）',
+    g_net:'共起ネットワーク', n_num:'表示語数', n_measure:'共起の尺度', meas_jac:'Jaccard（有無）', meas_cos:'コサイン類似度（頻度）', n_sim:'共起のしきい値', n_comm:'コミュニティで色分け', n_commmethod:'コミュニティ検出法', cm_label:'ラベル伝播法', cm_greedy:'貪欲モジュラリティ最大化 (CNM)', cm_louvain:'Louvain法', n_layout:'配置（レイアウト）', lay_fr:'力学モデル (Fruchterman-Reingold)', lay_spectral:'スペクトル配置 (Laplacian)', n_sizeby:'ノードの大きさ', size_deg:'次数（つながりの数）', size_freq:'出現頻度（のべ出現回数）', size_deg_short:'次数', size_freq_short:'頻度', n_nodescale:'ノードの大きさ（×倍）', n_textscale:'テキストサイズ（6pt×倍）', n_legend:'大きさの凡例（左上に表示）', n_legend_hint:'カンマ区切りの値を入力すると、選択中の基準（次数／頻度）で中抜きの丸と値の凡例を左上に表示します。', n_spread:'ノード間の広がり（力のスケール）',
     n_note:'尺度: 有無(0/1)なら Jaccard（共起文書数/いずれかに出現）、頻度ならコサイン類似度（頻度ベクトルの向き）。しきい値以上の語ペアを線で結びます。',
     n_stat:'この設定: {nodes} 語 / {edges} 本の線', relayout:'↻ 再配置', dl_log:'📋 設定・結果ログ (.txt)',
     ph_main:'左で文書単語行列CSVを読み込むか、デモを試してください。',
@@ -259,7 +279,7 @@ const I18N={
     toast_demo:'デモDFMを読み込みました（68語×147文書）', toast_parsefail:'CSVの解析に失敗しました',
     toast_empty:'語が見つかりません。属性の列の指定をご確認ください。',
     meta_file:'file', meta_words:'語', meta_docs:'文書', meta_vals:'値', val_binary:'2値 (0/1)', val_freq:'頻度', meta_skip:'属性列（除外）',
-    net_none:'条件に合う共起がありません。しきい値を下げるか、最小出現文書数を下げてください。'
+    net_none:'条件に合う共起がありません。しきい値を下げるか、表示語数を増やしてください。'
   },
   en:{
     h1:'Word Cloud & Co-occurrence Network',
@@ -269,7 +289,7 @@ const I18N={
     demo_credit:'Demo: a document-feature matrix built from Kenji Miyazawa, "The Restaurant of Many Orders" (<b>public domain</b>, author d.1933). Source: <a href="https://www.aozora.gr.jp/cards/000081/card43754.html" target="_blank" rel="noopener">Aozora Bunko</a>.',
     attr:'Attribute columns (excluded)', attr_empty:'Column names appear here after a file is loaded.', attr_hint:'Checked columns are excluded as attributes; every other column is treated as a word (column 1 is the document id).',
     g_cloud:'Word cloud', c_num:'Words shown', c_metric:'Size by', metric_total:'total count', metric_df:'document frequency', c_min:'Min size (×12pt)', c_max:'Max size (×12pt)',
-    g_net:'Co-occurrence network', n_minfreq:'Min document frequency', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_layout:'Layout', lay_fr:'Force-directed (Fruchterman-Reingold)', lay_spectral:'Spectral (Laplacian)', n_sizeby:'Node size', size_deg:'Degree (number of links)', size_freq:'Occurrence frequency (total count)', n_spread:'Node spread (force scale)',
+    g_net:'Co-occurrence network', n_num:'Words shown', n_measure:'Similarity measure', meas_jac:'Jaccard (presence)', meas_cos:'Cosine (frequency)', n_sim:'Co-occurrence threshold', n_comm:'Color by community', n_commmethod:'Community method', cm_label:'Label propagation', cm_greedy:'Greedy modularity (CNM)', cm_louvain:'Louvain', n_layout:'Layout', lay_fr:'Force-directed (Fruchterman-Reingold)', lay_spectral:'Spectral (Laplacian)', n_sizeby:'Node size', size_deg:'Degree (number of links)', size_freq:'Occurrence frequency (total count)', size_deg_short:'Degree', size_freq_short:'Frequency', n_nodescale:'Node size (×)', n_textscale:'Text size (6pt ×)', n_legend:'Size legend (top-left)', n_legend_hint:'Enter comma-separated values to show a top-left legend of hollow circles and values, sized by the current basis (degree/frequency).', n_spread:'Node spread (force scale)',
     n_note:'Measure: Jaccard (shared/either docs) for presence (0/1), or cosine similarity for frequency (count-vector angle). Pairs above the threshold are linked.',
     n_stat:'this setting: {nodes} words / {edges} links', relayout:'↻ Re-layout', dl_log:'📋 Settings & results log (.txt)',
     ph_main:'Load a DFM CSV on the left, or try the demo.',
@@ -282,7 +302,7 @@ const I18N={
     toast_demo:'Loaded demo DFM (68 words × 147 docs)', toast_parsefail:'Failed to parse CSV',
     toast_empty:'No words found. Please check the attribute-column list.',
     meta_file:'file', meta_words:'words', meta_docs:'docs', meta_vals:'values', val_binary:'binary (0/1)', val_freq:'frequency', meta_skip:'attribute columns (excluded)',
-    net_none:'No co-occurrences match. Lower the threshold or the min document frequency.'
+    net_none:'No co-occurrences match. Lower the threshold or increase the number of words shown.'
   }
 };
 function t(k){const d=I18N[LANG];return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k);}
@@ -354,10 +374,11 @@ function setModel(m,filename){
     '<span class="k">'+t('meta_docs')+'</span> <span class="v">'+m.docN+'</span> · '+
     '<span class="k">'+t('meta_vals')+'</span> <span class="v">'+(isBinary?t('val_binary'):t('val_freq'))+'</span>'+
     (m.skipped&&m.skipped.length?('<br><span class="k">'+t('meta_skip')+'</span> <span class="v">'+m.skipped.join(', ')+'</span>'):'');
-  ['#cloudGroup','#netGroup'].forEach(s=>$(s).style.display='');
+  ['#cloudGroup','#netGroup','#dlLog'].forEach(s=>$(s).style.display='');
   // set slider ranges from data
-  const maxdf=Math.max(1,...m.df);
-  $('#netMin').max=Math.min(10,maxdf);
+  $('#netN').min=Math.min(10,m.names.length); // keep min <= max for tiny vocabularies
+  $('#netN').max=Math.min(120,m.names.length);
+  if(+$('#netN').value>m.names.length){$('#netN').value=m.names.length;$('#netNVal').textContent=m.names.length;}
   $('#cloudN').min=Math.min(10,m.names.length); // keep min <= max for tiny vocabularies
   $('#cloudN').max=Math.min(150,m.names.length);
   if(+$('#cloudN').value>m.names.length){$('#cloudN').value=m.names.length;$('#cloudNVal').textContent=m.names.length;}
@@ -462,11 +483,11 @@ function cosine(va,na,vb,nb){if(!na||!nb)return 0;let dot=0;const[S,L]=va.size<v
 let NET=null, NETSEED=1; // NETSEED fixed at 1 on load -> reproducible; "再配置" increments it
 
 function buildNet(){
-  const minf=+$('#netMin').value, sim0=+$('#netSim').value, MAXN=80;
+  const topN=+$('#netN').value, sim0=+$('#netSim').value;
   const measure=($('#netMeasure')&&$('#netMeasure').value)||'jaccard';
-  let nodesIdx=MODEL.names.map((_,i)=>i).filter(i=>MODEL.df[i]>=minf);
-  nodesIdx.sort((a,b)=>MODEL.total[b]-MODEL.total[a]||(MODEL.names[a]<MODEL.names[b]?-1:1)); // deterministic order (tie-break by name)
-  if(nodesIdx.length>MAXN)nodesIdx=nodesIdx.slice(0,MAXN);
+  let nodesIdx=MODEL.names.map((_,i)=>i);
+  nodesIdx.sort((a,b)=>MODEL.total[b]-MODEL.total[a]||(MODEL.names[a]<MODEL.names[b]?-1:1)); // most frequent first (tie-break by name)
+  if(nodesIdx.length>topN)nodesIdx=nodesIdx.slice(0,topN); // keep the top-N words by total frequency (like the word cloud)
   let edges=[];
   for(let a=0;a<nodesIdx.length;a++)for(let b=a+1;b<nodesIdx.length;b++){
     const ia=nodesIdx[a],ib=nodesIdx[b];
@@ -680,9 +701,12 @@ function paintNet(svg){
   const lineCol=cssv('--ink-faint'),inkDim=cssv('--ink-dim'),ink=cssv('--ink'),cyan=cssv('--cyan');
   // node radius: sqrt-scaled so the perceived AREA (not the radius) reflects the chosen quantity
   const sizeBy=($('#netSizeBy')&&$('#netSizeBy').value)||'degree';
+  const nodeScale=+(($('#netNodeScale')&&$('#netNodeScale').value)||1)||1;
+  const textScale=+(($('#netTextScale')&&$('#netTextScale').value)||2)||2;
   const sizeVal=N.nodesIdx.map((wi,i)=>sizeBy==='freq'?(MODEL.total[wi]||0):N.deg[i]);
   const sizeMax=Math.max(1,...sizeVal);
-  const radiusOf=i=>6+11*Math.sqrt((sizeVal[i]||0)/sizeMax);
+  const radiusForVal=v=>(6+11*Math.sqrt(Math.max(0,v)/sizeMax))*nodeScale;
+  const radiusOf=i=>radiusForVal(sizeVal[i]||0);
   // community colours via the selected method (label prop / greedy modularity / Louvain), computed at paint time
   const comm=useComm?community(N.n,N.edges):null;
   const labs=comm?[...new Set(comm)]:[];const colOf=l=>PALETTE[labs.indexOf(l)%PALETTE.length];
@@ -706,11 +730,30 @@ function paintNet(svg){
   N.nodesIdx.forEach((wi,i)=>{
     const r=radiusOf(i);
     const g=svgEl('g',{class:'netlabel',transform:'translate('+N.pos[i].x+','+N.pos[i].y+')'});g.dataset.i=i;
-    const tx=svgEl('text',{x:0,y:-r-4,'text-anchor':'middle','font-size':11,'font-family':cssv('--sans'),fill:'#000'});
+    const tx=svgEl('text',{x:0,y:-r-4,'text-anchor':'middle','font-size':6*textScale,'font-family':cssv('--sans'),fill:'#000'});
     tx.textContent=MODEL.names[wi];g.appendChild(tx);
     gL.appendChild(g);
   });
   svg.appendChild(gL);
+  // --- node-size legend (top-left): hollow circles for the entered values + basis title (次数/頻度) ---
+  const legVals=[...new Set(((($('#netLegend')&&$('#netLegend').value)||'').split(/[,，\s]+/).map(Number).filter(v=>isFinite(v)&&v>0)))].sort((a,b)=>b-a);
+  if(legVals.length){
+    const estW=s=>{let w=0;for(const ch of String(s)){const c=ch.codePointAt(0);w+=((c>=0x3000&&c<=0x9fff)||(c>=0xff00&&c<=0xffef))?12:6.8;}return w;};
+    const lx=16, maxR=Math.max(...legVals.map(radiusForVal)), cx=lx+maxR;
+    const titleY=22, tTitle=(sizeBy==='freq'?t('size_freq_short'):t('size_deg_short'));
+    const rows=[];let top=titleY+8;
+    legVals.forEach(v=>{const r=radiusForVal(v);const cyc=top+r;rows.push({v,r,cyc});top=cyc+r+8;});
+    const valX=lx+2*maxR+10;
+    const boxW=Math.max(estW(tTitle), 2*maxR+10+Math.max(...legVals.map(estW)))+16;
+    const gLeg=svgEl('g',{});
+    gLeg.appendChild(svgEl('rect',{x:lx-8,y:titleY-16,width:boxW,height:(top-(titleY-16)),rx:8,fill:cssv('--panel'),'fill-opacity':0.82,stroke:cssv('--line'),'stroke-width':1}));
+    const tt=svgEl('text',{x:lx,y:titleY,'font-size':12.5,'font-family':cssv('--sans'),'font-weight':700,fill:ink});tt.textContent=tTitle;gLeg.appendChild(tt);
+    rows.forEach(row=>{
+      gLeg.appendChild(svgEl('circle',{cx:cx,cy:row.cyc,r:row.r,fill:'none',stroke:ink,'stroke-width':1.5}));
+      const vt=svgEl('text',{x:valX,y:row.cyc+4,'font-size':11.5,'font-family':cssv('--mono'),fill:inkDim});vt.textContent=row.v;gLeg.appendChild(vt);
+    });
+    svg.appendChild(gLeg);
+  }
   attachDrag(svg);
 }
 function attachDrag(svg){
@@ -785,9 +828,8 @@ function downloadText(text,name){
 function buildLog(){
   const lbl=k=>({total:'total count / のべ出現回数',df:'document frequency / 出現文書数',jaccard:'Jaccard (presence)',cosine:'Cosine (frequency)',louvain:'Louvain',greedy:'Greedy modularity (CNM)',label:'Label propagation',fr:'Fruchterman-Reingold',spectral:'Spectral (Laplacian)',degree:'degree / 次数',freq:'frequency / 頻度'}[k]||k);
   const net=NET||computeNet(false);
-  // count of isolated nodes removed = nodes passing the min-doc-freq filter (capped at 80) minus nodes kept after removal
-  const minf=+$('#netMin').value,MAXN=80;
-  let preN=MODEL.names.map((_,i)=>i).filter(i=>MODEL.df[i]>=minf).length;if(preN>MAXN)preN=MAXN;
+  // count of isolated nodes removed = top-N candidate words minus nodes kept after removal
+  const preN=Math.min(+$('#netN').value,MODEL.names.length);
   const removed=Math.max(0,preN-net.n);
   const nComm=$('#netComm').checked?[...new Set(community(net.n,net.edges))].length:0;
   const L=[];
@@ -804,11 +846,14 @@ function buildLog(){
   L.push('  min size / 最小サイズ     : '+(+$('#cloudMin').value).toFixed(1)+' ×12pt');
   L.push('  max size / 最大サイズ     : '+(+$('#cloudMax').value).toFixed(1)+' ×12pt');
   L.push('-- co-occurrence network / 共起ネットワーク');
-  L.push('  min doc freq / 最小文書数 : '+$('#netMin').value);
+  L.push('  words shown / 表示語数    : '+$('#netN').value);
   L.push('  measure / 尺度            : '+lbl($('#netMeasure').value));
   L.push('  threshold / しきい値      : '+(+$('#netSim').value).toFixed(2));
   L.push('  layout / 配置             : '+lbl($('#netLayout').value));
   L.push('  node size by / サイズ基準 : '+lbl($('#netSizeBy').value)+' (area-proportional)');
+  L.push('  node size scale / 倍率   : '+(+$('#netNodeScale').value).toFixed(1)+'x');
+  L.push('  text size / 文字サイズ    : '+(6*+$('#netTextScale').value).toFixed(0)+'pt ('+(+$('#netTextScale').value).toFixed(1)+'x 6pt)');
+  L.push('  size legend / 大きさ凡例  : '+(($('#netLegend').value||'').trim()||'(none)'));
   L.push('  node spread / 広がり      : '+(+$('#netSpread').value).toFixed(1));
   L.push('  color by community / 色分け: '+($('#netComm').checked?'on':'off'));
   L.push('  community method / 検出法 : '+lbl($('#netCommMethod').value));
@@ -863,7 +908,7 @@ $('#cloudMin').oninput=e=>$('#cloudMinVal').textContent=(+e.target.value).toFixe
 $('#cloudMin').onchange=()=>renderAll();
 $('#cloudMax').oninput=e=>$('#cloudMaxVal').textContent=(+e.target.value).toFixed(1);
 $('#cloudMax').onchange=()=>renderAll();
-$('#netMin').oninput=e=>{$('#netMinVal').textContent=e.target.value;renderAll(true);}; // live update (integer steps -> cheap)
+$('#netN').oninput=e=>{$('#netNVal').textContent=e.target.value;renderAll(true);}; // live update (top-N words)
 $('#netSim').oninput=e=>{$('#netSimVal').textContent=(+e.target.value).toFixed(2);updateNetStat();};
 $('#netSim').onchange=()=>renderAll(true);
 $('#netMeasure').onchange=()=>renderAll(true);
@@ -871,6 +916,10 @@ $('#netSpread').oninput=e=>$('#netSpreadVal').textContent=(+e.target.value).toFi
 $('#netSpread').onchange=()=>renderAll(true);
 $('#netLayout').onchange=()=>renderAll(true);
 $('#netSizeBy').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
+const repaintNet=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
+$('#netNodeScale').oninput=e=>{$('#netNodeScaleVal').textContent=(+e.target.value).toFixed(1);repaintNet();};
+$('#netTextScale').oninput=e=>{$('#netTextScaleVal').textContent=(+e.target.value).toFixed(1);repaintNet();};
+$('#netLegend').oninput=repaintNet;
 $('#netComm').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#netCommMethod').onchange=()=>{if(NET&&$('#results').style.display!=='none'){const svg=$('#results .card:last-child svg');if(svg)paintNet(svg);}};
 $('#relayout').onclick=()=>{NETSEED++;renderAll(true);};
