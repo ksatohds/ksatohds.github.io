@@ -326,7 +326,9 @@ function jacobiEigen(A){
     for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){
       if(Math.abs(a[p][q])<1e-300)continue;
       const app=a[p][p],aqq=a[q][q],apq=a[p][q];
-      const phi=0.5*Math.atan2(2*apq,app-aqq);
+      // rotation applied below is A -> R^T A R with R=[[c,s],[-s,c]]; the angle that
+      // zeroes a[p][q] under that convention is atan2(2*apq, aqq-app) (NOT app-aqq).
+      const phi=0.5*Math.atan2(2*apq,aqq-app);
       const c=Math.cos(phi),s=Math.sin(phi);
       for(let i=0;i<n;i++){const aip=a[i][p],aiq=a[i][q];a[i][p]=c*aip-s*aiq;a[i][q]=s*aip+c*aiq;}
       for(let i=0;i<n;i++){const api=a[p][i],aqi=a[q][i];a[p][i]=c*api-s*aqi;a[q][i]=s*api+c*aqi;}
