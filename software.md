@@ -65,7 +65,7 @@ title: Software
 </div>
 
 <div class="section">
-  <h2 class="section-title" data-ja="Webアプリ">Web apps</h2>
+  <h2 class="section-title" data-ja="HTMLアプリ">HTML apps</h2>
   <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="いずれもインストール不要。データはブラウザ内で処理され、外部に送信されません。各アプリは日本語・英語の表示切替に対応しています。">All run without installation. Your data is processed in the browser and never uploaded. Each app has its own Japanese/English toggle.</p>
   <div class="gallery-grid">
 
@@ -115,6 +115,24 @@ title: Software
         <p data-ja="分類木（CART）を構築し、決定ルール・混同行列・変数重要度を表示します。">Build a CART classification tree and view decision rules, a confusion matrix, and variable importance.</p>
         <div class="gallery-links">
           <a href="{{ '/html_app/class_tree.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title" data-ja="Webアプリ">Web apps</h2>
+  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="外部サーバー上で動作するアプリです。">Apps that run on an external server (R Shiny).</p>
+  <div class="gallery-grid">
+
+    <div class="gallery-item">
+      <div class="gallery-body">
+        <h3 data-ja="回帰木・分類木 CART">Regression &amp; Classification Tree (CART)</h3>
+        <p data-ja="回帰木・分類木（CART）を構築する R Shiny アプリ。">An R Shiny app that builds regression and classification trees (CART).</p>
+        <div class="gallery-links">
+          <a href="https://kenichi-satoh.shinyapps.io/CART/" data-ja="アプリを開く">Open app</a>
         </div>
       </div>
     </div>
