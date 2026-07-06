@@ -20,7 +20,7 @@ title: Software
 
 <div class="section">
   <h2 class="section-title" data-ja="ソフトウェア">Software</h2>
-  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="GitHubで公開しているRパッケージと、インストール不要でブラウザだけで動くWebアプリを紹介します。">R packages published on GitHub, plus web apps that run entirely in your browser — no installation required.</p>
+  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="GitHubで公開しているRパッケージと、インストール不要でブラウザだけで動くHTMLアプリ・Webアプリを紹介します。">R packages published on GitHub, plus HTML and WEB apps that run entirely in your browser — no installation required.</p>
 </div>
 
 <div class="section">
