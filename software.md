@@ -9,6 +9,13 @@ title: Software
   .lang-toggle button { background: transparent; border: none; padding: 5px 13px; cursor: pointer; color: var(--color-text-light); font-weight: 500; transition: background 0.15s, color 0.15s; }
   .lang-toggle button:hover { color: var(--color-primary); }
   .lang-toggle button.on { background: var(--color-accent); color: #fff; }
+  /* subtle per-section card colours: R packages (teal), HTML apps (blue), Web apps (amber) */
+  .gallery-grid.sw-pkg  .gallery-item { border-top: 4px solid #16a085; background: #f2fbf8; }
+  .gallery-grid.sw-pkg  .gallery-item h3 { color: #0f836b; }
+  .gallery-grid.sw-html .gallery-item { border-top: 4px solid #2980b9; background: #f1f8fd; }
+  .gallery-grid.sw-html .gallery-item h3 { color: #21689b; }
+  .gallery-grid.sw-web  .gallery-item { border-top: 4px solid #e08a34; background: #fdf7ef; }
+  .gallery-grid.sw-web  .gallery-item h3 { color: #bd6d22; }
 </style>
 
 <div class="lang-toggle-wrap">
@@ -20,12 +27,12 @@ title: Software
 
 <div class="section">
   <h2 class="section-title" data-ja="ソフトウェア">Software</h2>
-  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="GitHubで公開しているRパッケージと、インストール不要でブラウザだけで動くHTMLアプリ・Webアプリを紹介します。">R packages published on GitHub, plus HTML and WEB apps that run entirely in your browser — no installation required.</p>
+  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="GitHubで公開しているRパッケージ、ブラウザで動くHTMLアプリ、サーバー上で動くWebアプリを紹介します。いずれもインストール不要です。">R packages published on GitHub, plus browser-based HTML apps and a server-hosted web app — no installation required.</p>
 </div>
 
 <div class="section">
   <h2 class="section-title" data-ja="Rパッケージ">R packages</h2>
-  <div class="gallery-grid">
+  <div class="gallery-grid sw-pkg">
 
     <div class="gallery-item">
       <div class="gallery-body">
@@ -74,7 +81,7 @@ title: Software
     <p style="margin: 0; color: var(--color-text-light); line-height: 1.85; font-family: var(--font-mono, monospace); font-size: 0.86rem;" data-ja="テキスト解析（DFM作成）→ ①DFMの可視化 ②対応分析 ③NMF・トピックモデル">Text analysis (build DFM) → ① DFM visualization ② Correspondence analysis ③ NMF · Topic model</p>
   </div>
 
-  <div class="gallery-grid">
+  <div class="gallery-grid sw-html">
 
     <div class="gallery-item">
       <div class="gallery-body">
@@ -132,7 +139,7 @@ title: Software
 <div class="section">
   <h2 class="section-title" data-ja="Webアプリ">Web apps</h2>
   <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="外部サーバー上で動作するアプリです。">Apps that run on an external server (R Shiny).</p>
-  <div class="gallery-grid">
+  <div class="gallery-grid sw-web">
 
     <div class="gallery-item">
       <div class="gallery-body">
