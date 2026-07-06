@@ -9,12 +9,12 @@ title: Software
   .lang-toggle button { background: transparent; border: none; padding: 5px 13px; cursor: pointer; color: var(--color-text-light); font-weight: 500; transition: background 0.15s, color 0.15s; }
   .lang-toggle button:hover { color: var(--color-primary); }
   .lang-toggle button.on { background: var(--color-accent); color: #fff; }
-  /* subtle per-section card colours: R packages (teal), HTML apps (blue), Web apps (amber) */
-  .gallery-grid.sw-pkg  .gallery-item { border-top: 4px solid #16a085; background: #f2fbf8; }
+  /* subtle per-section card colours on the LEFT edge (like the laboratory page): R packages (teal), HTML apps (blue), Web apps (amber) */
+  .gallery-grid.sw-pkg  .gallery-item { border-left: 4px solid #16a085; background: linear-gradient(135deg, #e8f7f3 0%, var(--color-white) 45%); }
   .gallery-grid.sw-pkg  .gallery-item h3 { color: #0f836b; }
-  .gallery-grid.sw-html .gallery-item { border-top: 4px solid #2980b9; background: #f1f8fd; }
+  .gallery-grid.sw-html .gallery-item { border-left: 4px solid #2980b9; background: linear-gradient(135deg, #e8f2fb 0%, var(--color-white) 45%); }
   .gallery-grid.sw-html .gallery-item h3 { color: #21689b; }
-  .gallery-grid.sw-web  .gallery-item { border-top: 4px solid #e08a34; background: #fdf7ef; }
+  .gallery-grid.sw-web  .gallery-item { border-left: 4px solid #e08a34; background: linear-gradient(135deg, #fdf1e2 0%, var(--color-white) 45%); }
   .gallery-grid.sw-web  .gallery-item h3 { color: #bd6d22; }
 </style>
 
