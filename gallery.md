@@ -39,9 +39,14 @@ title: 展示
     </div>
 
     <div class="gallery-item">
-      <img src="{{ 'image/5ee2403f49bab53df1e2bfbc92966087.jpg' | relative_url }}" alt="WEBアプリケーション">
+      <img src="{{ 'image/5ee2403f49bab53df1e2bfbc92966087.jpg' | relative_url }}" alt="ソフトウェア">
       <div class="gallery-body">
-        <h3>■WEBアプリケーション</h3>
+        <h3>■ソフトウェア</h3>
+        <ul>
+          <li>Rパッケージ</li>
+          <li>HTMLアプリケーション</li>
+          <li>WEBアプリケーション</li>
+        </ul>
         <div class="gallery-links">
           <a href="{{ '/software.html' | relative_url }}">Software</a>
         </div>
