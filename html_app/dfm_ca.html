@@ -142,7 +142,7 @@
     <div class="group" id="dispGroup" style="display:none">
       <h2 data-i18n="g_disp">表示</h2>
       <label class="field">
-        <span class="lab"><span data-i18n="c_words">表示する語（頻度上位%）</span> <span class="val" id="wNVal">30%</span></span>
+        <span class="lab"><span data-i18n="c_words">表示語数</span> <span class="val" id="wNVal">30</span></span>
         <input type="range" id="wN" min="5" max="100" value="30" step="5">
       </label>
       <label class="field">
@@ -198,7 +198,7 @@ const I18N={
     demo_credit:'デモは沖縄県観光商工部「<b>平成18年度観光統計実態調査「沖縄観光客満足度調査」</b>」（別冊『観光客の声』・<b>第4回調査</b>）の自由記述の<b>一部</b>から作成した文書単語行列です（属性: 居住地・性別・年代・満足度、値は語の出現頻度）。出典: <a href="https://www.pref.okinawa.jp/shigoto/kankotokusan/1011671/1011816/1011825/1020290.html" target="_blank" rel="noopener">沖縄県</a>（&copy; 沖縄県）。',
     g_group:'グループ変数（カテゴリ）', group_empty:'ファイルを読み込むと候補が表示されます。',
     group_hint:'カテゴリ属性（水準数 2〜20）を最大2つ選べます。2つ選ぶと交互作用（例: 男性_20代）を内部で作成します。',
-    g_disp:'表示', c_words:'表示する語（頻度上位%）', freq_ge:'頻度 ≥ {x}', c_catsize:'グループ変数の文字 (×6pt)', c_wordsize:'単語の文字 (×6pt)', dim_x:'横軸', dim_y:'縦軸',
+    g_disp:'表示', c_words:'表示語数', freq_ge:'頻度 ≥ {x}', c_catsize:'グループ変数の文字 (×6pt)', c_wordsize:'単語の文字 (×6pt)', dim_x:'横軸', dim_y:'縦軸',
     ph_main:'左で属性列付きの文書単語行列CSVを読み込むか、デモを試してください。',
     ph_sub:'カテゴリ属性と語のクロス集計に対応分析を適用し、属性カテゴリと語を同一平面に布置するバイプロットを描きます。',
     f_model:'対応分析 · バイプロット（symmetric map）', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
@@ -220,7 +220,7 @@ const I18N={
     demo_credit:'Demo: a document-feature matrix built from <b>part</b> of the free-text answers in the "Okinawa Tourist Satisfaction Survey" (<b>FY2006 Tourism Statistics Survey</b>, supplement "Voices of Tourists", 4th-round survey), Dept. of Tourism &amp; Commerce, Okinawa Prefecture. Attributes: residence, sex, age, satisfaction; values are word counts. Source: <a href="https://www.pref.okinawa.jp/shigoto/kankotokusan/1011671/1011816/1011825/1020290.html" target="_blank" rel="noopener">Okinawa Prefecture</a> (&copy; Okinawa Prefectural Government).',
     g_group:'Group variables (categorical)', group_empty:'Candidates appear here after a file is loaded.',
     group_hint:'Pick up to 2 categorical attributes (2–20 levels). Picking 2 builds their interaction internally (e.g. male_20s).',
-    g_disp:'Display', c_words:'Words shown (top freq %)', freq_ge:'freq ≥ {x}', c_catsize:'Category text (×6pt)', c_wordsize:'Word text (×6pt)', dim_x:'X axis', dim_y:'Y axis',
+    g_disp:'Display', c_words:'Words shown', freq_ge:'freq ≥ {x}', c_catsize:'Category text (×6pt)', c_wordsize:'Word text (×6pt)', dim_x:'X axis', dim_y:'Y axis',
     ph_main:'Load a DFM CSV that has attribute columns on the left, or try the demo.',
     ph_sub:'Correspondence analysis on the attribute×word crosstab, drawing a biplot that places categories and words on one plane.',
     f_model:'Correspondence analysis · biplot (symmetric map)', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
@@ -441,7 +441,10 @@ function renderCA(){
   CA=ca;
   updateDimSelects(ca.dims);
   const dimX=(+$('#dimX').value||1)-1, dimY=(+$('#dimY').value||2)-1;
-  const pctW=+$('#wN').value; const topN=Math.max(1,Math.round(ca.words.length*pctW/100)); // % of vocabulary, 100% = all words
+  // #wN = 表示語数 (number of words shown, top-N by frequency); its max is the vocabulary size (like dfm_viz)
+  $('#wN').max=ca.words.length;
+  if(+$('#wN').value>ca.words.length){$('#wN').value=ca.words.length;$('#wNVal').textContent=ca.words.length;}
+  const topN=Math.max(1,Math.min(+$('#wN').value,ca.words.length));
   const catMul=+$('#catSize').value||1, wordMul=+$('#wordSize').value||1;
   $('#placeholder').style.display='none';box.style.display='';box.innerHTML='';
   // metrics
@@ -503,7 +506,7 @@ function buildLog(ca,dimX,dimY,topN,catMul,wordMul){
   L.push('[Settings]');
   L.push('file                 = '+(LASTNAME||''));
   L.push('group_variables      = '+(groups.length?groups.join(' x '):'(none)'));
-  L.push('words_shown_top_pct  = '+(+$('#wN').value)+'%  (topN = '+topN+' of '+ca.words.length+')');
+  L.push('words_shown          = '+topN+' of '+ca.words.length+'  (top-N by frequency)');
   L.push('category_text_x6pt   = '+(+$('#catSize').value).toFixed(1));
   L.push('word_text_x6pt       = '+(+$('#wordSize').value).toFixed(1));
   L.push('x_axis               = '+t('dim_label')+' '+(dimX+1));
@@ -561,7 +564,7 @@ function loadRows(rows,filename,preferred){
   DATA=buildData(rows);LASTNAME=filename;
   const ok=buildGroupChecks(preferred);
   ['#groupGroup','#dispGroup'].forEach(s=>$(s).style.display='');
-  // #wN is a percentage (5–100%); it does not depend on the vocabulary size
+  // #wN (表示語数) max is set to the vocabulary size inside renderCA
   if(!ok){$('#placeholder').style.display='';$('#results').style.display='none';$('#meta').classList.remove('show');return;}
   renderCA();
   const cats=CA?CA.catLabels.length:0;
@@ -593,7 +596,7 @@ drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataT
 fileInput.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);}};
 $('#demo').onclick=()=>{loadRows(rowsFromDemo(),'okinawa_dfm.csv',['性別','年代']);toast(t('toast_demo'));};
 
-$('#wN').oninput=e=>$('#wNVal').textContent=e.target.value+'%';
+$('#wN').oninput=e=>$('#wNVal').textContent=e.target.value;
 $('#wN').onchange=()=>renderCA();
 $('#catSize').oninput=e=>$('#catSizeVal').textContent=(+e.target.value).toFixed(1);
 $('#catSize').onchange=()=>renderCA();

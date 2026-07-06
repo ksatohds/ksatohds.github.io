@@ -273,7 +273,7 @@ const I18N={
     ph_sub:'text_dfm アプリで作成したCSV（文書 × 語、属性列を含んでもよい）を読み込み、ワードクラウドと共起ネットワーク図を作成します。',
     f_model:'Jaccard 共起 · Fruchterman-Reingold', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
     m_words:'語数', m_docs:'文書数', m_nodes:'ノード数', m_edges:'エッジ数',
-    sec_cloud:'ワードクラウド', sec_cloud_d:'語の大きさは出現量に比例。色は総頻度の段階（凡例参照）。', cloud_freq:'頻度',
+    sec_cloud:'ワードクラウド', sec_cloud_d:'語の大きさは出現量に比例。色は総頻度の段階（凡例参照）。', cloud_freq:'頻度', freq_ge:'頻度 ≥ {x}',
     sec_net:'共起ネットワーク', sec_net_d:'類似度がしきい値以上の語ペアを線で結ぶ。丸の大きさは次数または出現頻度（左で選択、面積が量に比例）。',
     dl_cloud:'ワードクラウド SVG', dl_net:'ネットワーク SVG',
     toast_demo:'デモDFMを読み込みました（68語×147文書）', toast_parsefail:'CSVの解析に失敗しました',
@@ -296,7 +296,7 @@ const I18N={
     ph_sub:'Load a CSV built by the text_dfm app (docs × words, attribute columns allowed) and draw a word cloud and a co-occurrence network.',
     f_model:'Jaccard co-occurrence · Fruchterman-Reingold', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
     m_words:'Words', m_docs:'Documents', m_nodes:'Nodes', m_edges:'Edges',
-    sec_cloud:'Word cloud', sec_cloud_d:'Word size ∝ occurrence; color = total-frequency band (see legend).', cloud_freq:'frequency',
+    sec_cloud:'Word cloud', sec_cloud_d:'Word size ∝ occurrence; color = total-frequency band (see legend).', cloud_freq:'frequency', freq_ge:'freq ≥ {x}',
     sec_net:'Co-occurrence network', sec_net_d:'Word pairs with similarity above the threshold are linked. Node size = degree or occurrence frequency (selectable; area ∝ quantity).',
     dl_cloud:'Word cloud SVG', dl_net:'Network SVG',
     toast_demo:'Loaded demo DFM (68 words × 147 docs)', toast_parsefail:'Failed to parse CSV',
@@ -417,6 +417,7 @@ function buildCloud(){
   const N=Math.min(+$('#cloudN').value,idx.length);
   const sel=idx.slice(0,N);
   const maxv=key[sel[0]]||1,minv=key[sel[N-1]]||1;
+  const freqMin=Math.min(...sel.map(i=>MODEL.total[i])); // min total frequency among displayed words (= the 表示語数 cutoff)
   const W=760,H=460,cx=W/2,cy=H/2,BASE=12; // font size = multiplier x 12pt (R textplot_wordcloud min_size/max_size style)
   const sa=BASE*(+$('#cloudMin').value), sb=BASE*(+$('#cloudMax').value);
   const FMIN=Math.min(sa,sb), FMAX=Math.max(sa,sb);
@@ -438,7 +439,7 @@ function buildCloud(){
   // legend laid out inside the figure (top-left); reserve its box so no word overlaps it
   const rangeStr=L=>L.lo===L.hi?String(L.hi):(L.lo+'–'+L.hi);
   const estW=s=>{let w=0;for(const ch of s){const c=ch.codePointAt(0);w+=((c>=0x3000&&c<=0x9fff)||(c>=0xff00&&c<=0xffef))?11:6.6;}return w;};
-  const lp=8,rowH=17,titleH=16,swW=15,swH=10,LX=12,LY=12,ltitle=t('cloud_freq');
+  const lp=8,rowH=17,titleH=16,swW=15,swH=10,LX=12,LY=12,ltitle=t('freq_ge').replace('{x}',freqMin);
   const contentW=Math.max(estW(ltitle),...legend.map(L=>swW+6+estW(rangeStr(L))));
   const boxW=lp*2+contentW, boxH=lp*2+titleH+legend.length*rowH;
   const legendLayout={box:{x:LX,y:LY,w:boxW,h:boxH},title:{x:LX+lp,y:LY+lp+11,text:ltitle},
@@ -735,12 +736,18 @@ function paintNet(svg){
     gL.appendChild(g);
   });
   svg.appendChild(gL);
-  // --- node-size legend (top-left): hollow circles for the entered values + basis title (次数/頻度) ---
+  // --- top-left "頻度 ≥ N" label: min total frequency among the drawn nodes (= the 表示語数 cutoff, like dfm_ca) ---
+  if(N.nodesIdx.length){
+    const freqGe=Math.min(...N.nodesIdx.map(wi=>MODEL.total[wi]||0));
+    const fl=svgEl('text',{x:16,y:20,'font-size':13,'font-family':cssv('--sans'),'font-weight':700,fill:ink});
+    fl.textContent=t('freq_ge').replace('{x}',freqGe);svg.appendChild(fl);
+  }
+  // --- node-size legend (top-left, below the 頻度≥N label): hollow circles for the entered values + basis title (次数/頻度) ---
   const legVals=[...new Set(((($('#netLegend')&&$('#netLegend').value)||'').split(/[,，\s]+/).map(Number).filter(v=>isFinite(v)&&v>0)))].sort((a,b)=>b-a);
   if(legVals.length){
     const estW=s=>{let w=0;for(const ch of String(s)){const c=ch.codePointAt(0);w+=((c>=0x3000&&c<=0x9fff)||(c>=0xff00&&c<=0xffef))?12:6.8;}return w;};
     const lx=16, maxR=Math.max(...legVals.map(radiusForVal)), cx=lx+maxR;
-    const titleY=22, tTitle=(sizeBy==='freq'?t('size_freq_short'):t('size_deg_short'));
+    const titleY=46, tTitle=(sizeBy==='freq'?t('size_freq_short'):t('size_deg_short')); // start below the 頻度≥N label
     const rows=[];let top=titleY+8;
     legVals.forEach(v=>{const r=radiusForVal(v);const cyc=top+r;rows.push({v,r,cyc});top=cyc+r+8;});
     const valX=lx+2*maxR+10;
