@@ -75,7 +75,7 @@ title: Software
   <h2 class="section-title" data-ja="HTMLアプリ">HTML apps</h2>
   <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="いずれもインストール不要。データはブラウザ内で処理され、外部に送信されません。各アプリは日本語・英語の表示切替に対応しています。">All run without installation. Your data is processed in the browser and never uploaded. Each app has its own Japanese/English toggle.</p>
 
-  <div style="background: var(--color-white); border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent); border-radius: 6px; padding: 16px 20px; margin: 8px 0 26px; max-width: 800px;">
+  <div style="background: var(--color-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 16px 20px; margin: 8px 0 26px; max-width: 800px;">
     <p style="margin: 0 0 8px; font-weight: 600; color: var(--color-primary);" data-ja="テキストから可視化まで、CSVでつながります">From text to visuals — connected by one CSV</p>
     <p style="margin: 0 0 10px; color: var(--color-text-light); line-height: 1.85;" data-ja="まず「テキスト解析」で文書単語行列（DFM）を作り、CSVに出力します。その同じCSVを、下の3つのアプリにそのまま読み込めます。生のテキストから、ワードクラウド・共起ネットワーク・バイプロット・グループ別トピックまで、コードを書かずに一気通貫で分析できます。">First, the Text analysis app builds a document-feature matrix (DFM) from your text and exports it as CSV. That same CSV loads directly into the three apps below — taking you from raw text to word clouds, co-occurrence networks, biplots, and group-wise topics without writing any code.</p>
     <p style="margin: 0; color: var(--color-text-light); line-height: 1.85; font-family: var(--font-mono, monospace); font-size: 0.86rem;" data-ja="テキスト解析（DFM作成）→ ①DFMの可視化 ②対応分析 ③NMF・トピックモデル">Text analysis (build DFM) → ① DFM visualization ② Correspondence analysis ③ NMF · Topic model</p>
