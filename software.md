@@ -89,6 +89,7 @@ title: Software
         <p data-ja="日本語テキストを解析して文書単語行列（DFM）を作成します。連接語の検出や語の削除・置換に対応し、結果はCSVで出力できます。">Tokenize Japanese text and build a document-feature matrix (DFM). Detect collocations, remove or replace words, and export to CSV.</p>
         <div class="gallery-links">
           <a href="{{ '/html_app/text_dfm.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
         </div>
       </div>
     </div>
@@ -99,6 +100,7 @@ title: Software
         <p data-ja="「テキスト解析」で出力したDFMのCSVを読み込み、ワードクラウドと共起ネットワークを描画します。表示語数・しきい値・コミュニティ検出法を対話的に調整できます。">Loads the DFM CSV exported by the Text analysis app and draws a word cloud and a co-occurrence network. Adjust the number of words shown, thresholds, and community-detection methods interactively.</p>
         <div class="gallery-links">
           <a href="{{ '/html_app/dfm_viz.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
         </div>
       </div>
     </div>
@@ -109,6 +111,7 @@ title: Software
         <p data-ja="属性列付きのDFM（「テキスト解析」で作成）を読み込み、属性×語のクロス集計に対応分析を適用します。カテゴリと語を同一平面に布置するバイプロットを描きます。">Loads a DFM with attribute columns (from the Text analysis app), applies correspondence analysis to the attribute × word crosstab, and draws a biplot placing categories and words on the same plane.</p>
         <div class="gallery-links">
           <a href="{{ '/html_app/dfm_ca.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
         </div>
       </div>
     </div>
@@ -119,6 +122,7 @@ title: Software
         <p data-ja="非負値行列因子分解（NMF）を実行します。「トピックモデル」タブは属性列付きのDFM（「テキスト解析」で作成）を読み込みグループ別のトピック構成を、「行列分解」タブは一般の行列をヒートマップ・両側クラスタリングで示します。">Runs non-negative matrix factorization (NMF). The Topic model tab reads a DFM with attribute columns (from the Text analysis app) and shows topic composition by group; the Matrix factorization tab takes any matrix and shows heatmaps &amp; two-way clustering.</p>
         <div class="gallery-links">
           <a href="{{ '/html_app/nmf_app.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
         </div>
       </div>
     </div>
@@ -129,6 +133,7 @@ title: Software
         <p data-ja="分類木（CART）を構築し、決定ルール・混同行列・変数重要度を表示します。">Build a CART classification tree and view decision rules, a confusion matrix, and variable importance.</p>
         <div class="gallery-links">
           <a href="{{ '/html_app/class_tree.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
         </div>
       </div>
     </div>

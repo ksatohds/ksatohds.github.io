@@ -380,6 +380,7 @@
   <span data-ci18n-html="f_model">モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)</span>
   <span><span data-ci18n="f_pkg">関連Rパッケージ: </span><a href="https://ksatohds.github.io/nmfkc/" target="_blank" rel="noopener">nmfkc</a></span>
   <span class="credit"><b data-ci18n="f_org">滋賀大学データサイエンス学系</b> · <span data-ci18n="f_name">佐藤健一</span></span>
+  <span class="credit" data-ci18n-html="f_license"></span>
   <button class="dl" id="saveApp" style="margin-left:auto" data-ci18n="save_app">💾 GitHubから最新版を保存</button>
 </footer>
 
@@ -507,9 +508,13 @@ function clusterRows(X,P,Q){
 /* --- shared chrome i18n (header title/eq, footer, tab labels) --- */
 const CHROME_I18N={
   ja:{tab_topic:'トピックモデル', tab_matrix:'行列分解 NMF',
-    f_model:'モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)', f_pkg:'関連Rパッケージ: ', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存'},
+    f_model:'モデル: Y ≈ XB (Lee &amp; Seung 乗法更新則)', f_pkg:'関連Rパッケージ: ', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一',
+    f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MITライセンス</a>',
+    save_app:'💾 GitHubから最新版を保存'},
   en:{tab_topic:'Topic Model', tab_matrix:'Matrix NMF',
-    f_model:'model: Y ≈ XB (Lee &amp; Seung multiplicative update)', f_pkg:'related R package: ', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub'}
+    f_model:'model: Y ≈ XB (Lee &amp; Seung multiplicative update)', f_pkg:'related R package: ', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
+    f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>',
+    save_app:'💾 Save Latest HTML from GitHub'}
 };
 const HEADER_I18N={
   topic:{

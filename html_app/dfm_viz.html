@@ -246,6 +246,7 @@
 <footer>
   <span class="credit" data-i18n-html="f_model">Jaccard co-occurrence · Fruchterman-Reingold</span>
   <span class="credit"><b data-i18n="f_org">滋賀大学データサイエンス学系</b> · <span data-i18n="f_name">佐藤健一</span></span>
+  <span class="credit" data-i18n-html="f_license"></span>
   <button class="dl" id="saveApp" style="margin-left:auto" data-i18n="save_app">&#128190; GitHubから最新版を保存</button>
 </footer>
 
@@ -271,7 +272,9 @@ const I18N={
     n_stat:'この設定: {nodes} 語 / {edges} 本の線', relayout:'↻ 再配置', dl_log:'📋 設定・結果ログ (.txt)',
     ph_main:'左で文書単語行列CSVを読み込むか、デモを試してください。',
     ph_sub:'text_dfm アプリで作成したCSV（文書 × 語、属性列を含んでもよい）を読み込み、ワードクラウドと共起ネットワーク図を作成します。',
-    f_model:'Jaccard 共起 · Fruchterman-Reingold', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一', save_app:'💾 GitHubから最新版を保存',
+    f_model:'Jaccard 共起 · Fruchterman-Reingold', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一',
+    f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MITライセンス</a>',
+    save_app:'💾 GitHubから最新版を保存',
     m_words:'語数', m_docs:'文書数', m_nodes:'ノード数', m_edges:'エッジ数',
     sec_cloud:'ワードクラウド', sec_cloud_d:'語の大きさは出現量に比例。色は総頻度の段階（凡例参照）。', cloud_freq:'頻度', freq_ge:'頻度 ≥ {x}',
     sec_net:'共起ネットワーク', sec_net_d:'類似度がしきい値以上の語ペアを線で結ぶ。丸の大きさは次数または出現頻度（左で選択、面積が量に比例）。',
@@ -294,7 +297,9 @@ const I18N={
     n_stat:'this setting: {nodes} words / {edges} links', relayout:'↻ Re-layout', dl_log:'📋 Settings & results log (.txt)',
     ph_main:'Load a DFM CSV on the left, or try the demo.',
     ph_sub:'Load a CSV built by the text_dfm app (docs × words, attribute columns allowed) and draw a word cloud and a co-occurrence network.',
-    f_model:'Jaccard co-occurrence · Fruchterman-Reingold', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh', save_app:'💾 Save Latest HTML from GitHub',
+    f_model:'Jaccard co-occurrence · Fruchterman-Reingold', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
+    f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>',
+    save_app:'💾 Save Latest HTML from GitHub',
     m_words:'Words', m_docs:'Documents', m_nodes:'Nodes', m_edges:'Edges',
     sec_cloud:'Word cloud', sec_cloud_d:'Word size ∝ occurrence; color = total-frequency band (see legend).', cloud_freq:'frequency', freq_ge:'freq ≥ {x}',
     sec_net:'Co-occurrence network', sec_net_d:'Word pairs with similarity above the threshold are linked. Node size = degree or occurrence frequency (selectable; area ∝ quantity).',
