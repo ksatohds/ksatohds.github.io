@@ -212,12 +212,16 @@ const I18N={
     f_model:'OLS · 重回帰分析', save_app:'💾 GitHubから最新版を保存',
     f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一',
     f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MITライセンス</a>',
-    m_r2:'決定係数 R²', m_adjr2:'自由度調整済R²', m_sigma:'残差標準誤差', m_f:'F値', m_n:'標本数', m_df:'自由度',
+    m_r2:'決定係数 R²', m_adjr2:'自由度調整済R²', m_sigma:'残差標準誤差', m_sigma_loocv:'残差標準誤差 (LOOCV)', m_f:'F値',
+    m_loglik:'対数尤度', m_aic:'AIC', m_bic:'BIC', m_n:'標本数', m_df:'自由度',
     sec_summary:'summary(lm()) 出力', sec_summary_d:'R の summary(lm(...)) に準じた形式です（表示桁数は簡略化しており、Rの出力と完全には一致しない場合があります）。',
     sec_coef:'係数表', sec_coef_d:'各説明変数（ダミー変数を含む）の推定値・標準誤差・t値・p値。',
-    sec_fitted:'予測値 vs 実測値', sec_fitted_d:'対角線に近いほどあてはまりが良いことを示します。',
+    sec_fitted:'観測値 vs 予測値', sec_fitted_d:'対角線に近いほどあてはまりが良いことを示します。',
     sec_resid:'残差 vs 予測値', sec_resid_d:'0を中心にランダムに散らばっていれば等分散性の仮定に整合します。',
-    dl_title:'ダウンロード', dl_pred:'predictions.csv (実測・予測・残差)', dl_log:'linear_model.log (設定・結果)',
+    sec_loocv:'1個抜き交差検証法（LOOCV）', sec_loocv_d:'各観測値iを除いて再当てはめした場合の予測誤差 e₍ᵢ₎ = eᵢ/(1−hᵢᵢ) を、n回の再計算なしにハット行列のてこ比 hᵢᵢ だけで厳密に求めます（Sherman-Morrisonの公式）。',
+    loo_cv_label:'CV₍ₙ₎', loo_cv_formula:'CV₍ₙ₎ = (1/n)Σ(e₍ᵢ₎)²', loo_compare_label:'通常の残差標準誤差との比較',
+    loo_warn_highlev:'てこ比 hᵢᵢ が1に極めて近い（＝完全に近い過剰適合の）観測点があり、その点のLOOCV残差は不安定です。標本数に対して変数が多すぎないか確認してください。',
+    dl_title:'ダウンロード', dl_pred:'predictions.csv (実測・予測・残差・LOOCV予測)', dl_log:'linear_model.log (設定・結果)',
     col_var:'変数', col_est:'Estimate', col_se:'Std. Error', col_t:'t value', col_p:'Pr(>|t|)', col_sig:'',
     toast_nofile:'CSVを読み込んでください',
     toast_notarget:'目的変数を選択してください',
@@ -248,12 +252,16 @@ const I18N={
     f_model:'OLS · multiple linear regression', save_app:'💾 Save Latest HTML from GitHub',
     f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
     f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>',
-    m_r2:'R-squared', m_adjr2:'Adjusted R²', m_sigma:'Residual std. error', m_f:'F-statistic', m_n:'Samples', m_df:'DF',
+    m_r2:'R-squared', m_adjr2:'Adjusted R²', m_sigma:'Residual std. error', m_sigma_loocv:'Residual std. error (LOOCV)', m_f:'F-statistic',
+    m_loglik:'Log-likelihood', m_aic:'AIC', m_bic:'BIC', m_n:'Samples', m_df:'DF',
     sec_summary:'summary(lm()) output', sec_summary_d:'Formatted like R’s summary(lm(...)) (digit counts are simplified and may not exactly match R’s console output).',
     sec_coef:'Coefficients', sec_coef_d:'Estimate, standard error, t value and p value for each feature (including dummy variables).',
-    sec_fitted:'Fitted vs Actual', sec_fitted_d:'Points closer to the diagonal indicate a better fit.',
+    sec_fitted:'Observed vs Fitted', sec_fitted_d:'Points closer to the diagonal indicate a better fit.',
     sec_resid:'Residuals vs Fitted', sec_resid_d:'Random scatter around 0 is consistent with the equal-variance assumption.',
-    dl_title:'Downloads', dl_pred:'predictions.csv (actual, fitted, residual)', dl_log:'linear_model.log (settings & results)',
+    sec_loocv:'Leave-One-Out Cross-Validation (LOOCV)', sec_loocv_d:'The prediction error from refitting with observation i left out, e₍ᵢ₎ = eᵢ/(1−hᵢᵢ), computed exactly from the leverage hᵢᵢ of the hat matrix — no refitting needed (Sherman-Morrison formula).',
+    loo_cv_label:'CV₍ₙ₎', loo_cv_formula:'CV₍ₙ₎ = (1/n)Σ(e₍ᵢ₎)²', loo_compare_label:'Comparison with the ordinary residual std. error',
+    loo_warn_highlev:'One or more points have leverage hᵢᵢ extremely close to 1 (near-perfect fit to that single point); its LOOCV residual is unstable. Check whether you have too many features relative to the sample size.',
+    dl_title:'Downloads', dl_pred:'predictions.csv (actual, fitted, residual, LOOCV prediction)', dl_log:'linear_model.log (settings & results)',
     col_var:'variable', col_est:'Estimate', col_se:'Std. Error', col_t:'t value', col_p:'Pr(>|t|)', col_sig:'',
     toast_nofile:'Please load a CSV first',
     toast_notarget:'Please select a target variable',
@@ -582,8 +590,30 @@ function run(){
         max:quantileType7(sortedResid,1)
       };
 
+      // LOOCV, explicit (hat-matrix) form — no refitting needed, matches Sherman-Morrison:
+      //   h_ii = x_i'(X'X)^-1 x_i  (leverage);  e_(i) = e_i/(1-h_ii)  (LOO residual)
+      //   CV(n) = (1/n) * sum( e_(i)^2 );  sigma_LOOCV = sqrt(CV(n))
+      const hii=X.map(row=>{let s=0;for(let a=0;a<p;a++){let acc=0;for(let b=0;b<p;b++)acc+=row[b]*XtXinv[b][a];s+=acc*row[a];}return s;});
+      const maxLeverage=Math.max(...hii);
+      const highLeverage=maxLeverage>=1-1e-8;
+      const looResid=resid.map((e,i)=>highLeverage&&hii[i]>=1-1e-8?NaN:e/(1-hii[i]));
+      const looFitted=y.map((v,i)=>v-looResid[i]);
+      const validLoo=looResid.filter(isFinite);
+      const CVn=validLoo.length?validLoo.reduce((s,e)=>s+e*e,0)/validLoo.length:NaN;
+      const sigmaLoocv=Math.sqrt(CVn);
+
+      // Gaussian log-likelihood at the MLE (matches R's logLik.lm): -n/2*(log(2pi)+log(RSS/n)+1).
+      // df counts p regression coefficients PLUS 1 for the estimated residual variance sigma^2
+      // (R's convention, e.g. logLik(lm(...)) reports attr(,"df")=p+1).
+      const logLik=-n/2*(Math.log(2*Math.PI)+Math.log(SSE/n)+1);
+      const aicDf=p+1;
+      const AICval=-2*logLik+2*aicDf;
+      const BICval=-2*logLik+Math.log(n)*aicDf;
+
       LAST={target,features,catVars,usedFeatures,colNames,p,n,rows,beta,se,tval,pval,
-            fitted,resid,SSE,SST,dfResid,dfModel,sigma,R2,adjR2,Fstat,Fpval,rq,filename:DATA.filename};
+            fitted,resid,SSE,SST,dfResid,dfModel,sigma,R2,adjR2,Fstat,Fpval,rq,
+            hii,looResid,looFitted,CVn,sigmaLoocv,highLeverage,
+            logLik,aicDf,AIC:AICval,BIC:BICval,filename:DATA.filename};
       render(LAST);
     }catch(e){
       if(e&&e.message==='singular')toast(t('toast_singular'));
@@ -662,7 +692,11 @@ function render(R){
   addM(t('m_r2'),R.R2.toFixed(4));
   addM(t('m_adjr2'),R.adjR2.toFixed(4));
   addM(t('m_sigma'),R.sigma.toFixed(3));
+  addM(t('m_sigma_loocv'),isFinite(R.sigmaLoocv)?R.sigmaLoocv.toFixed(3):'—');
   addM(t('m_f'),isFinite(R.Fstat)?R.Fstat.toFixed(2):'—');
+  addM(t('m_loglik'),R.logLik.toFixed(2),'df='+R.aicDf);
+  addM(t('m_aic'),R.AIC.toFixed(2));
+  addM(t('m_bic'),R.BIC.toFixed(2));
   addM(t('m_n'),R.n);
   addM(t('m_df'),R.dfModel+', '+R.dfResid);
   box.appendChild(met);
@@ -691,6 +725,22 @@ function render(R){
   resCard.appendChild(el('div',{class:'desc',text:t('sec_resid_d')}));
   resCard.appendChild(residFigure(R,'residuals_fitted'));
   box.appendChild(resCard);
+
+  const looCard=el('div',{class:'card'});
+  looCard.appendChild(el('h3',{text:t('sec_loocv')}));
+  looCard.appendChild(el('div',{class:'desc',text:t('sec_loocv_d')}));
+  const looPre=document.createElement('pre');looPre.className='summary';
+  const cvLine=t('loo_cv_formula')+' = '+(isFinite(R.CVn)?fmtSig(R.CVn,4):'—');
+  const sigLine=t('m_sigma_loocv')+'  = sqrt('+t('loo_cv_label')+') = '+(isFinite(R.sigmaLoocv)?fmtSig(R.sigmaLoocv,4):'—');
+  const cmpLine=t('loo_compare_label')+': '+t('m_sigma')+' = '+R.sigma.toFixed(3)+'   '+t('m_sigma_loocv')+' = '+(isFinite(R.sigmaLoocv)?R.sigmaLoocv.toFixed(3):'—');
+  looPre.textContent=cvLine+'\n'+sigLine+'\n\n'+cmpLine;
+  looCard.appendChild(looPre);
+  if(R.highLeverage){
+    const warn=el('div',{class:'desc'});warn.style.color='var(--danger)';warn.style.marginTop='10px';
+    warn.textContent=t('loo_warn_highlev');
+    looCard.appendChild(warn);
+  }
+  box.appendChild(looCard);
 
   const dlCard=el('div',{class:'card'});
   dlCard.appendChild(el('h3',{text:t('dl_title')}));
@@ -721,7 +771,7 @@ function renderCoefTable(R){
   table.appendChild(tbody);wrap.appendChild(table);return wrap;
 }
 
-/* --- simple scatter plot (Fitted vs Actual, with a y=x reference line) --- */
+/* --- simple scatter plot (Observation vs Fitted: x=fitted, y=observed, with a y=x reference line) --- */
 function scatterFigure(R,basename){
   const actual=R.rows.map(r=>parseFloat(r[R.target]));
   const fitted=R.fitted;
@@ -738,7 +788,7 @@ function scatterFigure(R,basename){
   svg.appendChild(el('line',{x1:pad.l,y1:pad.t,x2:pad.l,y2:H-pad.b,stroke:ink,'stroke-width':1}));
   actual.forEach((av,i)=>{svg.appendChild(el('circle',{cx:xScale(fitted[i]),cy:yScale(av),r:3.4,fill:cyan,'fill-opacity':0.75}));});
   const xlab=el('text',{x:(pad.l+W-pad.r)/2,y:H-8,'text-anchor':'middle','font-size':12,'font-family':'var(--mono)'});xlab.style.fill=ink;xlab.textContent=(LANG==='ja')?'予測値 (fitted)':'Fitted';svg.appendChild(xlab);
-  const ylab=el('text',{x:14,y:(pad.t+H-pad.b)/2,'text-anchor':'middle','font-size':12,'font-family':'var(--mono)',transform:'rotate(-90 14,'+((pad.t+H-pad.b)/2)+')'});ylab.style.fill=ink;ylab.textContent=(LANG==='ja')?'実測値 (actual)':'Actual';svg.appendChild(ylab);
+  const ylab=el('text',{x:14,y:(pad.t+H-pad.b)/2,'text-anchor':'middle','font-size':12,'font-family':'var(--mono)',transform:'rotate(-90 14,'+((pad.t+H-pad.b)/2)+')'});ylab.style.fill=ink;ylab.textContent=(LANG==='ja')?'観測値 (observed)':'Observed';svg.appendChild(ylab);
   return figure(svg,basename);
 }
 /* --- residuals vs fitted, with a y=0 reference line --- */
@@ -783,15 +833,16 @@ function downloadSVGfile(svgEl,name){saveBlob(new Blob([svgStandalone(svgEl)],{t
 /* --- downloads --- */
 function csvCell(v){if(v==null)v='';v=String(v);if(/[",\n]/.test(v))return '"'+v.replace(/"/g,'""')+'"';return v;}
 function downloadPredictions(R){
-  const {rows,features,target,fitted,resid}=R;
-  let csv='﻿'+features.map(csvCell).join(',')+','+csvCell(target)+',fitted,residual\n';
+  const {rows,features,target,fitted,resid,hii,looFitted,looResid}=R;
+  let csv='﻿'+features.map(csvCell).join(',')+','+csvCell(target)+',fitted,residual,leverage,loocv_fitted,loocv_residual\n';
   rows.forEach((r,i)=>{
-    csv+=features.map(f=>csvCell(r[f])).join(',')+','+csvCell(r[target])+','+fitted[i].toFixed(6)+','+resid[i].toFixed(6)+'\n';
+    csv+=features.map(f=>csvCell(r[f])).join(',')+','+csvCell(r[target])+','+fitted[i].toFixed(6)+','+resid[i].toFixed(6)+','+
+      hii[i].toFixed(6)+','+(isFinite(looFitted[i])?looFitted[i].toFixed(6):'NA')+','+(isFinite(looResid[i])?looResid[i].toFixed(6):'NA')+'\n';
   });
   saveBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),'predictions.csv');
 }
 function buildLog(R){
-  const {target,usedFeatures,colNames,beta,se,tval,pval,sigma,dfResid,dfModel,n,R2,adjR2,Fstat,Fpval,rq}=R;
+  const {target,usedFeatures,colNames,beta,se,tval,pval,sigma,dfResid,dfModel,n,R2,adjR2,Fstat,Fpval,rq,CVn,sigmaLoocv,highLeverage,logLik,aicDf,AIC,BIC}=R;
   const L=[];
   L.push('# Multiple Linear Regression (OLS) — log');
   try{L.push('generated : '+new Date().toISOString());}catch(e){}
@@ -817,6 +868,16 @@ function buildLog(R){
     L.push('f_pvalue           : '+Fpval);
   }
   L.push('residual_quantiles : min='+rq.min+', Q1='+rq.q1+', median='+rq.med+', Q3='+rq.q3+', max='+rq.max);
+  L.push('');
+  L.push('[Information criteria] (df = p parameters + 1 for the residual variance)');
+  L.push('logLik : '+logLik+'  (df='+aicDf+')');
+  L.push('AIC    : '+AIC);
+  L.push('BIC    : '+BIC);
+  L.push('');
+  L.push('[LOOCV (leave-one-out cross-validation), explicit hat-matrix form: e_(i)=e_i/(1-h_ii)]');
+  L.push('CV(n) = mean(e_(i)^2)     : '+CVn);
+  L.push('residual_se (LOOCV)      : '+sigmaLoocv);
+  if(highLeverage)L.push('WARNING: at least one observation has leverage h_ii extremely close to 1; its LOOCV residual is unstable.');
   L.push('');
   L.push('[summary(lm()) style output]');
   L.push(buildSummaryText(R));
