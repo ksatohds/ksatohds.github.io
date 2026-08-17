@@ -947,6 +947,9 @@ function buildLog(R){
 function downloadLog(R){saveText('class_tree.log',buildLog(R));}
 
 /* ================= demo (iris) ================= */
+// iris: Fisher's/Anderson's iris flower measurements (Fisher, 1936; Anderson, 1935).
+// Bundled in R's "datasets" package (part of R 4.4.1). The measurements themselves are
+// factual data, not creative expression, and are reproduced here unchanged/unmodified.
 function irisCSV(){
   // compact iris dataset
   const d=`sepal_length,sepal_width,petal_length,petal_width,species

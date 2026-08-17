@@ -282,6 +282,7 @@
       <input type="file" id="file" accept=".csv,.tsv,.txt">
       <div class="filemeta" id="meta"></div>
       <button class="dl" id="demo" style="width:100%;margin-top:10px" data-i18n="demo_btn">◇ デモデータを読み込む</button>
+      <div class="hint" data-i18n="demo_credit" style="margin-top:8px;line-height:1.6">デモは人工データです（架空の人名・食品の好みを例として作成、実在のデータではありません）。</div>
       <div class="checkline" style="margin-top:12px">
         <input type="checkbox" id="hasHeader" checked>
         <label for="hasHeader"><span data-i18n="cb_header">1行目を列名として扱う</span></label>
@@ -933,6 +934,7 @@ const I18N={
     cb_header:'1行目を列名として扱う', cb_rowname:'1列目を行名として扱う',
     cb_transpose:'行列を転置してから分解', cb_transpose_sub:'Y → Yᵀ (行と列を入れ替え)',
     demo_btn:'◇ デモデータを読み込む',
+    demo_credit:'デモは人工データです（架空の人名・食品の好みを例として作成、実在のデータではありません）。',
     p_rank:'階数 Q (基底数=クラスタ数)', p_maxit:'最大反復回数', p_eps:'収束閾値 (相対)',
     p_seed:'乱数シード', p_nstart:'再スタート回数 (nstart)', p_init:'Xの初期値',
     init_kmeans:'k-means++ (Yの列の重心)', init_random:'一様乱数',
@@ -983,6 +985,7 @@ const I18N={
     cb_header:'Use first row as column names', cb_rowname:'Use first column as row names',
     cb_transpose:'Transpose before factorization', cb_transpose_sub:'Y → Yᵀ (swap rows and columns)',
     demo_btn:'◇ Load demo data',
+    demo_credit:'This demo uses synthetic (artificial) data — fictional names and made-up food preferences, not a real dataset.',
     p_rank:'Rank Q (bases = clusters)', p_maxit:'Max iterations', p_eps:'Convergence tol. (relative)',
     p_seed:'Random seed', p_nstart:'Restarts (nstart)', p_init:'Initial value of X',
     init_kmeans:'k-means++ (centroids of Y columns)', init_random:'Uniform random',
@@ -1416,6 +1419,8 @@ function workingData(){let d=DATA;if($('#transpose').checked)d=transposeData(d);
 
 function makeDemo(){
   // Food-preference matrix: rows = foods (features P), cols = people (samples N).
+  // Synthetic illustrative data authored for this demo (fictional names, made-up preferences) —
+  // not drawn from any external dataset.
   return [
     'food,Akiko,Kenta,Hanako,Daisuke,Misaki,Taro',
     'Cake,1,0,1,0,1,0',
