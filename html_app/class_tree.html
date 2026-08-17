@@ -155,6 +155,7 @@
       <input type="file" id="file" accept=".csv,.tsv,.txt">
       <div class="filemeta" id="meta"></div>
       <button class="dl" id="demo" style="width:100%;margin-top:10px" data-i18n="demo_btn">◇ デモデータ (iris)</button>
+      <div class="hint" data-i18n="demo_credit" style="margin-top:8px;line-height:1.6">アヤメ属3種（setosa・versicolor・virginica）各50株の、がく片・花弁の長さ・幅の測定データ。Rの標準データセット（datasetsパッケージ）です。</div>
     </div>
 
     <div class="group" id="varGroup" style="display:none">
@@ -228,6 +229,7 @@ const I18N={
     g_data:'データ', g_vars:'変数選択', g_param:'パラメータ',
     drop_big:'CSVをドロップ / クリック', drop_small:'1行=1標本 · 列=変数',
     demo_btn:'◇ デモデータ (iris)',
+    demo_credit:'アヤメ属3種（setosa・versicolor・virginica）各50株の、がく片・花弁の長さ・幅の測定データ。Rの標準データセット（datasetsパッケージ）です。',
     v_target:'目的変数 (カテゴリ)', v_features:'説明変数 (複数選択可)',
     v_hint:'チェックした変数を説明変数に使います。連続・カテゴリの両方を扱えます。カテゴリは頻度上位5水準＋その他(misc.)として扱います。',
     cb_numcat:'少数水準の数値をカテゴリとして扱う', cb_numcat_sub:'OFFで順序数値（しきい値分岐）として扱う',
@@ -265,6 +267,7 @@ const I18N={
     g_data:'Data', g_vars:'Variables', g_param:'Parameters',
     drop_big:'Drop or click a CSV', drop_small:'1 row = 1 sample · columns = variables',
     demo_btn:'◇ Demo data (iris)',
+    demo_credit:'Sepal/petal length and width of 50 flowers each from 3 iris species (setosa, versicolor, virginica). A standard R dataset (the "datasets" package).',
     v_target:'Target (categorical)', v_features:'Features (multi-select)',
     v_hint:'Checked variables are used as features. Both continuous and categorical are supported. Categoricals use the top-5 levels + others (misc.).',
     cb_numcat:'Treat low-level numerics as categorical', cb_numcat_sub:'OFF = ordered numeric (threshold splits)',
