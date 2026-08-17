@@ -141,7 +141,7 @@
         <button class="dl" id="demo1" data-i18n="demo1_btn">◇ デモ1 (cars)</button>
         <button class="dl" id="demo2" data-i18n="demo2_btn">◇ デモ2 (ToothGrowth)</button>
       </div>
-      <div class="hint" data-i18n="demo_credit" style="margin-top:8px;line-height:1.6">デモ1「cars」: 自動車の速度と制動距離（1920年代のデータ）。デモ2「ToothGrowth」: ビタミンCの投与量・投与方法とモルモットの歯の成長量。いずれもRの標準データセット（datasetsパッケージ）です。</div>
+      <div class="hint" data-i18n-html="demo_credit" style="margin-top:8px;line-height:1.6"></div>
     </div>
 
     <div class="group" id="varGroup" style="display:none">
@@ -202,7 +202,7 @@ const I18N={
     g_data:'データ', g_vars:'変数選択', g_cat:'カテゴリカル変数（ダミー変数化）',
     drop_big:'CSVをドロップ / クリック', drop_small:'1行=1標本 · 列=変数',
     demo1_btn:'◇ デモ1 (cars)', demo2_btn:'◇ デモ2 (ToothGrowth)',
-    demo_credit:'デモ1「cars」: 自動車の速度と制動距離（1920年代のデータ）。デモ2「ToothGrowth」: ビタミンCの投与量・投与方法とモルモットの歯の成長量。いずれもRの標準データセット（datasetsパッケージ）です。',
+    demo_credit:'出典（いずれもRの標準データセット・datasetsパッケージ）: デモ1「cars」自動車の速度と制動距離（Ezekiel, 1930） — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/cars.html" target="_blank" rel="noopener">R documentation</a>。デモ2「ToothGrowth」ビタミンCの投与量・方法とモルモットの歯の成長量（Crampton, 1947） — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html" target="_blank" rel="noopener">R documentation</a>。',
     v_target:'目的変数 (数値)', v_features:'説明変数 (複数選択可)',
     v_hint:'チェックした変数を説明変数に使います。数値の列はそのまま連続変数として、文字列の列は下の「カテゴリカル変数」欄に候補として現れます。',
     cat_hint:'説明変数の中で数値でない列です。チェックした変数はダミー変数に展開してから重回帰に用います（水準はアルファベット順、最初の水準が基準カテゴリ）。チェックを外すとその変数はモデルから除外されます。',
@@ -239,7 +239,7 @@ const I18N={
     g_data:'Data', g_vars:'Variables', g_cat:'Categorical variables (dummy coding)',
     drop_big:'Drop or click a CSV', drop_small:'1 row = 1 sample · columns = variables',
     demo1_btn:'◇ Demo 1 (cars)', demo2_btn:'◇ Demo 2 (ToothGrowth)',
-    demo_credit:'Demo 1 "cars": speed and stopping distance of cars (1920s data). Demo 2 "ToothGrowth": effect of vitamin C dose/delivery method on tooth growth in guinea pigs. Both are standard R datasets (the "datasets" package).',
+    demo_credit:'Source (both are standard R datasets, the "datasets" package): Demo 1 "cars" — speed and stopping distance of cars (Ezekiel, 1930) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/cars.html" target="_blank" rel="noopener">R documentation</a>. Demo 2 "ToothGrowth" — effect of vitamin C dose/method on tooth growth in guinea pigs (Crampton, 1947) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html" target="_blank" rel="noopener">R documentation</a>.',
     v_target:'Target (numeric)', v_features:'Features (multi-select)',
     v_hint:'Checked variables are used as features. Numeric columns are used as continuous variables; text columns appear as candidates in the "Categorical variables" list below.',
     cat_hint:'Non-numeric columns among the selected features. Checked variables are dummy-coded before regression (levels sorted alphabetically; the first level is the reference). Unchecking a variable excludes it from the model.',
