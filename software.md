@@ -16,6 +16,9 @@ title: Software
   .gallery-grid.sw-html .gallery-item h3 { color: #21689b; }
   .gallery-grid.sw-web  .gallery-item { border-left: 4px solid #e08a34; background: linear-gradient(135deg, #fdf1e2 0%, var(--color-white) 45%); }
   .gallery-grid.sw-web  .gallery-item h3 { color: #bd6d22; }
+  /* general-purpose statistical tools (CART, multiple regression) — not tied to text/DFM data, so a distinct pastel purple */
+  .gallery-grid.sw-html .gallery-item.sw-stat { border-left-color: #8e5fc9; background: linear-gradient(135deg, #f2ecfa 0%, var(--color-white) 45%); }
+  .gallery-grid.sw-html .gallery-item.sw-stat h3 { color: #6b3fa0; }
 </style>
 
 <div class="lang-toggle-wrap">
@@ -127,7 +130,7 @@ title: Software
       </div>
     </div>
 
-    <div class="gallery-item">
+    <div class="gallery-item sw-stat">
       <div class="gallery-body">
         <h3 data-ja="分類木（CART）">Classification tree (CART)</h3>
         <p data-ja="分類木（CART）を構築し、決定ルール・混同行列・変数重要度を表示します。">Build a CART classification tree and view decision rules, a confusion matrix, and variable importance.</p>
@@ -138,7 +141,7 @@ title: Software
       </div>
     </div>
 
-    <div class="gallery-item">
+    <div class="gallery-item sw-stat">
       <div class="gallery-body">
         <h3 data-ja="重回帰分析">Multiple linear regression</h3>
         <p data-ja="最小二乗法（OLS）で重回帰モデルを推定します。説明変数にカテゴリカルな列があれば自動検出し、ダミー変数化して用いることができます。RのSummary(lm(...))に準じた出力形式です。">Fits a multiple linear regression model by ordinary least squares (OLS). Categorical (text) features are auto-detected and can be dummy-coded. Output is formatted like R's summary(lm(...)).</p>
