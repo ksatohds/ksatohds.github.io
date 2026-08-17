@@ -138,6 +138,17 @@ title: Software
       </div>
     </div>
 
+    <div class="gallery-item">
+      <div class="gallery-body">
+        <h3 data-ja="重回帰分析">Multiple linear regression</h3>
+        <p data-ja="最小二乗法（OLS）で重回帰モデルを推定します。説明変数にカテゴリカルな列があれば自動検出し、ダミー変数化して用いることができます。RのSummary(lm(...))に準じた出力形式です。">Fits a multiple linear regression model by ordinary least squares (OLS). Categorical (text) features are auto-detected and can be dummy-coded. Output is formatted like R's summary(lm(...)).</p>
+        <div class="gallery-links">
+          <a href="{{ '/html_app/linear_model.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
