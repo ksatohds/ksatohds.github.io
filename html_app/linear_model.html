@@ -65,6 +65,9 @@
   .checklist label:hover{color:var(--cyan)}
   .checklist input[type=checkbox]{width:auto;margin:0;flex-shrink:0;accent-color:var(--cyan);cursor:pointer}
   .checklist .empty{display:block;color:var(--ink-faint);font-size:11.5px;padding:4px 2px}
+  .selectrow{display:flex;gap:8px;margin-bottom:6px}
+  .miniBtn{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);cursor:pointer;transition:border-color .15s,color .15s}
+  .miniBtn:hover{border-color:var(--cyan-deep);color:var(--cyan)}
   .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.45}
   .checkline input{accent-color:var(--cyan);margin-top:2px}
   .checkline .sub{display:block;color:var(--ink-faint);font-size:11px;font-family:var(--mono)}
@@ -155,6 +158,10 @@
       </label>
       <label class="field">
         <span class="lab"><span data-i18n="v_features">説明変数 (複数選択可)</span> <span class="val" id="featCount">0</span></span>
+        <div class="selectrow">
+          <button type="button" class="miniBtn" id="featSelectAll" data-i18n="btn_selectall">すべて選択</button>
+          <button type="button" class="miniBtn" id="featClearAll" data-i18n="btn_clearall">クリア</button>
+        </div>
         <div class="checklist" id="features"></div>
       </label>
       <div class="hint" data-i18n="v_hint">チェックした変数を説明変数に使います。</div>
@@ -212,6 +219,7 @@ const I18N={
     demo1_btn:'◇ デモ1 (cars)', demo2_btn:'◇ デモ2 (ToothGrowth)',
     demo_credit:'出典（いずれもRの標準データセット・datasetsパッケージ）: デモ1「cars」自動車の速度と制動距離（Ezekiel, 1930） — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/cars.html" target="_blank" rel="noopener">R documentation</a>。デモ2「ToothGrowth」ビタミンCの投与量・方法とモルモットの歯の成長量（Crampton, 1947） — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html" target="_blank" rel="noopener">R documentation</a>。',
     v_target:'目的変数 (数値)', v_features:'説明変数 (複数選択可)',
+    btn_selectall:'すべて選択', btn_clearall:'クリア',
     v_hint:'チェックした変数を説明変数に使います。数値の列は連続変数として扱われますが、文字列の列や水準数の少ない数値の列（0/1フラグなど）は下の「カテゴリカル変数」欄に候補として現れ、ダミー変数化できます。',
     cb_numcat:'少数水準の数値をカテゴリとして扱う',
     cb_numcat_sub:'OFFで全ての数値列を連続変数として扱う',
@@ -251,6 +259,7 @@ const I18N={
     demo1_btn:'◇ Demo 1 (cars)', demo2_btn:'◇ Demo 2 (ToothGrowth)',
     demo_credit:'Source (both are standard R datasets, the "datasets" package): Demo 1 "cars" — speed and stopping distance of cars (Ezekiel, 1930) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/cars.html" target="_blank" rel="noopener">R documentation</a>. Demo 2 "ToothGrowth" — effect of vitamin C dose/method on tooth growth in guinea pigs (Crampton, 1947) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html" target="_blank" rel="noopener">R documentation</a>.',
     v_target:'Target (numeric)', v_features:'Features (multi-select)',
+    btn_selectall:'Select all', btn_clearall:'Clear',
     v_hint:'Checked variables are used as features. Numeric columns are treated as continuous; text columns and low-cardinality numeric columns (e.g. 0/1 flags) appear as candidates in the "Categorical variables" list below, where they can be dummy-coded.',
     cb_numcat:'Treat low-cardinality numeric columns as categorical',
     cb_numcat_sub:'When off, all numeric columns are treated as continuous',
@@ -1006,6 +1015,8 @@ function readFile(f){const rd=new FileReader();rd.onload=()=>ingestText(rd.resul
 $('#demo1').onclick=()=>{ingestText(carsCSV(),'cars.csv');toast(t('toast_demo1'));};
 $('#demo2').onclick=()=>{ingestText(toothGrowthCSV(),'ToothGrowth.csv');toast(t('toast_demo2'));};
 $('#numAsCat').onchange=()=>{if(DATA)rebuildFeatureList();};
+$('#featSelectAll').onclick=()=>{$$('#features input').forEach(cb=>cb.checked=true);updateFeatCount();rebuildCatList();};
+$('#featClearAll').onclick=()=>{$$('#features input').forEach(cb=>cb.checked=false);updateFeatCount();rebuildCatList();};
 
 $('#run').onclick=run;
 
