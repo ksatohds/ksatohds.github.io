@@ -29,6 +29,7 @@ title: 近況
   <h2 class="section-title">■研究・社会連携</h2>
   <div class="card">
     <ul class="news-list">
+      <li><span class="news-tag talk">講演</span>滋賀県高等学校等教育研究会情報教育研究部会において「生成AIを活用したデータサイエンス入門」 2026年8月19日</li>
       <li><span class="news-tag paper">論文</span>琉球大学との共同研究が<a href="https://www.accjournal.org/">Acute and Critical Care</a>（Q1誌）に受理 2026年6月</li>
       <li><span class="news-tag talk">講演</span>トヨタ未来創生人財育成講座においてデータサイエンスに関する講演</li>
       <li><span class="news-tag media">放送</span><a href="https://www.web.nhk/tv/an/rekishi-tantei/pl/series-tep-VR22V15XWL/ep/GPRWGV86XV">NHK歴史探偵「信長最大の敵 大坂本願寺」</a> 6/3水22:00-22:45</li>
