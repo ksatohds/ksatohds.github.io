@@ -71,6 +71,16 @@ title: Software
       </div>
     </div>
 
+    <div class="gallery-item">
+      <div class="gallery-body">
+        <h3>pord</h3>
+        <p data-ja="同一のK段階尺度で測った対のカテゴリカルデータ（例：期待度と達成度）に対する正確条件付き検定（Exact Conditional Tests for Paired Ordinal Data on a Square Table）。両側の周辺度数で条件付けたFisherの正確検定の一般化で、動的計画法により正確な帰無分布を求めます。">Exact conditional tests for paired ordinal data recorded on the same K-point scale (e.g. expectation vs. achievement). A generalization of Fisher's exact test conditioning on both margins, with the exact null distribution obtained by dynamic programming.</p>
+        <div class="gallery-links">
+          <a href="https://github.com/ksatohds/pord">GitHub</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
