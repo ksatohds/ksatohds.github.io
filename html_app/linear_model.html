@@ -65,6 +65,9 @@
   .checklist label:hover{color:var(--cyan)}
   .checklist input[type=checkbox]{width:auto;margin:0;flex-shrink:0;accent-color:var(--cyan);cursor:pointer}
   .checklist .empty{display:block;color:var(--ink-faint);font-size:11.5px;padding:4px 2px}
+  .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.45}
+  .checkline input{accent-color:var(--cyan);margin-top:2px}
+  .checkline .sub{display:block;color:var(--ink-faint);font-size:11px;font-family:var(--mono)}
 
   .run{width:100%;padding:12px;border:none;border-radius:7px;background:var(--cyan);color:#062522;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--sans);letter-spacing:.02em;transition:filter .15s,transform .05s}
   .run:hover{filter:brightness(1.08)}
@@ -155,6 +158,11 @@
         <div class="checklist" id="features"></div>
       </label>
       <div class="hint" data-i18n="v_hint">チェックした変数を説明変数に使います。</div>
+      <div class="checkline" style="margin-top:10px">
+        <input type="checkbox" id="numAsCat" checked>
+        <label for="numAsCat"><span data-i18n="cb_numcat">少数水準の数値をカテゴリとして扱う</span>
+          <span class="sub" data-i18n="cb_numcat_sub">OFFで全ての数値列を連続変数として扱う</span></label>
+      </div>
     </div>
 
     <div class="group" id="catGroup" style="display:none">
@@ -204,8 +212,10 @@ const I18N={
     demo1_btn:'◇ デモ1 (cars)', demo2_btn:'◇ デモ2 (ToothGrowth)',
     demo_credit:'出典（いずれもRの標準データセット・datasetsパッケージ）: デモ1「cars」自動車の速度と制動距離（Ezekiel, 1930） — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/cars.html" target="_blank" rel="noopener">R documentation</a>。デモ2「ToothGrowth」ビタミンCの投与量・方法とモルモットの歯の成長量（Crampton, 1947） — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html" target="_blank" rel="noopener">R documentation</a>。',
     v_target:'目的変数 (数値)', v_features:'説明変数 (複数選択可)',
-    v_hint:'チェックした変数を説明変数に使います。数値の列はそのまま連続変数として、文字列の列は下の「カテゴリカル変数」欄に候補として現れます。',
-    cat_hint:'説明変数の中で数値でない列です。チェックした変数はダミー変数に展開してから重回帰に用います（水準はアルファベット順、最初の水準が基準カテゴリ）。チェックを外すとその変数はモデルから除外されます。',
+    v_hint:'チェックした変数を説明変数に使います。数値の列は連続変数として扱われますが、文字列の列や水準数の少ない数値の列（0/1フラグなど）は下の「カテゴリカル変数」欄に候補として現れ、ダミー変数化できます。',
+    cb_numcat:'少数水準の数値をカテゴリとして扱う',
+    cb_numcat_sub:'OFFで全ての数値列を連続変数として扱う',
+    cat_hint:'説明変数の中でカテゴリとみなされる列です（数値でない列、または水準数の少ない数値列）。チェックした変数はダミー変数に展開してから重回帰に用います（水準はアルファベット順、最初の水準が基準カテゴリ）。チェックを外すと、数値列は連続変数として扱い、非数値列はモデルから除外します。',
     run:'重回帰分析を実行', run_busy:'計算中…',
     hint:'最小二乗法（OLS）で重回帰モデルを推定します。Rの summary(lm(...)) に準じた出力形式です。計算はすべてブラウザ内で完結し、データは外部送信されません。',
     ph_main:'左でCSVを読み込むか、デモデータ (cars / ToothGrowth) を試してください。',
@@ -241,8 +251,10 @@ const I18N={
     demo1_btn:'◇ Demo 1 (cars)', demo2_btn:'◇ Demo 2 (ToothGrowth)',
     demo_credit:'Source (both are standard R datasets, the "datasets" package): Demo 1 "cars" — speed and stopping distance of cars (Ezekiel, 1930) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/cars.html" target="_blank" rel="noopener">R documentation</a>. Demo 2 "ToothGrowth" — effect of vitamin C dose/method on tooth growth in guinea pigs (Crampton, 1947) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html" target="_blank" rel="noopener">R documentation</a>.',
     v_target:'Target (numeric)', v_features:'Features (multi-select)',
-    v_hint:'Checked variables are used as features. Numeric columns are used as continuous variables; text columns appear as candidates in the "Categorical variables" list below.',
-    cat_hint:'Non-numeric columns among the selected features. Checked variables are dummy-coded before regression (levels sorted alphabetically; the first level is the reference). Unchecking a variable excludes it from the model.',
+    v_hint:'Checked variables are used as features. Numeric columns are treated as continuous; text columns and low-cardinality numeric columns (e.g. 0/1 flags) appear as candidates in the "Categorical variables" list below, where they can be dummy-coded.',
+    cb_numcat:'Treat low-cardinality numeric columns as categorical',
+    cb_numcat_sub:'When off, all numeric columns are treated as continuous',
+    cat_hint:'Columns among the selected features considered categorical (non-numeric, or numeric with few distinct values). Checked variables are dummy-coded before regression (levels sorted alphabetically; the first level is the reference). Unchecking a numeric column treats it as continuous; unchecking a non-numeric column excludes it from the model.',
     run:'Fit model', run_busy:'Fitting…',
     hint:'Fits a multiple linear regression model by ordinary least squares (OLS), formatted like R’s summary(lm(...)). Everything runs in your browser; no data is uploaded.',
     ph_main:'Load a CSV on the left, or try the demo data (cars / ToothGrowth).',
@@ -332,6 +344,14 @@ function isNumericCol(col){
   }
   return n>0&&num/n>=0.95;
 }
+// numeric columns with few distinct values (e.g. 0/1 flags, small integer codes) are offered
+// as categorical/dummy-coding candidates too, matching class_tree.html's numAsCat behavior
+const CAT_MAX_LEVELS=10;
+const numAsCatOn=()=>{const el=$('#numAsCat');return el?el.checked:true;};
+function isCatCandidate(col){
+  if(!isNumericCol(col))return true;
+  return numAsCatOn()&&uniqueCount(col)<=CAT_MAX_LEVELS;
+}
 
 /* ================= variable selection UI ================= */
 function buildVarUI(){
@@ -356,7 +376,7 @@ function rebuildFeatureList(){
     const cb=document.createElement('input');cb.type='checkbox';cb.value=c;
     cb.checked=(c in prevChecked)?prevChecked[c]:true;
     cb.onchange=()=>{updateFeatCount();rebuildCatList();};
-    const tag=isNumericCol(c)?' ·num':' ·cat('+uniqueCount(c)+')';
+    const tag=isNumericCol(c)?((numAsCatOn()&&uniqueCount(c)<=CAT_MAX_LEVELS)?' ·num('+uniqueCount(c)+')':' ·num'):' ·cat('+uniqueCount(c)+')';
     const sp=document.createElement('span');sp.textContent=c+tag;
     lab.appendChild(cb);lab.appendChild(sp);fsel.appendChild(lab);
   });
@@ -371,13 +391,18 @@ function uniqueCount(col){
 function updateFeatCount(){
   $('#featCount').textContent=$$('#features input:checked').length;
 }
-// among CHECKED features, list the non-numeric (categorical) ones with a dummy-code checkbox (default: checked)
+// among CHECKED features, list the categorical candidates (non-numeric columns, plus numeric
+// columns with few distinct values when numAsCat is on) with a dummy-code checkbox.
+// Default checked state: non-numeric columns default ON (dummy-coding is their only usable
+// form); numeric-but-low-cardinality columns default OFF, so newly-detected candidates (e.g.
+// a 0/1 flag) are surfaced for the user to opt into, without silently changing the fitted
+// model for a column that was previously treated as continuous.
 function rebuildCatList(){
   const clist=$('#catlist');
   const prevChecked={};$$('#catlist input').forEach(cb=>prevChecked[cb.value]=cb.checked);
   clist.innerHTML='';
   const checkedFeatures=[...$$('#features input:checked')].map(cb=>cb.value);
-  const catCols=checkedFeatures.filter(c=>!isNumericCol(c));
+  const catCols=checkedFeatures.filter(isCatCandidate);
   if(!catCols.length){
     const p=document.createElement('span');p.className='empty';p.setAttribute('data-i18n','cat_empty');
     p.textContent=(LANG==='ja')?'（該当なし。数値以外の説明変数を選ぶと表示されます）':'(none — select a non-numeric feature to see candidates here)';
@@ -386,7 +411,7 @@ function rebuildCatList(){
   catCols.forEach(c=>{
     const lab=document.createElement('label');
     const cb=document.createElement('input');cb.type='checkbox';cb.value=c;
-    cb.checked=(c in prevChecked)?prevChecked[c]:true;
+    cb.checked=(c in prevChecked)?prevChecked[c]:!isNumericCol(c);
     const sp=document.createElement('span');sp.textContent=c+' ('+uniqueCount(c)+(LANG==='ja'?' 水準':' levels')+')';
     lab.appendChild(cb);lab.appendChild(sp);clist.appendChild(lab);
   });
@@ -489,11 +514,9 @@ function buildDesignMatrix(rows,target,features,catVars){
   const colData=[new Array(n).fill(1)];
   const usedFeatures=[];
   features.forEach(f=>{
-    if(isNumericCol(f)){
-      colNames.push(f);
-      colData.push(rows.map(r=>parseFloat(r[f])));
-      usedFeatures.push({name:f,type:'numeric'});
-    }else if(catVars.has(f)){
+    if(catVars.has(f)){
+      // checked in the categorical list -> dummy-code, even if the raw values look numeric
+      // (e.g. a 0/1 flag or a small integer code such as smoke or ptl)
       const levels=[...new Set(rows.map(r=>String(r[f]).trim()))].sort();
       if(levels.length<2)return; // constant column after filtering -> skip
       const ref=levels[0];
@@ -503,6 +526,10 @@ function buildDesignMatrix(rows,target,features,catVars){
         colData.push(rows.map(r=>String(r[f]).trim()===lev?1:0));
       }
       usedFeatures.push({name:f,type:'categorical',levels,ref});
+    }else if(isNumericCol(f)){
+      colNames.push(f);
+      colData.push(rows.map(r=>parseFloat(r[f])));
+      usedFeatures.push({name:f,type:'numeric'});
     }
     // non-numeric and not in catVars -> excluded from the model
   });
@@ -978,6 +1005,7 @@ fileInput.onchange=e=>{const f=e.target.files[0];if(f)readFile(f);};
 function readFile(f){const rd=new FileReader();rd.onload=()=>ingestText(rd.result,f.name);rd.readAsText(f);}
 $('#demo1').onclick=()=>{ingestText(carsCSV(),'cars.csv');toast(t('toast_demo1'));};
 $('#demo2').onclick=()=>{ingestText(toothGrowthCSV(),'ToothGrowth.csv');toast(t('toast_demo2'));};
+$('#numAsCat').onchange=()=>{if(DATA)rebuildFeatureList();};
 
 $('#run').onclick=run;
 
