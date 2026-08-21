@@ -414,7 +414,16 @@ function estLabelWidth(labels,fs){
   });
   return mx;
 }
-function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed){
+// Per-label width, same model as estLabelWidth() but kept individually: nolapPlace needs
+// each label's own half-width to clamp it inside its cell.
+function labelWidths(labels,fs){
+  const cjk=/[　-ヿ㐀-䶿一-鿿＀-￯]/;
+  return labels.map(s=>{
+    let u=0;for(const ch of String(s))u+=cjk.test(ch)?1:0.62;
+    return u*fs;
+  });
+}
+function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed,halfW,halfH){
   const n=xs.length;
   if(!n)return {x:[],y:[],moved:[]};
   // grow the grid until it can hold every point (R's nolap errors here instead;
@@ -435,10 +444,20 @@ function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed){
     const r=nolapOnce(i0,j0,xdiv,ydiv,s);
     if(!best||r.ssd<best.ssd)best=r;
   }
+  // Place each label at the point of its cell CLOSEST to its own dot, rather than at the cell
+  // centre. The non-overlap guarantee is preserved because the label box is clamped to stay
+  // inside its cell: two labels in adjacent cells can meet at the shared boundary but never
+  // cross it. Centring wasted that freedom -- a label whose dot already sat in the cell was
+  // still pushed to the middle, up to half a cell (over 50px on a coarse grid) away for no
+  // reason, which is why leader lines survived even at a fine grid.
   const X=new Array(n),Y=new Array(n),moved=new Array(n);
   for(let k=0;k<n;k++){
-    X[k]=x0+(best.pi[k]+0.5)*cw;
-    Y[k]=y0+(best.pj[k]+0.5)*ch;
+    const cl=x0+best.pi[k]*cw, ct=y0+best.pj[k]*ch;
+    const hw=halfW?halfW[k]:0, hh=halfH?halfH[k]:0;
+    const xlo=cl+hw, xhi=cl+cw-hw;
+    const ylo=ct+hh, yhi=ct+ch-hh;
+    X[k]=(xlo<=xhi)?Math.min(Math.max(xs[k],xlo),xhi):cl+cw/2;
+    Y[k]=(ylo<=yhi)?Math.min(Math.max(ys[k],ylo),yhi):ct+ch/2;
     moved[k]=(best.pi[k]!==i0[k]||best.pj[k]!==j0[k]);
   }
   return {x:X,y:Y,moved:moved,xdiv:xdiv,ydiv:ydiv,grew:grew};
@@ -585,7 +604,10 @@ function biplotSvg(ca,dimX,dimY,topN,catMul,wordMul){
     const wPx=estLabelWidth(items.map(o=>o.s),bigFs);
     const xdiv=Math.max(3,Math.floor((W-pad)/wPx));
     const ydiv=Math.max(3,Math.min(NOLAP_ROWS,Math.floor((H-pad)/(bigFs*1.45))));
-    const pl=nolapPlace(items.map(o=>o.x),items.map(o=>o.y),pad*0.5,pad*0.5,W-pad,H-pad,xdiv,ydiv,10);
+    // each item carries its own font size, so its half-box is measured at that size
+    const hw=items.map(o=>labelWidths([o.s],o.fs)[0]/2);
+    const hh=items.map(o=>o.fs*1.45/2);
+    const pl=nolapPlace(items.map(o=>o.x),items.map(o=>o.y),pad*0.5,pad*0.5,W-pad,H-pad,xdiv,ydiv,10,hw,hh);
     LASTGRID={xdiv:pl.xdiv,ydiv:pl.ydiv,cells:pl.xdiv*pl.ydiv,n:items.length,
               labW:Math.round(wPx),rowH:+(bigFs*1.45).toFixed(1),tight:pl.grew};
     // A leader is needed whenever the label ended up far from its dot -- NOT merely when nolap
