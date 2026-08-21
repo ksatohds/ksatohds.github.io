@@ -800,6 +800,16 @@ function renderTree(model,classes){
       const txt=el('text',{class:'treesub',x:x,y:y+NODE_H/2+16,'text-anchor':'middle'});
       txt.style.fill=amber;txt.style.fontWeight='700';txt.textContent=cond;
       gLinks.appendChild(txt);
+      // Yes / No one line below the condition, each pulled toward the branch it describes:
+      // the LEFT child always receives the rows for which the condition holds (see
+      // predictOne: goLeft = v < thr, or level in set). Stated explicitly because the
+      // convention is otherwise invisible in the picture. A white halo keeps the word
+      // legible where it crosses a link curve.
+      const lx2=xScale(n.left._x),rx2=xScale(n.right._x),yn=y+NODE_H/2+29;
+      [[t('yes_word'),x-Math.max(14,(x-lx2)*0.32)],[t('no_word'),x+Math.max(14,(rx2-x)*0.32)]].forEach(([w,px])=>{
+        const tl=el('text',{class:'treesub',x:px,y:yn,'text-anchor':'middle','paint-order':'stroke',stroke:'#fff','stroke-width':3,'stroke-linejoin':'round'});
+        tl.style.fill='#444';tl.textContent=w;gLinks.appendChild(tl);
+      });
       walk(n.left);walk(n.right);
     }
   })(root);
