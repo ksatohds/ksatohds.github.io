@@ -716,6 +716,8 @@ const DOT='#9ec5e8',DOT_EDGE='#5a8fc4';
 // and a 0.8px stroke is thinned so much by antialiasing that ~2.1 renders as nearly
 // invisible. Tied to DOT_EDGE by reference so the two can never drift apart.
 const LEAD=DOT_EDGE;
+// below this gap a label reads as belonging to its dot on its own, so no leader is drawn
+const LEAD_MIN=9;
 
 /* ================= plots ================= */
 function screeSvg(R){
@@ -802,8 +804,13 @@ function scatterSvg(R,withArrows,basename){
   }
 
   // ---- leader lines (faint, underneath everything) ----
+  // A leader is needed whenever the label ended up far from its dot -- which is NOT the same
+  // as "nolap moved it to another cell". Labels are drawn at the CENTRE of their cell, so a
+  // label that never changed cell can still sit half a cell away (over 50px on a coarse grid)
+  // and would then float unconnected. Test the actual distance instead.
   if(lab&&VIEW.showLead)R.labels.forEach((lb,i)=>{
-    if(lab.moved[i])svg.appendChild(el('line',{x1:ptX[i],y1:ptY[i],x2:lab.x[i],y2:lab.y[i],
+    const ddx=lab.x[i]-ptX[i],ddy=lab.y[i]-ptY[i];
+    if(ddx*ddx+ddy*ddy>LEAD_MIN*LEAD_MIN)svg.appendChild(el('line',{x1:ptX[i],y1:ptY[i],x2:lab.x[i],y2:lab.y[i],
       stroke:LEAD,'stroke-width':0.8}));
   });
 
