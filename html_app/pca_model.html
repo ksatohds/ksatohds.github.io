@@ -538,28 +538,34 @@ function nolapRng(seed){
   let s=(seed>>>0)||1;
   return function(){s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};
 }
-function nolapOnce(i0,j0,xdiv,ydiv,seed){
+function nolapOnce(i0,j0,xdiv,ydiv,seed,fixed,blocked){
   const n=i0.length,rnd=nolapRng(seed);
   const cnt=new Int32Array(xdiv*ydiv);
   const pi=Int32Array.from(i0),pj=Int32Array.from(j0);
   for(let k=0;k<n;k++)cnt[pi[k]*ydiv+pj[k]]++;
-  for(let guard=0;guard<n;guard++){
-    let m=0;for(let c=0;c<cnt.length;c++)if(cnt[c]>m)m=cnt[c];
+  // A blocked cell already holds an anchor's text. Seeding it with one phantom occupant makes
+  // any word that STARTED there count as crowded, so it is pushed out; blocking alone only
+  // stopped words from being moved IN, leaving a lone word sitting under an anchor untouched.
+  if(blocked)for(let c=0;c<cnt.length;c++)if(blocked[c])cnt[c]++;
+  const stuck=new Set();
+  for(let guard=0;guard<n*2;guard++){
+    let m=0;for(let c=0;c<cnt.length;c++)if(cnt[c]>m&&!stuck.has(c))m=cnt[c];
     if(m<=1)break;
-    const crowded=[];for(let c=0;c<cnt.length;c++)if(cnt[c]===m)crowded.push(c);
+    const crowded=[];for(let c=0;c<cnt.length;c++)if(cnt[c]===m&&!stuck.has(c))crowded.push(c);
+    if(!crowded.length)break;
     const cc=crowded[Math.floor(rnd()*crowded.length)]|0;
     const ci=(cc/ydiv)|0,cj=cc%ydiv;
     let best=Infinity,ties=[];
     for(let c=0;c<cnt.length;c++){
-      if(cnt[c]!==0)continue;
+      if(cnt[c]!==0||(blocked&&blocked[c]))continue;
       const ei=(c/ydiv)|0,ej=c%ydiv;
       const d2=(ei-ci)*(ei-ci)+(ej-cj)*(ej-cj);
       if(d2<best){best=d2;ties=[c];}else if(d2===best)ties.push(c);
     }
     if(!ties.length)break; // no empty cell left (grid too small); leave as is
     const ec=ties[Math.floor(rnd()*ties.length)]|0;
-    let mv=-1;for(let k=0;k<n;k++)if(pi[k]===ci&&pj[k]===cj){mv=k;break;}
-    if(mv<0)break;
+    let mv=-1;for(let k=0;k<n;k++)if(pi[k]===ci&&pj[k]===cj&&!(fixed&&fixed[k])){mv=k;break;}
+    if(mv<0){stuck.add(cc);continue;} // only anchors here -- nothing may be moved out
     pi[mv]=(ec/ydiv)|0;pj[mv]=ec%ydiv;
     cnt[cc]=m-1;cnt[ec]=1;
   }
@@ -610,7 +616,7 @@ function labelWidths(labels,fs){
   const fam=labelFont(),pad=haloWidth(fs);
   return labels.map(s=>measureText(s,fs,fam)+pad);
 }
-function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed,halfW,halfH){
+function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed,halfW,halfH,fixed){
   const n=xs.length;
   if(!n)return {x:[],y:[],moved:[]};
   // grow the grid until it can hold every point (R's nolap errors here instead;
@@ -626,9 +632,28 @@ function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed,halfW,halfH){
     i0[k]=clamp(Math.floor((xs[k]-x0)/cw),0,xdiv-1);
     j0[k]=clamp(Math.floor((ys[k]-y0)/ch),0,ydiv-1);
   }
+  // An anchor is not moved and may be wider than one cell, so reserve every cell its label
+  // box actually covers. Without this a word could be placed in a neighbouring cell that the
+  // anchor's text already occupies -- which is how sizing the grid by the words alone would
+  // otherwise reintroduce overlaps.
+  let blocked=null;
+  if(fixed){
+    blocked=new Uint8Array(xdiv*ydiv);
+    for(let k=0;k<n;k++){
+      if(!fixed[k])continue;
+      const hwk=halfW?halfW[k]:0, hhk=halfH?halfH[k]:0;
+      const ia=clamp(Math.floor((xs[k]-hwk-x0)/cw),0,xdiv-1);
+      const ib=clamp(Math.floor((xs[k]+hwk-x0)/cw),0,xdiv-1);
+      const ja=clamp(Math.floor((ys[k]-hhk-y0)/ch),0,ydiv-1);
+      const jb=clamp(Math.floor((ys[k]+hhk-y0)/ch),0,ydiv-1);
+      for(let i=ia;i<=ib;i++)for(let j=ja;j<=jb;j++)blocked[i*ydiv+j]=1;
+    }
+    // the anchor's own cell must stay usable by the anchor itself
+    for(let k=0;k<n;k++)if(fixed[k])blocked[i0[k]*ydiv+j0[k]]=0;
+  }
   let best=null;
   for(let s=1;s<=Math.max(1,nseed);s++){
-    const r=nolapOnce(i0,j0,xdiv,ydiv,s);
+    const r=nolapOnce(i0,j0,xdiv,ydiv,s,fixed,blocked);
     if(!best||r.ssd<best.ssd)best=r;
   }
   // Place each label at the point of its cell CLOSEST to its own dot, rather than at the cell
@@ -643,8 +668,12 @@ function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed,halfW,halfH){
     const hw=halfW?halfW[k]:0, hh=halfH?halfH[k]:0;
     const xlo=cl+hw, xhi=cl+cw-hw;
     const ylo=ct+hh, yhi=ct+ch-hh;
-    X[k]=(xlo<=xhi)?Math.min(Math.max(xs[k],xlo),xhi):cl+cw/2;
-    Y[k]=(ylo<=yhi)?Math.min(Math.max(ys[k],ylo),yhi):ct+ch/2;
+    if(fixed&&fixed[k]){           // anchors are drawn exactly where they belong
+      X[k]=xs[k];Y[k]=ys[k];
+    }else{
+      X[k]=(xlo<=xhi)?Math.min(Math.max(xs[k],xlo),xhi):cl+cw/2;
+      Y[k]=(ylo<=yhi)?Math.min(Math.max(ys[k],ylo),yhi):ct+ch/2;
+    }
     moved[k]=(best.pi[k]!==i0[k]||best.pj[k]!==j0[k]);
   }
   return {x:X,y:Y,moved:moved,xdiv:xdiv,ydiv:ydiv,grew:grew};
