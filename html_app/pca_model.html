@@ -576,22 +576,39 @@ function nolapOnce(i0,j0,xdiv,ydiv,seed){
 // is meant to prevent. CJK glyphs are about one em wide against ~0.62 em for ASCII.
 function estLabelWidth(labels,fs){
   if(!labels.length)return fs;
-  const cjk=/[　-ヿ㐀-䶿一-鿿＀-￯]/;
-  let mx=fs*2;
-  labels.forEach(s=>{
-    let u=0;for(const ch of String(s))u+=cjk.test(ch)?1:0.62;
-    if(u*fs>mx)mx=u*fs;
-  });
-  return mx;
+  const w=labelWidths(labels,fs);
+  return Math.max(fs*2,...w);
 }
 // Per-label width, same model as estLabelWidth() but kept individually: nolapPlace needs
 // each label's own half-width to clamp it inside its cell.
-function labelWidths(labels,fs){
+// Real text width, measured with the canvas 2D context in the very font the SVG will use.
+// The previous character-count estimate (1 em per CJK glyph, 0.62 per ASCII) ran up to ~8%
+// low -- enough that a label clamped to its cell edge still spilled a pixel into its
+// neighbour. A cached context makes this cheap enough to call per label.
+let _mctx=null;
+function measureText(str,fs,family){
+  try{
+    if(!_mctx)_mctx=document.createElement('canvas').getContext('2d');
+    _mctx.font=fs+'px '+(family||'sans-serif');
+    const w=_mctx.measureText(String(str)).width;
+    if(isFinite(w)&&w>0)return w;
+  }catch(e){}
+  // fallback: the old estimate, with headroom for its known bias
   const cjk=/[　-ヿ㐀-䶿一-鿿＀-￯]/;
-  return labels.map(s=>{
-    let u=0;for(const ch of String(s))u+=cjk.test(ch)?1:0.62;
-    return u*fs;
-  });
+  let u=0;for(const ch of String(str))u+=cjk.test(ch)?1:0.62;
+  return u*fs*1.12;
+}
+function labelFont(){
+  try{return getComputedStyle(document.body).fontFamily;}catch(e){return 'sans-serif';}
+}
+// The halo counts as part of the label: it is opaque white and would erase a neighbouring
+// glyph it covered, so the box that must not overlap is the text PLUS its halo. haloWidth()
+// mirrors the stroke-width used in halo(); the stroke straddles the outline, extending half
+// its width on each side, so the full stroke width is added to the box.
+function haloWidth(fs){return Math.max(2,fs*0.30);}
+function labelWidths(labels,fs){
+  const fam=labelFont(),pad=haloWidth(fs);
+  return labels.map(s=>measureText(s,fs,fam)+pad);
 }
 function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed,halfW,halfH){
   const n=xs.length;
@@ -808,17 +825,18 @@ function scatterSvg(R,withArrows,basename){
       // requested row count at what the current font size actually allows. A rendered
       // text box is about 1.4x the font size once ascent and descent are counted, so
       // 1.45 leaves a hair of clearance -- measured, not assumed.
-      const ydivMax=Math.max(3,Math.floor((H-pad)/(fs*1.45)));
+      const rowPx=fs*1.45+haloWidth(fs);   // halo adds to the height as well
+      const ydivMax=Math.max(3,Math.floor((H-pad)/rowPx));
       const ydiv=Math.max(3,Math.min(VIEW.nolapDiv,ydivMax));
       // half-boxes so each label can be clamped inside its own cell
       const hw=labelWidths(R.labels,fs).map(v=>v/2);
-      const hh=R.labels.map(()=>fs*1.45/2);
+      const hh=R.labels.map(()=>rowPx/2);
       const pl=nolapPlace(ptX,ptY,pad*0.5,pad*0.5,W-pad,H-pad,xdiv,ydiv,10,hw,hh);
       // Capacity implied by the geometry: how many labels this plot can separate at the
       // current font size. Worth reporting, because once the grid has to be subdivided
       // the cells are narrower than a label and some overlap can survive.
       LASTGRID={xdiv:pl.xdiv,ydiv:pl.ydiv,ydivMax:ydivMax,cells:pl.xdiv*pl.ydiv,
-                n:R.labels.length,labW:Math.round(wPx),rowH:+(fs*1.45).toFixed(1),tight:pl.grew};
+                n:R.labels.length,labW:Math.round(wPx),rowH:+rowPx.toFixed(1),tight:pl.grew};
       lab={x:pl.x,y:pl.y,moved:pl.moved,anchor:'middle',dxpx:0};
     }else{
       lab={x:ptX.map(v=>v+4.5),y:ptY.slice(),moved:ptX.map(()=>false),anchor:'start',dxpx:4.5};
