@@ -224,7 +224,7 @@ const I18N={
     drop_big:'CSVをドロップ / クリック', drop_small:'1行=1標本 · 列=変数',
     demo1_btn:'◇ デモ1 (infert)', demo2_btn:'◇ デモ2 (iris)',
     demo_credit:'出典（いずれもRの標準データセット・datasetsパッケージ）: デモ1「infert」自然流産・人工妊娠中絶後の不妊症に関するマッチング症例対照研究（Trichopoulos et al., 1976）— <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/infert.html" target="_blank" rel="noopener">R documentation</a>。層の識別列(stratum, pooled.stratum)を除いた解析用の6列を収録しています。デモ2「iris」フィッシャーのアヤメのデータ（Fisher, 1936; Anderson, 1935）— <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/iris.html" target="_blank" rel="noopener">R documentation</a>。全5列をそのまま収録しています。いずれも値は改変していません。',
-    demo_tip:'ヒント: iris は Species が3水準なので、「1とする値」の選び方で結果が大きく変わります。versicolor は素直に推定できますが、virginica では準完全分離、setosa では完全分離（花弁の大きさだけで完全に判別できる）が起こります。',
+    demo_tip:'ヒント: iris は Species が3水準あるので、「1とする値」を選んで解析します（既定は versicolor）。virginica に変えると準完全分離、setosa では完全分離（花弁の大きさだけで完全に判別できる）が起こり、警告が表示されます。分離のしくみを確かめる教材としてもお使いいただけます。',
     v_target:'目的変数（2値・カテゴリ）', v_poslevel:'1（陽性）とする値',
     poslevel_hint:'選んだ値を 1、それ以外の値をすべて 0 として扱います。',
     v_features:'説明変数 (複数選択可)',
@@ -276,7 +276,7 @@ const I18N={
     drop_big:'Drop a CSV / click', drop_small:'1 row = 1 sample · columns = variables',
     demo1_btn:'◇ Demo 1 (infert)', demo2_btn:'◇ Demo 2 (iris)',
     demo_credit:'Source (both are standard R datasets, the "datasets" package): Demo 1 "infert" — matched case-control study of infertility after spontaneous and induced abortion (Trichopoulos et al., 1976) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/infert.html" target="_blank" rel="noopener">R documentation</a>; the matched-set id columns (stratum, pooled.stratum) are omitted, leaving the six analysis variables. Demo 2 "iris" — Fisher\'s iris measurements (Fisher, 1936; Anderson, 1935) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/iris.html" target="_blank" rel="noopener">R documentation</a>; all five columns are included. The values themselves are unmodified.',
-    demo_tip:'Tip: iris has a three-level Species, so the value you treat as 1 matters a lot. versicolor gives a well-conditioned fit, virginica is quasi-separated, and setosa is completely separable on petal size alone.',
+    demo_tip:'Tip: iris has a three-level Species, so you choose which level counts as 1 (the demo starts on versicolor). Switching to virginica gives quasi-separation and setosa is completely separable on petal size alone — both raise a warning, which makes this a handy illustration of separation.',
     v_target:'Response (binary / categorical)', v_poslevel:'Value treated as 1 (positive)',
     poslevel_hint:'The chosen value becomes 1; every other value becomes 0.',
     v_features:'Features (multiple)',
@@ -1212,6 +1212,22 @@ function buildLog(R){
   L.push('n         : '+n+',  p (parameters incl. intercept): '+colNames.length);
   L.push('');
   L.push(buildSummaryText(R));
+  // odds ratios and their Wald CIs, formatted exactly as in the on-screen table
+  const Z975=1.959963985;
+  const orVal=R.beta.map(b=>Math.exp(b));
+  const loVal=R.beta.map((b,i)=>Math.exp(b-Z975*R.se[i]));
+  const hiVal=R.beta.map((b,i)=>Math.exp(b+Z975*R.se[i]));
+  const orStr=formatNumColumn(orVal,4);
+  const ciAll=formatNumColumn(loVal.concat(hiVal),3);
+  const loStr=ciAll.slice(0,R.beta.length),hiStr=ciAll.slice(R.beta.length);
+  const nmW=Math.max(...colNames.map(s=>s.length));
+  const orW=Math.max('exp(beta)'.length,...orStr.map(s=>s.length));
+  L.push('[Odds ratios, Wald 95% CI]');
+  L.push(rpad('',nmW)+' '+lpad('exp(beta)',orW)+'   95% CI');
+  colNames.forEach((nm,i)=>{
+    L.push(rpad(nm,nmW)+' '+lpad(orStr[i],orW)+'   ['+loStr[i]+', '+hiStr[i]+']');
+  });
+  L.push('');
   L.push('[Classification at cut-off 0.5]');
   L.push('accuracy  : '+(accuracy*100).toFixed(1)+'%');
   L.push('AUC       : '+(isFinite(auc)?auc.toFixed(4):'NA'));
@@ -1647,7 +1663,7 @@ function irisCSV(){
 
 function readFile(f){const rd=new FileReader();rd.onload=()=>ingestText(rd.result,f.name);rd.readAsText(f);}
 $('#demo1').onclick=()=>{ingestText(infertCSV(),'infert');toast(t('toast_demo1'));};
-$('#demo2').onclick=()=>{ingestText(irisCSV(),'iris');toast(t('toast_demo2'));};
+$('#demo2').onclick=()=>{ingestText(irisCSV(),'iris');const s=$('#poslevel');if(s&&[...s.options].some(o=>o.value==='versicolor')){s.value='versicolor';updatePosCount();}toast(t('toast_demo2'));};
 $('#numAsCat').onchange=()=>{if(DATA)rebuildFeatureList();};
 $('#featSelectAll').onclick=()=>{$$('#features input').forEach(cb=>cb.checked=true);updateFeatCount();rebuildCatList();};
 $('#featClearAll').onclick=()=>{$$('#features input').forEach(cb=>cb.checked=false);updateFeatCount();rebuildCatList();};
