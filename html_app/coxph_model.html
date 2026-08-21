@@ -230,7 +230,7 @@ const I18N={
     demo_credit:'出典: デモ1「gehan」白血病の寛解期間に関する対照試験（Freireich et al., 1963）— Rパッケージ <a href="https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/gehan.html" target="_blank" rel="noopener">MASS</a> 収録。デモ2「leukemia」急性骨髄性白血病の維持療法（Miller, 1997）— Rパッケージ <a href="https://stat.ethz.ch/R-manual/R-devel/library/survival/html/aml.html" target="_blank" rel="noopener">survival</a> 収録。いずれもRに同梱される推奨パッケージのデータで、値は改変せずそのまま収録しています。',
     demo_tip:'ヒント: ダミー変数の参照カテゴリはアルファベット順で最初の水準です（gehan なら 6-MP、leukemia なら Maintained）。Rで relevel() を使った例とは符号が反転することがありますが、モデルは同一です。',
     v_time:'追跡期間 time（数値）', v_status:'打ち切り指標 status', v_event:'イベント（死亡・再発）とする値',
-    event_hint:'選んだ値をイベント発生（status=1）、それ以外を打ち切り（status=0）として扱います。',
+    event_hint:'選んだ値をイベント発生、それ以外の値をすべて打ち切りとして扱います。打ち切りの符号はデータによって異なります（0/1、1/2、"dead"/"alive" など。まれに 1 が打ち切りのこともあります）が、ここで実際の値を選ぶだけで対応できます。',
     v_features:'説明変数 (複数選択可)',
     btn_selectall:'すべて選択', btn_clearall:'クリア',
     v_hint:'チェックした変数を説明変数に使います。コックス回帰には切片がなく、ベースラインハザード h₀(t) が切片の役割を果たします。',
@@ -244,7 +244,7 @@ const I18N={
     f_model:'Efron · コックス比例ハザードモデル', save_app:'💾 GitHubから最新版を保存',
     f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一',
     f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MITライセンス</a>',
-    m_n:'標本数', m_events:'イベント数', m_conc:'一致度 Concordance', m_loglik:'部分対数尤度',
+    m_n:'標本数', m_events:'イベント数', m_dropped:'欠測で除外', m_conc:'一致度 Concordance', m_loglik:'部分対数尤度',
     m_lr:'尤度比検定', m_wald:'Wald検定', m_score:'スコア(ログランク)検定', m_iter:'反復回数', m_df:'自由度',
     sec_coef:'係数表', sec_coef_d:'各説明変数（ダミー変数を含む）の係数・ハザード比 exp(coef)・標準誤差・z値・p値。',
     sec_ci:'ハザード比と95%信頼区間', sec_ci_d:'exp(coef) はハザード比、exp(-coef) はその逆数です。',
@@ -281,7 +281,7 @@ const I18N={
     demo_credit:'Source: Demo 1 "gehan" — remission times in a controlled trial of leukaemia (Freireich et al., 1963), bundled in the R package <a href="https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/gehan.html" target="_blank" rel="noopener">MASS</a>. Demo 2 "leukemia" — maintenance therapy for acute myelogenous leukaemia (Miller, 1997), bundled in the R package <a href="https://stat.ethz.ch/R-manual/R-devel/library/survival/html/aml.html" target="_blank" rel="noopener">survival</a>. Both ship with R as recommended packages; the values are reproduced unmodified.',
     demo_tip:'Tip: the reference category of a dummy-coded variable is its alphabetically first level (6-MP for gehan, Maintained for leukemia). Examples that call relevel() in R may therefore show the opposite sign, though the model is the same.',
     v_time:'Follow-up time', v_status:'Status (censoring indicator)', v_event:'Value that means an event',
-    event_hint:'The chosen value counts as an event (status = 1); every other value is treated as censored (status = 0).',
+    event_hint:'The chosen value counts as an event; every other value is treated as censored. Censoring conventions differ between data sets (0/1, 1/2 as in survival::lung, "dead"/"alive", occasionally 1 = censored) — just pick the value that means an event.',
     v_features:'Features (multiple)',
     btn_selectall:'Select all', btn_clearall:'Clear',
     v_hint:'Checked variables are used as covariates. A Cox model has no intercept — the baseline hazard h₀(t) plays that role.',
@@ -295,7 +295,7 @@ const I18N={
     f_model:'Efron · Cox Proportional Hazards', save_app:'💾 Save the latest version from GitHub',
     f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
     f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>',
-    m_n:'Samples', m_events:'Events', m_conc:'Concordance', m_loglik:'Partial log-likelihood',
+    m_n:'Samples', m_events:'Events', m_dropped:'Dropped (missing)', m_conc:'Concordance', m_loglik:'Partial log-likelihood',
     m_lr:'LR test', m_wald:'Wald test', m_score:'Score (logrank) test', m_iter:'Iterations', m_df:'df',
     sec_coef:'Coefficients', sec_coef_d:'Coefficient, hazard ratio exp(coef), standard error, z value and p-value for each covariate (including dummies).',
     sec_ci:'Hazard ratios with 95% confidence intervals', sec_ci_d:'exp(coef) is the hazard ratio and exp(-coef) its reciprocal.',
@@ -376,10 +376,14 @@ function ingestText(text,filename){
   ingestParsed({meta:{fields},data},filename);
 }
 
+// blank cells and the literal tokens R writes for missing data
+const MISSING_TOKENS=new Set(['','NA','NaN','na','N/A','null','NULL']);
+function isMissingVal(v){return v==null||MISSING_TOKENS.has(String(v).trim());}
+
 /* detect if a column is numeric (>=95% of non-blank values parse as a number, matching class_tree.html) */
 function isNumericCol(col){
   let n=0,num=0;
-  for(const r of DATA.rows){const v=r[col];if(v==null||String(v).trim()==='')continue;n++;
+  for(const r of DATA.rows){const v=r[col];if(isMissingVal(v))continue;n++;
     const s=String(v).trim();const f=parseFloat(s);
     if(isFinite(f)&&!isNaN(f)&&/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(s))num++;
   }
@@ -419,7 +423,7 @@ function buildVarUI(){
 }
 function levelsOf(col){
   const s=new Set();
-  for(const r of DATA.rows){const v=r[col];if(v!=null&&String(v).trim()!=='')s.add(String(v).trim());}
+  for(const r of DATA.rows){const v=r[col];if(!isMissingVal(v))s.add(String(v).trim());}
   const arr=[...s];
   const isNum=v=>/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v);
   const allNum=arr.length>0&&arr.every(isNum);
@@ -428,12 +432,13 @@ function levelsOf(col){
 }
 function rebuildEventList(){
   const sc=$('#statuscol').value,sel=$('#eventlevel');
-  const prev=sel.value;
   const levs=levelsOf(sc);
   sel.innerHTML='';
   levs.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
-  // default to the LAST level: for a 0/1 indicator this is "1", the usual event code
-  sel.value=levs.includes(prev)?prev:(levs.length?levs[levs.length-1]:'');
+  // Always fall back to the LAST level rather than carrying the previous choice over: it is
+  // "1" for a 0/1 indicator and "2" for survival::lung's 1 = censored / 2 = dead coding.
+  // Reusing the old value silently picked 1 (= censored) after switching data sets.
+  sel.value=levs.length?levs[levs.length-1]:'';
   sel.onchange=updateEvCount;
   updateEvCount();
 }
@@ -441,8 +446,14 @@ function updateEvCount(){
   const e=$('#evCount');if(!e||!DATA)return;
   const sc=$('#statuscol').value,ev=$('#eventlevel').value;
   let n=0,tot=0;
-  for(const r of DATA.rows){const v=r[sc];if(v==null||String(v).trim()==='')continue;tot++;if(String(v).trim()===ev)n++;}
-  e.textContent=(LANG==='ja'?'イベント ':'events ')+n+' / '+tot;
+  for(const r of DATA.rows){const v=r[sc];if(isMissingVal(v))continue;tot++;if(String(v).trim()===ev)n++;}
+  // spell out which values become censored, since the coding differs between data sets
+  // (0/1, 1/2 as in survival::lung, or even 1 = censored)
+  const others=levelsOf(sc).filter(v=>v!==ev);
+  const cens=others.length?others.join(', '):'-';
+  e.textContent=(LANG==='ja')
+    ?('イベント '+n+' / '+tot+'（打ち切り: '+cens+'）')
+    :('events '+n+' / '+tot+' (censored: '+cens+')');
 }
 function rebuildFeatureList(){
   const target=$('#timecol').value,scol=$('#statuscol').value;const fsel=$('#features');
@@ -463,7 +474,7 @@ function rebuildFeatureList(){
 }
 function uniqueCount(col){
   const s=new Set();
-  for(const r of DATA.rows){const v=r[col];if(v!=null&&String(v).trim()!=='')s.add(String(v).trim());}
+  for(const r of DATA.rows){const v=r[col];if(!isMissingVal(v))s.add(String(v).trim());}
   return s.size;
 }
 function updateFeatCount(){
@@ -860,11 +871,20 @@ function run(){
   if(features.length===0){toast(t('toast_nofeat'));return;}
   const catVars=new Set([...$$('#catlist input:checked')].map(el=>el.value));
 
-  // keep rows with a usable positive follow-up time and a present status
+  // complete-case analysis, matching R's na.action = na.omit: a row is used only when the
+  // time, the status AND every selected covariate are present (and the time is positive)
+  const numericFeat={};features.forEach(f=>{numericFeat[f]=!catVars.has(f)&&isNumericCol(f);});
   const rows=DATA.rows.filter(r=>{
-    const tv=parseFloat(r[tcol]),sv=r[scol];
-    return isFinite(tv)&&tv>0&&sv!=null&&String(sv).trim()!=='';
+    const tv=parseFloat(r[tcol]);
+    if(!(isFinite(tv)&&tv>0))return false;
+    if(isMissingVal(r[scol]))return false;
+    for(const f of features){
+      if(isMissingVal(r[f]))return false;
+      if(numericFeat[f]&&!isFinite(parseFloat(r[f])))return false;
+    }
+    return true;
   });
+  const nDropped=DATA.rows.length-rows.length;
   if(!rows.length){toast(t('toast_badtime'));return;}
   const time=rows.map(r=>parseFloat(r[tcol]));
   const status=rows.map(r=>String(r[scol]).trim()===ev?1:0);
@@ -896,7 +916,7 @@ function run(){
       const conc=coxConcordance(eta,time,status);
       const sch=schoenfeld(X,time,status,eventTimes,beta,p);
 
-      LAST={tcol,scol,ev,features,catVars,usedFeatures,colNames,p,n,rows,time,status,nEvents,
+      LAST={tcol,scol,ev,features,catVars,usedFeatures,colNames,p,n,rows,time,status,nEvents,nDropped,
             beta,se,zval,pval,V,ll,ll0:r0.ll,iter,converged,
             lrStat,waldStat,scoreStat,lrP,waldP,scoreP,eta,conc,sch,eventTimes,X,
             filename:DATA.filename};
@@ -938,7 +958,7 @@ function fmtSig1(p){
   return fx.length<=sc.length?fx:sc;
 }
 function buildSummaryText(R){
-  const {tcol,scol,ev,usedFeatures,colNames,beta,se,zval,pval,n,p,nEvents,
+  const {tcol,scol,ev,usedFeatures,colNames,beta,se,zval,pval,n,p,nEvents,nDropped,
          lrStat,waldStat,scoreStat,lrP,waldP,scoreP,conc,filename}=R;
   const formula='Surv('+tcol+', '+scol+') ~ '+usedFeatures.map(f=>f.name).join(' + ');
   const dataLbl=filename||t('call_data');
@@ -948,16 +968,19 @@ function buildSummaryText(R){
   L.push('coxph(formula = '+formula+', data = '+dataLbl+')');
   L.push('');
   L.push('  n= '+n+', number of events= '+nEvents+' ');
+  // R appends this line whenever na.omit removed rows
+  if(nDropped>0)L.push('   ('+nDropped+' observation'+(nDropped===1?'':'s')+' deleted due to missingness)');
   L.push('');
   // printCoefmat: coef, exp(coef) and se(coef) share one decimal count (digits = 4);
   // z is rounded to 3 decimals then shown to 4 significant digits; p follows format.pval
-  const csDec=commonDecimals([...beta,...hr,...se],4);
+  const csAll=formatNumColumn([...beta,...hr,...se],4);
+  const coS=csAll.slice(0,beta.length),hrS=csAll.slice(beta.length,2*beta.length),seS=csAll.slice(2*beta.length);
   const zRounded=zval.map(v=>isFinite(v)?Number(v.toFixed(3)):v);
   const zFin=zRounded.filter(isFinite);
   const zDec=Math.min(3,zFin.length?commonDecimals(zFin,4):3);
   const pStr=formatPvalColumn(pval);
   const rows=colNames.map((name,i)=>({
-    name, co:beta[i].toFixed(csDec), hr:hr[i].toFixed(csDec), se:se[i].toFixed(csDec),
+    name, co:coS[i], hr:hrS[i], se:seS[i],
     zv:isFinite(zval[i])?zRounded[i].toFixed(zDec):String(zval[i]),
     pv:pStr[i], stars:sigStars(pval[i])
   }));
@@ -1015,6 +1038,7 @@ function render(R){
     m.appendChild(vv);met.appendChild(m);};
   addM(t('m_n'),R.n);
   addM(t('m_events'),R.nEvents,(100*R.nEvents/R.n).toFixed(0)+'%');
+  if(R.nDropped>0)addM(t('m_dropped'),R.nDropped);
   addM(t('m_conc'),isFinite(R.conc.C)?R.conc.C.toFixed(3):'—','se='+(isFinite(R.conc.se)?R.conc.se.toFixed(3):'—'));
   addM(t('m_loglik'),R.ll.toFixed(2));
   addM(t('m_lr'),R.lrStat.toFixed(2),'p='+fmtSig1(R.lrP));
@@ -1094,13 +1118,14 @@ function renderCoefTable(R){
   [t('col_var'),t('col_coef'),t('col_hr'),t('col_se'),t('col_z'),t('col_p'),t('col_sig')].forEach(h=>{const th=document.createElement('th');th.textContent=h;htr.appendChild(th);});
   thead.appendChild(htr);table.appendChild(thead);
   const tbody=document.createElement('tbody');
-  const csDec=commonDecimals([...beta,...hr,...se],4);
+  const csAll=formatNumColumn([...beta,...hr,...se],4);
+  const coS=csAll.slice(0,beta.length),hrS=csAll.slice(beta.length,2*beta.length),seS=csAll.slice(2*beta.length);
   const pStr=formatPvalColumn(pval);
   colNames.forEach((name,i)=>{
     const tr=document.createElement('tr');
     const td0=document.createElement('td');td0.textContent=name;tr.appendChild(td0);
     const zv=isFinite(zval[i])?zval[i].toFixed(3):String(zval[i]);
-    [beta[i].toFixed(csDec),hr[i].toFixed(csDec),se[i].toFixed(csDec),zv,pStr[i]].forEach(v=>{
+    [coS[i],hrS[i],seS[i],zv,pStr[i]].forEach(v=>{
       const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
     const tds=document.createElement('td');tds.className='sig';tds.textContent=sigStars(pval[i]);tr.appendChild(tds);
     tbody.appendChild(tr);
@@ -1143,11 +1168,16 @@ function axLab2(svg,W,H,pad,ink,xs,ys){
   const yl=el('text',{x:14,y:yc,'text-anchor':'middle','font-size':12,'font-family':'var(--mono)',transform:'rotate(-90 14,'+yc+')'});
   yl.style.fill=ink;yl.textContent=ys;svg.appendChild(yl);
 }
-function legendBox(svg,W,pad,labels,ink){
+// pos: 'tr' (default) keeps the legend top-right, 'tl' puts it top-left. Survival curves
+// fall away from the top-left, whereas log(-log S) rises to the right, so each plot has a
+// different empty corner.
+function legendBox(svg,W,pad,labels,ink,pos){
+  const left=(pos==='tl');
   labels.forEach((lb,k)=>{
     const y=pad.t+12+k*15;
-    svg.appendChild(el('line',{x1:W-pad.r-90,y1:y,x2:W-pad.r-70,y2:y,stroke:GCOL[k%GCOL.length],'stroke-width':2.4}));
-    const tx=el('text',{x:W-pad.r-64,y:y+4,'font-size':11,'font-family':'var(--mono)'});
+    const x0=left?(pad.l+14):(W-pad.r-90);
+    svg.appendChild(el('line',{x1:x0,y1:y,x2:x0+20,y2:y,stroke:GCOL[k%GCOL.length],'stroke-width':2.4}));
+    const tx=el('text',{x:x0+26,y:y+4,'font-size':11,'font-family':'var(--mono)'});
     tx.style.fill=ink;tx.textContent=lb;svg.appendChild(tx);
   });
 }
@@ -1179,7 +1209,7 @@ function kmFigure(R,g,basename){
 }
 // log(-log S) against log t: parallel curves support proportional hazards
 function logLogFigure(R,g,basename){
-  const W=520,H=380,pad={l:60,r:120,t:16,b:42};
+  const W=520,H=380,pad={l:60,r:24,t:16,b:42};
   const series=g.idx.map(ix=>kmCurve(R.time,R.status,ix)
       .filter(pt=>pt.t>0&&pt.s>0&&pt.s<1)
       .map(pt=>({x:Math.log(pt.t),y:Math.log(-Math.log(pt.s))})));
@@ -1204,7 +1234,7 @@ function logLogFigure(R,g,basename){
     svg.appendChild(el('path',{d,fill:'none',stroke:GCOL[k%GCOL.length],'stroke-width':2.2}));
     pts.forEach(pt=>svg.appendChild(el('circle',{cx:xS(pt.x),cy:yS(pt.y),r:2.4,fill:GCOL[k%GCOL.length]})));
   });
-  legendBox(svg,W,pad,g.levels,ink);
+  legendBox(svg,W,pad,g.levels,ink,'tl');
   axLab2(svg,W,H,pad,ink,'log '+R.tcol,'log(-log S)');
   return figure(svg,basename);
 }
@@ -1219,19 +1249,38 @@ function schoenFigure(R,j,basename){
   const ylo=Math.min(...pts.map(p=>p.y)),yhi=Math.max(...pts.map(p=>p.y));
   const xs=(xhi-xlo)||1,ys=(yhi-ylo)||1;
   const xS=v=>pad.l+(v-(xlo-xs*0.05))/(xs*1.1)*(W-pad.l-pad.r);
-  const yS=v=>H-pad.b-(v-(ylo-ys*0.12))/(ys*1.24)*(H-pad.t-pad.b);
+  const yS=v=>H-pad.b-(v-(ylo-ys*0.12))/(ys*1.45)*(H-pad.t-pad.b);
   if(ylo<0&&yhi>0)svg.appendChild(el('line',{x1:pad.l,y1:yS(0),x2:W-pad.r,y2:yS(0),stroke:faint,'stroke-width':1.2,'stroke-dasharray':'4,3'}));
   axes2(svg,W,H,pad,ink);
   pts.forEach(p=>svg.appendChild(el('circle',{cx:xS(p.x),cy:yS(p.y),r:3.2,fill:col,'fill-opacity':0.75})));
   // least-squares trend line: a visible slope hints at a time-varying effect
   const mx=pts.reduce((s,p)=>s+p.x,0)/pts.length,my=pts.reduce((s,p)=>s+p.y,0)/pts.length;
   let sxy=0,sxx=0;pts.forEach(p=>{sxy+=(p.x-mx)*(p.y-my);sxx+=(p.x-mx)*(p.x-mx);});
+  let slope=NaN;
   if(sxx>0){
-    const b=sxy/sxx,a=my-b*mx;
-    svg.appendChild(el('line',{x1:xS(xlo),y1:yS(a+b*xlo),x2:xS(xhi),y2:yS(a+b*xhi),stroke:'#b03a3a','stroke-width':1.8}));
+    slope=sxy/sxx;const a=my-slope*mx;
+    svg.appendChild(el('line',{x1:xS(xlo),y1:yS(a+slope*xlo),x2:xS(xhi),y2:yS(a+slope*xhi),stroke:'#b03a3a','stroke-width':1.8}));
   }
   const ttl=el('text',{x:pad.l+4,y:pad.t+12,'font-size':12,'font-family':'var(--mono)'});
   ttl.style.fill=ink;ttl.textContent=R.colNames[j];svg.appendChild(ttl);
+  // legend: what the marks mean, and the fitted slope -- a slope far from flat is the
+  // visual signal that this covariate's effect drifts with time
+  const lx=W-pad.r-160,ly=pad.t+10;
+  svg.appendChild(el('circle',{cx:lx+8,cy:ly,r:3.2,fill:col,'fill-opacity':0.75}));
+  const l1=el('text',{x:lx+20,y:ly+4,'font-size':11,'font-family':'var(--mono)'});
+  l1.style.fill=ink;l1.textContent=(LANG==='ja')?'Schoenfeld残差':'Schoenfeld residual';svg.appendChild(l1);
+  if(isFinite(slope)){
+    svg.appendChild(el('line',{x1:lx,y1:ly+16,x2:lx+16,y2:ly+16,stroke:'#b03a3a','stroke-width':1.8}));
+    const l2=el('text',{x:lx+20,y:ly+20,'font-size':11,'font-family':'var(--mono)'});
+    l2.style.fill=ink;
+    l2.textContent=((LANG==='ja')?'回帰直線 傾き=':'trend slope=')+fmtSig(slope,3);
+    svg.appendChild(l2);
+  }
+  if(ylo<0&&yhi>0){
+    svg.appendChild(el('line',{x1:lx,y1:ly+32,x2:lx+16,y2:ly+32,stroke:faint,'stroke-width':1.2,'stroke-dasharray':'4,3'}));
+    const l3=el('text',{x:lx+20,y:ly+36,'font-size':11,'font-family':'var(--mono)'});
+    l3.style.fill=ink;l3.textContent=(LANG==='ja')?'0（水平＝PH成立）':'0 (flat = PH holds)';svg.appendChild(l3);
+  }
   axLab2(svg,W,H,pad,ink,R.tcol,'Schoenfeld');
   return figure(svg,basename);
 }
@@ -1275,6 +1324,7 @@ function buildLog(R){
   L.push('time      : '+tcol);
   L.push('status    : '+scol+'   (event when '+scol+' == '+ev+')');
   L.push('counts    : n = '+n+',  events = '+nEvents+',  censored = '+(n-nEvents));
+  if(R.nDropped>0)L.push('missing   : '+R.nDropped+' rows dropped (complete-case analysis, as R\'s na.omit)');
   L.push('covariates: '+usedFeatures.map(f=>f.type==='categorical'?f.name+' (dummy, ref='+f.ref+')':f.name).join(', '));
   L.push('parameters: '+colNames.length+' (no intercept)');
   L.push('');
