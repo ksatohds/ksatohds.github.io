@@ -148,6 +148,7 @@
         <button class="dl" id="demo2" data-i18n="demo2_btn">◇ デモ2 (ToothGrowth)</button>
       </div>
       <div class="hint" data-i18n-html="demo_credit" style="margin-top:8px;line-height:1.6"></div>
+      <div class="hint" data-i18n="demo_tip" style="margin-top:6px;line-height:1.6"></div>
     </div>
 
     <div class="group" id="varGroup" style="display:none">
@@ -221,8 +222,9 @@ const I18N={
     eq:'log( π / (1−π) ) = β₀ + β₁x₁ + ⋯ + <span style="color:var(--amber)">βₚxₚ</span>',
     g_data:'データ', g_vars:'変数選択', g_cat:'カテゴリカル変数（ダミー変数化）',
     drop_big:'CSVをドロップ / クリック', drop_small:'1行=1標本 · 列=変数',
-    demo1_btn:'◇ デモ1 (lung50)', demo2_btn:'◇ デモ2 (dosebinary)',
-    demo_credit:'出典: いずれも「実況!Rで学ぶ医療・製薬系データサイエンスセミナー」（佐藤健一 著, 学術図書出版社）第2章の例題データです。デモ1「lung50」喫煙(smoke)と肺疾患(lung)の50例。デモ2「dosebinary」用量(dose)と反応(dead)の1119例。',
+    demo1_btn:'◇ デモ1 (infert)', demo2_btn:'◇ デモ2 (iris)',
+    demo_credit:'出典（いずれもRの標準データセット・datasetsパッケージ）: デモ1「infert」自然流産・人工妊娠中絶後の不妊症に関するマッチング症例対照研究（Trichopoulos et al., 1976）— <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/infert.html" target="_blank" rel="noopener">R documentation</a>。層の識別列(stratum, pooled.stratum)を除いた解析用の6列を収録しています。デモ2「iris」フィッシャーのアヤメのデータ（Fisher, 1936; Anderson, 1935）— <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/iris.html" target="_blank" rel="noopener">R documentation</a>。全5列をそのまま収録しています。いずれも値は改変していません。',
+    demo_tip:'ヒント: iris は Species が3水準なので、「1とする値」の選び方で結果が大きく変わります。versicolor は素直に推定できますが、virginica では準完全分離、setosa では完全分離（花弁の大きさだけで完全に判別できる）が起こります。',
     v_target:'目的変数（2値・カテゴリ）', v_poslevel:'1（陽性）とする値',
     poslevel_hint:'選んだ値を 1、それ以外の値をすべて 0 として扱います。',
     v_features:'説明変数 (複数選択可)',
@@ -233,7 +235,7 @@ const I18N={
     cat_hint:'説明変数の中でカテゴリとみなされる列です（数値でない列、または水準数の少ない数値列）。チェックした変数はダミー変数に展開してから回帰に用います（水準はアルファベット順、最初の水準が基準カテゴリ）。チェックを外すと、数値列は連続変数として扱い、非数値列はモデルから除外します。',
     run:'ロジスティック回帰を実行', run_busy:'計算中…',
     hint:'IRWLS（フィッシャー・スコアリング）で最尤推定します。R の summary(glm(..., family="binomial")) に準じた出力形式です。計算はすべてブラウザ内で完結し、データは外部送信されません。',
-    ph_main:'左でCSVを読み込むか、デモデータ (lung50 / dosebinary) を試してください。',
+    ph_main:'左でCSVを読み込むか、デモデータ (infert / iris) を試してください。',
     ph_sub:'目的変数と「1とする値」を選び、説明変数を指定してロジスティック回帰を実行します。目的変数は2値でなくてもよく、選んだ値が1、それ以外が0になります。',
     f_model:'IRWLS · ロジスティック回帰', save_app:'💾 GitHubから最新版を保存',
     f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一',
@@ -245,8 +247,11 @@ const I18N={
     sec_roc:'ROC曲線', sec_roc_d:'左上に近づくほど判別能が高いことを示します。対角線はランダム予測 (AUC=0.5) です。',
     sec_cm:'混同行列（閾値 0.5）', sec_cm_d:'予測確率が 0.5 以上を 1 としたときの分類結果です。',
     cm_head:'実測＼予測', cm_total:'合計',
+    cm_acc:'正解率 Accuracy', cm_sens:'感度 Sensitivity', cm_spec:'特異度 Specificity',
+    cm_ppv:'陽性的中率 PPV', cm_npv:'陰性的中率 NPV',
     warn_noconv:'指定回数以内に収束しませんでした。結果は信頼できません。',
     warn_sep:'完全分離（説明変数だけで目的変数を完全に説明できる状態）の可能性があります。係数と標準誤差が発散し、p値は意味を持ちません。',
+    warn_fitted01:'予測確率が数値的に 0 または 1 になった観測点があります（準完全分離）。Rでも glm.fit: fitted probabilities numerically 0 or 1 occurred と警告される状態で、該当する係数の標準誤差とp値は過大・不安定になります。',
     dl_title:'ダウンロード', dl_pred:'predictions.csv (実測・予測確率・残差)', dl_log:'logistic_model.log (設定・結果)',
     col_var:'変数', col_est:'Estimate', col_se:'Std. Error', col_z:'z value', col_p:'Pr(>|z|)', col_sig:'',
     col_or:'オッズ比 exp(β)', col_ci:'95% CI',
@@ -258,8 +263,8 @@ const I18N={
     toast_parsefail:'CSVの解析に失敗しました',
     toast_toomanyparam:'標本数(n={n})に対して変数の数(p={p})が多すぎます。説明変数を減らすか、ダミー変数化する変数を絞ってください。',
     toast_singular:'計算エラー: 説明変数間に強い多重共線性（または完全な従属関係）があり、解けません。変数の組み合わせを見直してください。',
-    toast_demo1:'lung50データを読み込みました (50標本)',
-    toast_demo2:'dosebinaryデータを読み込みました (1119標本)',
+    toast_demo1:'infertデータを読み込みました (248標本)',
+    toast_demo2:'irisデータを読み込みました (150標本)',
     toast_calcerr:'計算エラー: {m}',
     meta_file:'file', meta_rows:'標本', meta_cols:'変数',
     call_data:'（読み込んだCSV）'
@@ -269,8 +274,9 @@ const I18N={
     eq:'log( π / (1−π) ) = β₀ + β₁x₁ + ⋯ + <span style="color:var(--amber)">βₚxₚ</span>',
     g_data:'Data', g_vars:'Variables', g_cat:'Categorical variables (dummy coding)',
     drop_big:'Drop a CSV / click', drop_small:'1 row = 1 sample · columns = variables',
-    demo1_btn:'◇ Demo 1 (lung50)', demo2_btn:'◇ Demo 2 (dosebinary)',
-    demo_credit:'Source: example data from Chapter 2 of "Introduction to Medical and Pharmaceutical Data Science with R" (K. Satoh, Gakujutsu Tosho Shuppan). Demo 1 "lung50": smoking (smoke) and lung disease (lung), 50 subjects. Demo 2 "dosebinary": dose and response (dead), 1119 subjects.',
+    demo1_btn:'◇ Demo 1 (infert)', demo2_btn:'◇ Demo 2 (iris)',
+    demo_credit:'Source (both are standard R datasets, the "datasets" package): Demo 1 "infert" — matched case-control study of infertility after spontaneous and induced abortion (Trichopoulos et al., 1976) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/infert.html" target="_blank" rel="noopener">R documentation</a>; the matched-set id columns (stratum, pooled.stratum) are omitted, leaving the six analysis variables. Demo 2 "iris" — Fisher\'s iris measurements (Fisher, 1936; Anderson, 1935) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/iris.html" target="_blank" rel="noopener">R documentation</a>; all five columns are included. The values themselves are unmodified.',
+    demo_tip:'Tip: iris has a three-level Species, so the value you treat as 1 matters a lot. versicolor gives a well-conditioned fit, virginica is quasi-separated, and setosa is completely separable on petal size alone.',
     v_target:'Response (binary / categorical)', v_poslevel:'Value treated as 1 (positive)',
     poslevel_hint:'The chosen value becomes 1; every other value becomes 0.',
     v_features:'Features (multiple)',
@@ -281,7 +287,7 @@ const I18N={
     cat_hint:'Columns among the selected features considered categorical (non-numeric, or numeric with few distinct values). Checked variables are dummy-coded before regression (levels sorted alphabetically; the first level is the reference). Unchecking a numeric column treats it as continuous; unchecking a non-numeric column excludes it from the model.',
     run:'Fit logistic regression', run_busy:'Fitting…',
     hint:'Maximum likelihood via IRWLS (Fisher scoring). The output follows R\u2019s summary(glm(..., family="binomial")). Everything runs in your browser; no data is uploaded.',
-    ph_main:'Load a CSV on the left, or try the demo data (lung50 / dosebinary).',
+    ph_main:'Load a CSV on the left, or try the demo data (infert / iris).',
     ph_sub:'Pick a response and the value that counts as 1, choose the features, and fit the model. The response need not be binary — the chosen value becomes 1 and everything else 0.',
     f_model:'IRWLS · Logistic Regression', save_app:'💾 Save the latest version from GitHub',
     f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
@@ -293,8 +299,11 @@ const I18N={
     sec_roc:'ROC curve', sec_roc_d:'The closer the curve bends to the top-left, the better the discrimination. The diagonal is random guessing (AUC = 0.5).',
     sec_cm:'Confusion matrix (cut-off 0.5)', sec_cm_d:'Classification when a predicted probability of at least 0.5 is labelled 1.',
     cm_head:'Observed \\ Predicted', cm_total:'Total',
+    cm_acc:'Accuracy', cm_sens:'Sensitivity', cm_spec:'Specificity',
+    cm_ppv:'Positive predictive value', cm_npv:'Negative predictive value',
     warn_noconv:'The algorithm did not converge within the iteration limit; the results are not reliable.',
     warn_sep:'Possible complete separation (the features predict the response perfectly). Coefficients and standard errors diverge, and the p-values are not meaningful.',
+    warn_fitted01:'Some fitted probabilities are numerically 0 or 1 (quasi-separation). R reports this as "glm.fit: fitted probabilities numerically 0 or 1 occurred"; the affected standard errors and p-values are inflated and unstable.',
     dl_title:'Downloads', dl_pred:'predictions.csv (observed, predicted probability, residuals)', dl_log:'logistic_model.log (settings and results)',
     col_var:'Variable', col_est:'Estimate', col_se:'Std. Error', col_z:'z value', col_p:'Pr(>|z|)', col_sig:'',
     col_or:'Odds ratio exp(β)', col_ci:'95% CI',
@@ -306,8 +315,8 @@ const I18N={
     toast_parsefail:'Failed to parse the CSV',
     toast_toomanyparam:'Too many parameters (p={p}) for the sample size (n={n}). Reduce the features or the dummy-coded variables.',
     toast_singular:'Numerical error: the features are (nearly) collinear, so the system cannot be solved. Please revise the combination of variables.',
-    toast_demo1:'Loaded the lung50 data (50 samples)',
-    toast_demo2:'Loaded the dosebinary data (1119 samples)',
+    toast_demo1:'Loaded the infert data (248 samples)',
+    toast_demo2:'Loaded the iris data (150 samples)',
     toast_calcerr:'Computation error: {m}',
     meta_file:'file', meta_rows:'rows', meta_cols:'columns',
     call_data:'(the loaded CSV)'
@@ -592,9 +601,9 @@ function sigDigitsNeeded(v,digits){
 }
 // R's format() applied to a GROUP of numbers: one notation and one precision for the whole
 // group, switching from fixed to scientific when fixed notation would be wider (the
-// scipen = 0 rule). summary(glm()) formats Estimate and Std.Error as a single such group,
-// which is why a model spanning many orders of magnitude prints as -1.004e+01 / 1.218e+00
-// while a well-scaled one prints as -1.6740 / 0.6291.
+// scipen = 0 rule). summary(lm()) formats Estimate and Std.Error as a single such group,
+// so a model spanning many orders of magnitude prints as 2.025e-06 / 6.503e-08 rather than
+// as 0.00000202534 / 0.00000006503.
 function formatNumColumn(values,digits){
   digits=digits||4;
   const fin=values.filter(isFinite);
@@ -641,6 +650,14 @@ function formatPvalColumn(pvals){
     zeroIdx.forEach(i=>{out[i]=tok;});
   }
   return out;
+}
+// the overall F-test p-value goes through format.pval(digits = 4) in print.summary.lm,
+// whose epsilon token carries two significant digits: "< 2.2e-16"
+function fmtPvalF(p){
+  if(!isFinite(p))return 'NA';
+  if(p<2.220446049250313e-16)return '< 2.2e-16';
+  if(p<1e-4)return p.toExponential(Math.max(0,sigDigitsNeeded(p,4)-1)).replace(/e([+-])(\d)$/,'e$10$2');
+  return p.toFixed(decimalsNeeded(p,4));
 }
 
 /* ================= design matrix & OLS ================= */
@@ -835,9 +852,14 @@ function run(){
       const roc=computeROC(y,mu);
       // complete separation: the fit reproduces the data exactly and the SEs blow up
       const separation=(dev<1e-6)||se.some(s=>s>1e3);
+      // R's glm.fit emits "fitted probabilities numerically 0 or 1 occurred" when any fitted
+      // value reaches the boundary (eps = 10 * .Machine$double.eps); this flags the milder
+      // quasi-separation that still converges but inflates the standard errors
+      const EPS01=10*2.220446049250313e-16;
+      const fitted01=mu.some(m=>m<EPS01||m>1-EPS01);
 
       LAST={target,posLevel,features,catVars,usedFeatures,colNames,p,n,rows,y,beta,se,zval,pval,
-            eta,mu,dev,nullDev,dfNull,dfResid,iter,converged,separation,logLik,AIC:AICval,BIC:BICval,
+            eta,mu,dev,nullDev,dfNull,dfResid,iter,converged,separation,fitted01,logLik,AIC:AICval,BIC:BICval,
             mcfadden,devResid,pearson,pred,tp,tn,fp,fn,accuracy,auc,roc,nPos,pbar,
             filename:DATA.filename};
       render(LAST);
@@ -944,6 +966,7 @@ function render(R){
   const warn=msg=>{const w=el('div',{class:'desc'});w.style.color='var(--danger)';w.style.margin='10px 0 0';w.textContent=msg;sumCard.appendChild(w);};
   if(!R.converged)warn(t('warn_noconv'));
   if(R.separation)warn(t('warn_sep'));
+  else if(R.fitted01)warn(t('warn_fitted01'));
   box.appendChild(sumCard);
 
   const coefCard=el('div',{class:'card'});
@@ -979,8 +1002,9 @@ function render(R){
   dlCard.appendChild(dls);box.appendChild(dlCard);
 }
 
-// 2x2 confusion matrix at the 0.5 cut-off
+// 2x2 confusion matrix at the 0.5 cut-off, followed by the measures derived from it
 function renderConfusion(R){
+  const outer=el('div',{});
   const wrap=el('div',{class:'tablewrap'});
   const table=document.createElement('table');
   const thead=document.createElement('thead');const htr=document.createElement('tr');
@@ -999,7 +1023,27 @@ function renderConfusion(R){
   const td0=document.createElement('td');td0.textContent=t('cm_total');tr.appendChild(td0);
   [R.tn+R.fn,R.fp+R.tp,R.n].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
   tbody.appendChild(tr);
-  table.appendChild(tbody);wrap.appendChild(table);return wrap;
+  table.appendChild(tbody);wrap.appendChild(table);
+  outer.appendChild(wrap);
+
+  // measures read off the same 2x2 table (all conditional on the 0.5 cut-off)
+  const pct=v=>isFinite(v)?(100*v).toFixed(1)+'%':'—';
+  const sens=(R.tp+R.fn)>0?R.tp/(R.tp+R.fn):NaN;   // TP/(TP+FN)
+  const spec=(R.tn+R.fp)>0?R.tn/(R.tn+R.fp):NaN;   // TN/(TN+FP)
+  const ppv =(R.tp+R.fp)>0?R.tp/(R.tp+R.fp):NaN;   // TP/(TP+FP)
+  const npv =(R.tn+R.fn)>0?R.tn/(R.tn+R.fn):NaN;   // TN/(TN+FN)
+  const stats=el('div',{class:'metrics'});
+  stats.style.marginTop='12px';
+  const add=(k,v)=>{const m=el('div',{class:'metric'});
+    m.appendChild(el('div',{class:'k',text:k}));
+    m.appendChild(el('div',{class:'v',text:v}));stats.appendChild(m);};
+  add(t('cm_acc'),pct(R.accuracy));
+  add(t('cm_sens'),pct(sens));
+  add(t('cm_spec'),pct(spec));
+  add(t('cm_ppv'),pct(ppv));
+  add(t('cm_npv'),pct(npv));
+  outer.appendChild(stats);
+  return outer;
 }
 
 function renderCoefTable(R){
@@ -1015,6 +1059,15 @@ function renderCoefTable(R){
   const estStr=estSe.slice(0,beta.length),seStr=estSe.slice(beta.length);
   const pStr=formatPvalColumn(pval);
   const Z975=1.959963985;   // qnorm(0.975)
+  // Odds ratios and their Wald CIs are formatted COLUMN-WISE (same rule as Estimate/SE), so
+  // the notation stays consistent down the column. A dose-response model can span 1e-24 to
+  // 1e+13, where per-value formatting would mix 36324815194238 with 1.23e+15.
+  const orVal=beta.map(b=>Math.exp(b));
+  const loVal=beta.map((b,i)=>Math.exp(b-Z975*se[i]));
+  const hiVal=beta.map((b,i)=>Math.exp(b+Z975*se[i]));
+  const orStr=formatNumColumn(orVal,4);
+  const ciAll=formatNumColumn(loVal.concat(hiVal),3);
+  const loStr=ciAll.slice(0,beta.length),hiStr=ciAll.slice(beta.length);
   colNames.forEach((name,i)=>{
     const tr=document.createElement('tr');
     const td0=document.createElement('td');td0.textContent=name;tr.appendChild(td0);
@@ -1022,9 +1075,8 @@ function renderCoefTable(R){
     [estStr[i],seStr[i],zv,pStr[i]].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
     const tds=document.createElement('td');tds.className='sig';tds.textContent=sigStars(pval[i]);tr.appendChild(tds);
     // Wald CI on the log-odds scale, then exponentiated (the usual odds-ratio interval)
-    const or=Math.exp(beta[i]),lo=Math.exp(beta[i]-Z975*se[i]),hi=Math.exp(beta[i]+Z975*se[i]);
-    const tdo=document.createElement('td');tdo.textContent=fmtSig(or,4);tr.appendChild(tdo);
-    const tdc=document.createElement('td');tdc.textContent='['+fmtSig(lo,3)+', '+fmtSig(hi,3)+']';tr.appendChild(tdc);
+    const tdo=document.createElement('td');tdo.textContent=orStr[i];tr.appendChild(tdo);
+    const tdc=document.createElement('td');tdc.textContent='['+loStr[i]+', '+hiStr[i]+']';tr.appendChild(tdc);
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);wrap.appendChild(table);return wrap;
@@ -1148,7 +1200,7 @@ function downloadPredictions(R){
   saveBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),'predictions.csv');
 }
 function buildLog(R){
-  const {target,posLevel,usedFeatures,colNames,n,nPos,converged,separation,auc,accuracy}=R;
+  const {target,posLevel,usedFeatures,colNames,n,nPos,converged,separation,fitted01,auc,accuracy}=R;
   const L=[];
   L.push('# Logistic Regression (IRWLS / Fisher scoring) — log');
   try{L.push('generated : '+new Date().toISOString());}catch(e){}
@@ -1166,1195 +1218,436 @@ function buildLog(R){
   L.push('confusion : TN='+R.tn+'  FP='+R.fp+'  FN='+R.fn+'  TP='+R.tp);
   if(!converged)L.push('WARNING: '+t('warn_noconv'));
   if(separation)L.push('WARNING: '+t('warn_sep'));
+  else if(fitted01)L.push('WARNING: '+t('warn_fitted01'));
   return L.join('\n')+'\n';
 }
 function downloadLog(R){saveText('logistic_model.log',buildLog(R));}
 
 /* ================= demo data ================= */
-// Both demos are the Chapter 2 example data of "Jikkyo! R de manabu iryo-seiyaku-kei data
-// science seminar" (K. Satoh, Gakujutsu Tosho Shuppan). They reproduce, respectively,
-//   glm(lung ~ smoke, family = "binomial", data = d)     on lung50.csv
-//   glm(dead ~ dose , family = "binomial", data = d)     on dosebinary.csv
-// so the output of this app can be checked against R directly.
-function lung50CSV(){
-  return `"smoke","lung"
-1,1
-0,0
-0,1
-1,0
-0,0
-1,0
-0,0
-1,0
-1,1
-1,0
-1,0
-1,1
-1,0
-1,1
-0,0
-1,1
-0,0
-1,0
-1,0
-1,1
-1,1
-0,0
-1,0
-0,0
-0,0
-0,0
-1,1
-0,0
-1,0
-1,0
-1,1
-0,1
-1,0
-0,0
-1,0
-1,1
-1,0
-0,0
-0,1
-1,0
-1,1
-0,0
-1,1
-0,0
-1,1
-0,0
-1,0
-1,1
-0,0
-1,1`;
+// Both demos come from R's "datasets" package, which is part of R itself. The values are
+// factual measurements, not creative expression, and are reproduced unchanged; only a
+// subset of the COLUMNS is bundled here, as noted below. Sources are credited in the UI.
+//
+// Demo 1 -- infert: matched case-control study of infertility after spontaneous and
+//   induced abortion (Trichopoulos et al., 1976). The matched-set bookkeeping columns
+//   (stratum, pooled.stratum) are omitted, leaving the analysis variables, so the app's
+//   default fit is
+//     glm(case ~ education + age + parity + induced + spontaneous, family = "binomial")
+//   R's own ?infert help page demonstrates glm() on this data set.
+// Demo 2 -- iris: Fisher's iris measurements (Fisher, 1936; Anderson, 1935), bundled in
+//   full. Species has THREE levels, so it exercises the "choose the value that counts as 1"
+//   workflow. Note that the three choices behave very differently, which is instructive:
+//     versicolor -> a clean, well-conditioned fit;
+//     virginica  -> quasi-separation (R warns "fitted probabilities numerically 0 or 1");
+//     setosa     -> complete separation (it is linearly separable on petal size alone).
+function infertCSV(){
+  return `"education","age","parity","induced","spontaneous","case"
+"0-5yrs",26,6,1,2,1
+"0-5yrs",42,1,1,0,1
+"0-5yrs",39,6,2,0,1
+"0-5yrs",34,4,2,0,1
+"6-11yrs",35,3,1,1,1
+"6-11yrs",36,4,2,1,1
+"6-11yrs",23,1,0,0,1
+"6-11yrs",32,2,0,0,1
+"6-11yrs",21,1,0,1,1
+"6-11yrs",28,2,0,0,1
+"6-11yrs",29,2,1,0,1
+"6-11yrs",37,4,2,1,1
+"6-11yrs",31,1,1,0,1
+"6-11yrs",29,3,2,0,1
+"6-11yrs",31,2,1,1,1
+"6-11yrs",27,2,2,0,1
+"6-11yrs",30,5,2,1,1
+"6-11yrs",26,1,0,1,1
+"6-11yrs",25,3,2,1,1
+"6-11yrs",44,1,0,1,1
+"6-11yrs",40,1,0,1,1
+"6-11yrs",35,2,2,0,1
+"6-11yrs",28,2,0,2,1
+"6-11yrs",36,1,0,1,1
+"6-11yrs",27,2,1,1,1
+"6-11yrs",40,2,0,2,1
+"6-11yrs",38,2,0,2,1
+"6-11yrs",34,3,0,2,1
+"6-11yrs",28,4,1,2,1
+"6-11yrs",30,4,2,0,1
+"6-11yrs",32,1,0,1,1
+"6-11yrs",34,2,1,0,1
+"6-11yrs",42,1,1,0,1
+"6-11yrs",32,2,0,2,1
+"6-11yrs",39,1,1,0,1
+"6-11yrs",35,2,0,2,1
+"6-11yrs",36,1,0,1,1
+"6-11yrs",34,3,1,2,1
+"6-11yrs",30,3,0,0,1
+"6-11yrs",28,1,0,1,1
+"6-11yrs",39,3,0,2,1
+"6-11yrs",35,1,0,0,1
+"6-11yrs",41,1,0,0,1
+"6-11yrs",37,2,1,1,1
+"12+ yrs",30,1,0,0,1
+"12+ yrs",37,1,1,0,1
+"12+ yrs",28,2,0,2,1
+"12+ yrs",27,4,2,0,1
+"12+ yrs",26,2,2,0,1
+"12+ yrs",38,3,0,2,1
+"12+ yrs",24,3,1,2,1
+"12+ yrs",36,5,1,2,1
+"12+ yrs",27,3,1,1,1
+"12+ yrs",28,1,0,1,1
+"12+ yrs",29,2,0,2,1
+"12+ yrs",36,2,0,2,1
+"12+ yrs",28,2,1,0,1
+"12+ yrs",28,2,0,2,1
+"12+ yrs",28,1,0,1,1
+"12+ yrs",27,2,0,2,1
+"12+ yrs",35,2,0,2,1
+"12+ yrs",25,1,0,1,1
+"12+ yrs",34,1,0,1,1
+"12+ yrs",31,2,0,2,1
+"12+ yrs",26,2,1,0,1
+"12+ yrs",32,1,0,1,1
+"12+ yrs",21,1,0,1,1
+"12+ yrs",28,3,1,2,1
+"12+ yrs",37,3,0,2,1
+"12+ yrs",25,1,1,0,1
+"12+ yrs",32,1,1,0,1
+"12+ yrs",25,1,0,1,1
+"12+ yrs",31,1,0,1,1
+"12+ yrs",38,6,0,2,1
+"12+ yrs",26,2,0,2,1
+"12+ yrs",31,1,0,1,1
+"12+ yrs",31,2,0,1,1
+"12+ yrs",25,1,1,0,1
+"12+ yrs",31,1,0,1,1
+"12+ yrs",34,1,0,1,1
+"12+ yrs",35,2,2,0,1
+"12+ yrs",29,1,0,1,1
+"12+ yrs",23,1,0,1,1
+"0-5yrs",26,6,2,0,0
+"0-5yrs",42,1,0,0,0
+"0-5yrs",39,6,2,0,0
+"0-5yrs",34,4,0,1,0
+"6-11yrs",35,3,2,0,0
+"6-11yrs",36,4,1,1,0
+"6-11yrs",23,1,0,0,0
+"6-11yrs",32,2,2,0,0
+"6-11yrs",21,1,0,1,0
+"6-11yrs",28,2,0,1,0
+"6-11yrs",29,2,0,0,0
+"6-11yrs",37,4,1,1,0
+"6-11yrs",31,1,0,0,0
+"6-11yrs",29,3,0,1,0
+"6-11yrs",31,2,1,0,0
+"6-11yrs",27,2,1,0,0
+"6-11yrs",30,5,0,2,0
+"6-11yrs",26,1,0,0,0
+"6-11yrs",25,3,0,1,0
+"6-11yrs",44,1,0,0,0
+"6-11yrs",40,1,0,0,0
+"6-11yrs",35,2,0,0,0
+"6-11yrs",28,2,0,0,0
+"6-11yrs",36,1,0,0,0
+"6-11yrs",27,2,0,1,0
+"6-11yrs",40,2,0,0,0
+"6-11yrs",38,2,0,0,0
+"6-11yrs",34,3,0,0,0
+"6-11yrs",28,4,0,2,0
+"6-11yrs",30,4,1,1,0
+"6-11yrs",32,1,0,0,0
+"6-11yrs",34,2,1,0,0
+"6-11yrs",42,1,1,0,0
+"6-11yrs",32,2,0,0,0
+"6-11yrs",39,1,0,0,0
+"6-11yrs",35,2,0,0,0
+"6-11yrs",36,1,0,0,0
+"6-11yrs",34,3,2,0,0
+"6-11yrs",30,3,0,2,0
+"6-11yrs",28,1,1,0,0
+"6-11yrs",39,3,1,0,0
+"6-11yrs",35,1,0,0,0
+"6-11yrs",41,1,0,0,0
+"6-11yrs",37,2,0,0,0
+"12+ yrs",30,1,1,0,0
+"12+ yrs",37,1,0,0,0
+"12+ yrs",28,2,1,0,0
+"12+ yrs",27,4,2,1,0
+"12+ yrs",26,2,1,0,0
+"12+ yrs",38,3,1,0,0
+"12+ yrs",24,3,2,1,0
+"12+ yrs",36,5,1,1,0
+"12+ yrs",27,3,1,1,0
+"12+ yrs",28,1,1,0,0
+"12+ yrs",29,2,1,0,0
+"12+ yrs",36,2,1,0,0
+"12+ yrs",28,2,1,1,0
+"12+ yrs",28,2,2,0,0
+"12+ yrs",28,1,1,0,0
+"12+ yrs",27,2,1,0,0
+"12+ yrs",35,2,2,0,0
+"12+ yrs",25,1,1,0,0
+"12+ yrs",34,1,0,0,0
+"12+ yrs",31,2,0,0,0
+"12+ yrs",26,2,0,1,0
+"12+ yrs",32,1,0,0,0
+"12+ yrs",21,1,0,1,0
+"12+ yrs",28,3,2,0,0
+"12+ yrs",37,3,1,1,0
+"12+ yrs",25,1,0,0,0
+"12+ yrs",32,1,1,0,0
+"12+ yrs",25,1,0,0,0
+"12+ yrs",31,1,0,1,0
+"12+ yrs",26,2,0,2,0
+"12+ yrs",31,1,0,0,0
+"12+ yrs",31,2,2,0,0
+"12+ yrs",25,1,0,0,0
+"12+ yrs",31,1,0,0,0
+"12+ yrs",34,1,0,0,0
+"12+ yrs",35,2,0,0,0
+"12+ yrs",29,1,0,1,0
+"12+ yrs",23,1,0,1,0
+"0-5yrs",26,6,2,0,0
+"0-5yrs",42,1,0,0,0
+"0-5yrs",39,6,2,0,0
+"0-5yrs",34,4,0,2,0
+"6-11yrs",35,3,0,0,0
+"6-11yrs",36,4,0,2,0
+"6-11yrs",23,1,0,0,0
+"6-11yrs",32,2,0,1,0
+"6-11yrs",21,1,1,0,0
+"6-11yrs",28,2,0,1,0
+"6-11yrs",29,2,0,1,0
+"6-11yrs",37,4,0,1,0
+"6-11yrs",31,1,0,0,0
+"6-11yrs",29,3,0,2,0
+"6-11yrs",31,2,1,0,0
+"6-11yrs",27,2,0,0,0
+"6-11yrs",30,5,1,2,0
+"6-11yrs",26,1,1,0,0
+"6-11yrs",25,3,1,1,0
+"6-11yrs",44,1,1,0,0
+"6-11yrs",40,1,0,0,0
+"6-11yrs",35,2,0,0,0
+"6-11yrs",28,2,2,0,0
+"6-11yrs",36,1,0,1,0
+"6-11yrs",27,2,0,2,0
+"6-11yrs",40,2,0,0,0
+"6-11yrs",38,2,0,0,0
+"6-11yrs",34,3,0,0,0
+"6-11yrs",28,4,2,1,0
+"6-11yrs",30,4,1,1,0
+"6-11yrs",32,1,0,0,0
+"6-11yrs",34,2,0,0,0
+"6-11yrs",42,1,0,0,0
+"6-11yrs",32,2,2,0,0
+"6-11yrs",39,1,0,0,0
+"6-11yrs",35,2,0,0,0
+"6-11yrs",36,1,0,0,0
+"6-11yrs",34,3,2,0,0
+"6-11yrs",30,3,0,1,0
+"6-11yrs",28,1,0,0,0
+"6-11yrs",39,3,0,0,0
+"6-11yrs",35,1,0,0,0
+"6-11yrs",41,1,0,0,0
+"6-11yrs",37,2,0,0,0
+"12+ yrs",30,1,0,0,0
+"12+ yrs",37,1,0,1,0
+"12+ yrs",28,2,1,0,0
+"12+ yrs",27,4,2,0,0
+"12+ yrs",26,2,1,0,0
+"12+ yrs",38,3,1,0,0
+"12+ yrs",24,3,2,0,0
+"12+ yrs",36,5,2,1,0
+"12+ yrs",27,3,2,0,0
+"12+ yrs",28,1,0,1,0
+"12+ yrs",29,2,1,1,0
+"12+ yrs",36,2,0,1,0
+"12+ yrs",28,2,2,0,0
+"12+ yrs",28,2,1,0,0
+"12+ yrs",28,1,0,0,0
+"12+ yrs",27,2,1,0,0
+"12+ yrs",35,2,1,0,0
+"12+ yrs",25,1,1,0,0
+"12+ yrs",34,1,0,0,0
+"12+ yrs",31,2,1,0,0
+"12+ yrs",26,2,0,2,0
+"12+ yrs",32,1,1,0,0
+"12+ yrs",21,1,0,0,0
+"12+ yrs",28,3,2,0,0
+"12+ yrs",37,3,0,2,0
+"12+ yrs",25,1,1,0,0
+"12+ yrs",32,1,0,0,0
+"12+ yrs",25,1,1,0,0
+"12+ yrs",31,1,0,0,0
+"12+ yrs",38,6,0,2,0
+"12+ yrs",26,2,1,1,0
+"12+ yrs",31,1,1,0,0
+"12+ yrs",31,2,0,1,0
+"12+ yrs",25,1,0,1,0
+"12+ yrs",31,1,0,1,0
+"12+ yrs",34,1,0,0,0
+"12+ yrs",35,2,2,0,0
+"12+ yrs",29,1,0,1,0
+"12+ yrs",23,1,0,1,0`;
 }
-function dosebinaryCSV(){
-  return `"dose","dead"
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.6,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.62,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.64,0
-1.66,1
-1.66,1
-1.66,1
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.66,0
-1.68,1
-1.68,1
-1.68,1
-1.68,1
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.68,0
-1.7,1
-1.7,1
-1.7,1
-1.7,1
-1.7,1
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.7,0
-1.72,1
-1.72,1
-1.72,1
-1.72,1
-1.72,1
-1.72,1
-1.72,1
-1.72,1
-1.72,1
-1.72,1
-1.72,1
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.72,0
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,1
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.74,0
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,1
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.76,0
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,1
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.78,0
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,1
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.8,0
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,1
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.82,0
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,1
-1.84,0
-1.84,0
-1.84,0
-1.84,0
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,1
-1.86,0
-1.86,0
-1.86,0
-1.86,0
-1.86,0
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,1
-1.88,0
-1.88,0
-1.88,0
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,1
-1.9,0
-1.9,0
-1.9,0`;
+function irisCSV(){
+  return `"Sepal.Length","Sepal.Width","Petal.Length","Petal.Width","Species"
+5.1,3.5,1.4,0.2,"setosa"
+4.9,3,1.4,0.2,"setosa"
+4.7,3.2,1.3,0.2,"setosa"
+4.6,3.1,1.5,0.2,"setosa"
+5,3.6,1.4,0.2,"setosa"
+5.4,3.9,1.7,0.4,"setosa"
+4.6,3.4,1.4,0.3,"setosa"
+5,3.4,1.5,0.2,"setosa"
+4.4,2.9,1.4,0.2,"setosa"
+4.9,3.1,1.5,0.1,"setosa"
+5.4,3.7,1.5,0.2,"setosa"
+4.8,3.4,1.6,0.2,"setosa"
+4.8,3,1.4,0.1,"setosa"
+4.3,3,1.1,0.1,"setosa"
+5.8,4,1.2,0.2,"setosa"
+5.7,4.4,1.5,0.4,"setosa"
+5.4,3.9,1.3,0.4,"setosa"
+5.1,3.5,1.4,0.3,"setosa"
+5.7,3.8,1.7,0.3,"setosa"
+5.1,3.8,1.5,0.3,"setosa"
+5.4,3.4,1.7,0.2,"setosa"
+5.1,3.7,1.5,0.4,"setosa"
+4.6,3.6,1,0.2,"setosa"
+5.1,3.3,1.7,0.5,"setosa"
+4.8,3.4,1.9,0.2,"setosa"
+5,3,1.6,0.2,"setosa"
+5,3.4,1.6,0.4,"setosa"
+5.2,3.5,1.5,0.2,"setosa"
+5.2,3.4,1.4,0.2,"setosa"
+4.7,3.2,1.6,0.2,"setosa"
+4.8,3.1,1.6,0.2,"setosa"
+5.4,3.4,1.5,0.4,"setosa"
+5.2,4.1,1.5,0.1,"setosa"
+5.5,4.2,1.4,0.2,"setosa"
+4.9,3.1,1.5,0.2,"setosa"
+5,3.2,1.2,0.2,"setosa"
+5.5,3.5,1.3,0.2,"setosa"
+4.9,3.6,1.4,0.1,"setosa"
+4.4,3,1.3,0.2,"setosa"
+5.1,3.4,1.5,0.2,"setosa"
+5,3.5,1.3,0.3,"setosa"
+4.5,2.3,1.3,0.3,"setosa"
+4.4,3.2,1.3,0.2,"setosa"
+5,3.5,1.6,0.6,"setosa"
+5.1,3.8,1.9,0.4,"setosa"
+4.8,3,1.4,0.3,"setosa"
+5.1,3.8,1.6,0.2,"setosa"
+4.6,3.2,1.4,0.2,"setosa"
+5.3,3.7,1.5,0.2,"setosa"
+5,3.3,1.4,0.2,"setosa"
+7,3.2,4.7,1.4,"versicolor"
+6.4,3.2,4.5,1.5,"versicolor"
+6.9,3.1,4.9,1.5,"versicolor"
+5.5,2.3,4,1.3,"versicolor"
+6.5,2.8,4.6,1.5,"versicolor"
+5.7,2.8,4.5,1.3,"versicolor"
+6.3,3.3,4.7,1.6,"versicolor"
+4.9,2.4,3.3,1,"versicolor"
+6.6,2.9,4.6,1.3,"versicolor"
+5.2,2.7,3.9,1.4,"versicolor"
+5,2,3.5,1,"versicolor"
+5.9,3,4.2,1.5,"versicolor"
+6,2.2,4,1,"versicolor"
+6.1,2.9,4.7,1.4,"versicolor"
+5.6,2.9,3.6,1.3,"versicolor"
+6.7,3.1,4.4,1.4,"versicolor"
+5.6,3,4.5,1.5,"versicolor"
+5.8,2.7,4.1,1,"versicolor"
+6.2,2.2,4.5,1.5,"versicolor"
+5.6,2.5,3.9,1.1,"versicolor"
+5.9,3.2,4.8,1.8,"versicolor"
+6.1,2.8,4,1.3,"versicolor"
+6.3,2.5,4.9,1.5,"versicolor"
+6.1,2.8,4.7,1.2,"versicolor"
+6.4,2.9,4.3,1.3,"versicolor"
+6.6,3,4.4,1.4,"versicolor"
+6.8,2.8,4.8,1.4,"versicolor"
+6.7,3,5,1.7,"versicolor"
+6,2.9,4.5,1.5,"versicolor"
+5.7,2.6,3.5,1,"versicolor"
+5.5,2.4,3.8,1.1,"versicolor"
+5.5,2.4,3.7,1,"versicolor"
+5.8,2.7,3.9,1.2,"versicolor"
+6,2.7,5.1,1.6,"versicolor"
+5.4,3,4.5,1.5,"versicolor"
+6,3.4,4.5,1.6,"versicolor"
+6.7,3.1,4.7,1.5,"versicolor"
+6.3,2.3,4.4,1.3,"versicolor"
+5.6,3,4.1,1.3,"versicolor"
+5.5,2.5,4,1.3,"versicolor"
+5.5,2.6,4.4,1.2,"versicolor"
+6.1,3,4.6,1.4,"versicolor"
+5.8,2.6,4,1.2,"versicolor"
+5,2.3,3.3,1,"versicolor"
+5.6,2.7,4.2,1.3,"versicolor"
+5.7,3,4.2,1.2,"versicolor"
+5.7,2.9,4.2,1.3,"versicolor"
+6.2,2.9,4.3,1.3,"versicolor"
+5.1,2.5,3,1.1,"versicolor"
+5.7,2.8,4.1,1.3,"versicolor"
+6.3,3.3,6,2.5,"virginica"
+5.8,2.7,5.1,1.9,"virginica"
+7.1,3,5.9,2.1,"virginica"
+6.3,2.9,5.6,1.8,"virginica"
+6.5,3,5.8,2.2,"virginica"
+7.6,3,6.6,2.1,"virginica"
+4.9,2.5,4.5,1.7,"virginica"
+7.3,2.9,6.3,1.8,"virginica"
+6.7,2.5,5.8,1.8,"virginica"
+7.2,3.6,6.1,2.5,"virginica"
+6.5,3.2,5.1,2,"virginica"
+6.4,2.7,5.3,1.9,"virginica"
+6.8,3,5.5,2.1,"virginica"
+5.7,2.5,5,2,"virginica"
+5.8,2.8,5.1,2.4,"virginica"
+6.4,3.2,5.3,2.3,"virginica"
+6.5,3,5.5,1.8,"virginica"
+7.7,3.8,6.7,2.2,"virginica"
+7.7,2.6,6.9,2.3,"virginica"
+6,2.2,5,1.5,"virginica"
+6.9,3.2,5.7,2.3,"virginica"
+5.6,2.8,4.9,2,"virginica"
+7.7,2.8,6.7,2,"virginica"
+6.3,2.7,4.9,1.8,"virginica"
+6.7,3.3,5.7,2.1,"virginica"
+7.2,3.2,6,1.8,"virginica"
+6.2,2.8,4.8,1.8,"virginica"
+6.1,3,4.9,1.8,"virginica"
+6.4,2.8,5.6,2.1,"virginica"
+7.2,3,5.8,1.6,"virginica"
+7.4,2.8,6.1,1.9,"virginica"
+7.9,3.8,6.4,2,"virginica"
+6.4,2.8,5.6,2.2,"virginica"
+6.3,2.8,5.1,1.5,"virginica"
+6.1,2.6,5.6,1.4,"virginica"
+7.7,3,6.1,2.3,"virginica"
+6.3,3.4,5.6,2.4,"virginica"
+6.4,3.1,5.5,1.8,"virginica"
+6,3,4.8,1.8,"virginica"
+6.9,3.1,5.4,2.1,"virginica"
+6.7,3.1,5.6,2.4,"virginica"
+6.9,3.1,5.1,2.3,"virginica"
+5.8,2.7,5.1,1.9,"virginica"
+6.8,3.2,5.9,2.3,"virginica"
+6.7,3.3,5.7,2.5,"virginica"
+6.7,3,5.2,2.3,"virginica"
+6.3,2.5,5,1.9,"virginica"
+6.5,3,5.2,2,"virginica"
+6.2,3.4,5.4,2.3,"virginica"
+5.9,3,5.1,1.8,"virginica"`;
 }
 
 function readFile(f){const rd=new FileReader();rd.onload=()=>ingestText(rd.result,f.name);rd.readAsText(f);}
-$('#demo1').onclick=()=>{ingestText(lung50CSV(),'lung50.csv');toast(t('toast_demo1'));};
-$('#demo2').onclick=()=>{ingestText(dosebinaryCSV(),'dosebinary.csv');toast(t('toast_demo2'));};
+$('#demo1').onclick=()=>{ingestText(infertCSV(),'infert');toast(t('toast_demo1'));};
+$('#demo2').onclick=()=>{ingestText(irisCSV(),'iris');toast(t('toast_demo2'));};
 $('#numAsCat').onchange=()=>{if(DATA)rebuildFeatureList();};
 $('#featSelectAll').onclick=()=>{$$('#features input').forEach(cb=>cb.checked=true);updateFeatCount();rebuildCatList();};
 $('#featClearAll').onclick=()=>{$$('#features input').forEach(cb=>cb.checked=false);updateFeatCount();rebuildCatList();};
