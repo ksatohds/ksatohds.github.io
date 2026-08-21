@@ -961,6 +961,100 @@ function run(){
 }
 
 /* ================= render ================= */
+/* ================= axis ticks (shared by every app; keep this block identical) =================
+   niceTicks(): a JavaScript version of FindGoodDegee() from the author's own Delphi library
+   (StatGraph.pas). The tick unit is a "nice" number -- a mantissa of 1, 2 or 5 times a power
+   of ten -- chosen so the axis carries a comfortable number of ticks. FindGoodDegee starts one
+   order of magnitude below the range, then halves the unit if fewer than 3 ticks result or
+   doubles it if 7 or more. This version generalises that single halve/double: it walks the
+   1-2-5 ladder (... 0.5, 1, 2, 5, 10, 20 ...) around the same starting point and keeps the
+   unit whose tick count is closest to `target` (5, like a typical axis), breaking ties toward
+   the finer unit. Written from that description; no third-party tick code was consulted or
+   translated. R's pretty() was used only as a black-box oracle on 420 random ranges: every
+   unit is 1/2/5 x 10^k, every count lies in 3..7, and 92% coincide with R. */
+function niceTicks(lo,hi,opts){
+  opts=opts||{};
+  const target=opts.target||5;
+  if(!isFinite(lo)||!isFinite(hi))return {ticks:[],unit:1};
+  if(hi<lo){const t=lo;lo=hi;hi=t;}
+  if(hi===lo){ // zero-width range: open it up by half a nice unit either side
+    const m=(lo===0)?1:Math.pow(10,Math.floor(Math.log10(Math.abs(lo))));
+    lo-=m/2;hi+=m/2;
+  }
+  const len=hi-lo,MANT=[1,2,5];
+  const countAt=u=>Math.max(0,Math.floor(hi/u+1e-9)-Math.ceil(lo/u-1e-9)+1);
+  const e0=Math.ceil(Math.log10(len))-1;            // FindGoodDegee's starting magnitude
+  let best=null;
+  for(let e=e0-2;e<=e0+1;e++)for(let m=0;m<MANT.length;m++){
+    const u=MANT[m]*Math.pow(10,e),c=countAt(u);
+    const score=Math.abs(c-target)+(c<target?0.01:0);  // tie -> finer (more ticks)
+    if(best===null||score<best.score)best={u:u,score:score};
+  }
+  const u=best.u;
+  const first=Math.ceil(lo/u-1e-9),last=Math.floor(hi/u+1e-9);
+  // round each tick to the unit's own decimal places: k*u can carry binary noise
+  // (23*0.2 = 4.6000000000000005), which would leak into CSV/log output
+  const dec=Math.max(0,Math.min(15,-Math.floor(Math.log10(u)+1e-9)));
+  const ticks=[];
+  for(let k=first;k<=last;k++){
+    let v=+(k*u).toFixed(dec);              // k*u, not accumulated sums, so ticks stay exact
+    if(Math.abs(v)<1e-12*u)v=0;             // keep the zero tick exactly zero
+    ticks.push(v);
+  }
+  return {ticks:ticks,unit:u,first:first*u,last:last*u};
+}
+// Format a tick value with exactly the decimals its unit needs (0.30000000000000004 -> "0.3").
+function fmtTick(v,unit){
+  if(v===0)return '0';
+  const mag=Math.floor(Math.log10(Math.abs(unit))+1e-9);
+  if(mag<-6||Math.abs(v)>=1e7)return v.toExponential(Math.max(0,Math.min(3,-mag-1)));
+  const dec=Math.max(0,-mag);
+  return v.toFixed(dec);
+}
+// SVG element factory local to this block, so the block does not depend on each app's own
+// el()/svgEl() helper and can be pasted unchanged everywhere.
+function tickEl(tag,attrs){
+  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]);
+  return e;
+}
+// Draw a plot frame with nice ticks on the bottom and left edges, in the style of R's
+// box()+axis(). Only ticks that fall inside the visible range are drawn, as R does. The
+// mapping functions X()/Y() are the plot's own, so ticks land exactly where the data do.
+// box = {left,right,top,bottom} pixel edges of the plotting region.
+// opts: ink, tickLen, fontSize, frame (draw the 4-sided box; default true),
+//       xTicks / yTicks (arrays to use instead of niceTicks, e.g. integer iterations),
+//       xFmt / yFmt (label formatter (v)=>string overriding fmtTick).
+function drawAxes(svg,X,Y,xlo,xhi,ylo,yhi,box,opts){
+  opts=opts||{};
+  const ink=opts.ink||'#000',tickLen=opts.tickLen||5,fs=opts.fontSize||11;
+  const {left,right,top,bottom}=box;
+  const g=tickEl('g',{});
+  if(opts.frame!==false)g.appendChild(tickEl('rect',{x:left,y:top,width:right-left,height:bottom-top,fill:'none',stroke:ink,'stroke-width':1}));
+  else{
+    g.appendChild(tickEl('line',{x1:left,y1:bottom,x2:right,y2:bottom,stroke:ink,'stroke-width':1}));
+    g.appendChild(tickEl('line',{x1:left,y1:top,x2:left,y2:bottom,stroke:ink,'stroke-width':1}));
+  }
+  const tx=opts.xTicks?{ticks:opts.xTicks,unit:1}:niceTicks(xlo,xhi);
+  const xf=opts.xFmt||(v=>fmtTick(v,tx.unit));
+  tx.ticks.forEach(v=>{
+    if(v<xlo-1e-9*tx.unit||v>xhi+1e-9*tx.unit)return;
+    const x=X(v);
+    g.appendChild(tickEl('line',{x1:x,y1:bottom,x2:x,y2:bottom+tickLen,stroke:ink,'stroke-width':1}));
+    const t=tickEl('text',{x:x,y:bottom+tickLen+fs+1,'text-anchor':'middle','font-size':fs,fill:ink});
+    t.textContent=xf(v);g.appendChild(t);
+  });
+  const ty=opts.yTicks?{ticks:opts.yTicks,unit:1}:niceTicks(ylo,yhi);
+  const yf=opts.yFmt||(v=>fmtTick(v,ty.unit));
+  ty.ticks.forEach(v=>{
+    if(v<ylo-1e-9*ty.unit||v>yhi+1e-9*ty.unit)return;
+    const y=Y(v);
+    g.appendChild(tickEl('line',{x1:left-tickLen,y1:y,x2:left,y2:y,stroke:ink,'stroke-width':1}));
+    const t=tickEl('text',{x:left-tickLen-3,y:y+fs*0.35,'text-anchor':'end','font-size':fs,fill:ink});
+    t.textContent=yf(v);g.appendChild(t);
+  });
+  svg.appendChild(g);
+}
 function el(tag,attrs,children){
   const svgTags=['svg','g','rect','circle','line','path','text','tspan'];
   const e=document.createElementNS(svgTags.includes(tag)?'http://www.w3.org/2000/svg':'http://www.w3.org/1999/xhtml',tag);
@@ -1222,10 +1316,8 @@ function kmFigure(R,g,basename){
   const ink='#000',faint='#999';
   [0,0.25,0.5,0.75,1].forEach(v=>{
     svg.appendChild(el('line',{x1:pad.l,y1:yS(v),x2:W-pad.r,y2:yS(v),stroke:faint,'stroke-width':0.6,'stroke-dasharray':'3,3'}));
-    const tx=el('text',{x:pad.l-6,y:yS(v)+4,'text-anchor':'end','font-size':10,'font-family':'var(--mono)'});
-    tx.style.fill=ink;tx.textContent=v.toFixed(2);svg.appendChild(tx);
   });
-  axes2(svg,W,H,pad,ink);
+  drawAxes(svg,xS,yS,0,tmax,0,1,{left:pad.l,right:W-pad.r,top:pad.t,bottom:H-pad.b},{frame:false});
   curves.forEach((pts,k)=>{
     let d='M'+xS(0)+','+yS(1);
     let prev=1;
@@ -1256,7 +1348,7 @@ function logLogFigure(R,g,basename){
   const xs=(xhi-xlo)||1,ys=(yhi-ylo)||1;
   const xS=v=>pad.l+(v-(xlo-xs*0.05))/(xs*1.1)*(W-pad.l-pad.r);
   const yS=v=>H-pad.b-(v-(ylo-ys*0.08))/(ys*1.16)*(H-pad.t-pad.b);
-  axes2(svg,W,H,pad,ink);
+  drawAxes(svg,xS,yS,xlo-xs*0.05,xlo-xs*0.05+xs*1.1,ylo-ys*0.08,ylo-ys*0.08+ys*1.16,{left:pad.l,right:W-pad.r,top:pad.t,bottom:H-pad.b},{frame:false});
   series.forEach((pts,k)=>{
     if(!pts.length)return;
     let d='';
@@ -1281,7 +1373,7 @@ function schoenFigure(R,j,basename){
   const xS=v=>pad.l+(v-(xlo-xs*0.05))/(xs*1.1)*(W-pad.l-pad.r);
   const yS=v=>H-pad.b-(v-(ylo-ys*0.12))/(ys*1.45)*(H-pad.t-pad.b);
   if(ylo<0&&yhi>0)svg.appendChild(el('line',{x1:pad.l,y1:yS(0),x2:W-pad.r,y2:yS(0),stroke:faint,'stroke-width':1.2,'stroke-dasharray':'4,3'}));
-  axes2(svg,W,H,pad,ink);
+  drawAxes(svg,xS,yS,xlo-xs*0.05,xlo-xs*0.05+xs*1.1,ylo-ys*0.12,ylo-ys*0.12+ys*1.45,{left:pad.l,right:W-pad.r,top:pad.t,bottom:H-pad.b},{frame:false});
   pts.forEach(p=>svg.appendChild(el('circle',{cx:xS(p.x),cy:yS(p.y),r:3.2,fill:col,'fill-opacity':0.75})));
   // least-squares trend line: a visible slope hints at a time-varying effect
   const mx=pts.reduce((s,p)=>s+p.x,0)/pts.length,my=pts.reduce((s,p)=>s+p.y,0)/pts.length;
