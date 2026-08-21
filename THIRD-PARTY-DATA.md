@@ -23,10 +23,12 @@ below. Values are reproduced **unmodified** unless a change is noted.
 | `linear_model.html` | `ToothGrowth` | datasets | Part of R (GPL-2 \| GPL-3) | Crampton (1947) |
 | `logistic_model.html` | `infert` | datasets | Part of R (GPL-2 \| GPL-3) | Trichopoulos et al. (1976) |
 | `logistic_model.html` | `iris` | datasets | Part of R (GPL-2 \| GPL-3) | Fisher (1936); Anderson (1935) |
+| `pca_model.html` | `USArrests` | datasets | Part of R (GPL-2 \| GPL-3) | McNeil, D.R. (1977), *Interactive Data Analysis*, Wiley; World Almanac and Book of Facts 1975 |
+| `pca_model.html` | `mtcars` | datasets | Part of R (GPL-2 \| GPL-3) | Henderson &amp; Velleman (1981), *Biometrics* 37, 391–411; 1974 *Motor Trend* magazine |
 
 Changes / 加えた変更:
 
-- `aml`, `cars`, `ToothGrowth`, `iris` — none. 改変なし。
+- `aml`, `cars`, `ToothGrowth`, `iris`, `USArrests`, `mtcars` — none. 改変なし。
 - `pharmacoSmoking` — restricted to the 113 patients with `ttr > 0` and to six columns,
   with `longestNoSmoke2 = 1` when `longestNoSmoke >= 100`, mirroring the lecture script.
   CC0 imposes no restriction on such changes.
@@ -109,9 +111,9 @@ material above, and nothing derived from it remains in this repository.
 
 The statistical routines (OLS; IRWLS for logistic regression; the Efron partial likelihood
 with Newton-Raphson, Kaplan-Meier, Schoenfeld residuals and Harrell's concordance for Cox
-regression; NMF; CART; correspondence analysis) were implemented from the standard published
-formulas and verified numerically against R as a black box. No source code from R or from any
-R package was copied or translated.
+regression; NMF; CART; correspondence analysis; the Jacobi eigendecomposition behind PCA)
+were implemented from the standard published formulas and verified numerically against R as a
+black box. No source code from R or from any R package was copied or translated.
 
 統計計算は公表された数式から実装し、R とは数値比較（ブラックボックス検証）で一致を
 確認したものです。R および R パッケージのソースコードの複製・翻案は行っていません。

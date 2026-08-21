@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pca_model</title>
+<style>
+  :root{
+    --bg:#0f1417; --panel:#161d21; --panel-2:#1c252a; --line:#2a353b;
+    --ink:#e8eef0; --ink-dim:#8b9ba1; --ink-faint:#5b6a70;
+    --cyan:#4fd6c8; --cyan-deep:#2a9e93; --amber:#e8a54b; --violet:#9d8cf0; --danger:#e06a6a;
+    --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Menlo",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  }
+  html[data-theme="light"]{
+    --bg:#ffffff; --panel:#f6f8f9; --panel-2:#edf1f3; --line:#d8e0e3;
+    --ink:#141c20; --ink-dim:#4e5d63; --ink-faint:#7f8d93;
+    --cyan:#0f9a8d; --cyan-deep:#0b7468; --amber:#b07617; --violet:#6250c8; --danger:#cf4a4a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--cyan)}
+
+  header{border-bottom:1px solid var(--line);padding:22px 28px 20px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+  .langtog{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-family:var(--mono);font-size:11px;align-self:center;flex-shrink:0}
+  .langtog button{background:transparent;color:var(--ink-dim);border:none;padding:5px 11px;cursor:pointer;letter-spacing:.06em;transition:background .12s,color .12s}
+  .langtog button:hover{color:var(--ink)}
+  .langtog button.on{background:var(--cyan);color:#062522;font-weight:700}
+  .brand{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:10px}
+  .brand .glyph{font-size:17px;letter-spacing:0;color:var(--ink)}
+  h1{font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .eq{font-family:var(--mono);color:var(--ink-dim);font-size:13px;margin-left:auto}
+
+  .wrap{display:grid;grid-template-columns:320px 1fr;gap:0;min-height:calc(100vh - 64px)}
+  .control{border-right:1px solid var(--line);padding:22px;background:var(--panel)}
+  .stage{padding:22px 28px;overflow:auto}
+  @media (max-width:820px){.wrap{grid-template-columns:1fr}.control{border-right:none;border-bottom:1px solid var(--line)}}
+
+  .group{margin-bottom:22px}
+  .group h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 11px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .group h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .dropzone{border:1px dashed var(--line);border-radius:8px;padding:20px 14px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:var(--panel-2)}
+  .dropzone:hover{border-color:var(--cyan-deep)}
+  .dropzone.drag{border-color:var(--cyan);background:#17272a}
+  .dropzone .big{font-size:13px;color:var(--ink);margin-bottom:4px}
+  .dropzone .small{font-size:11.5px;color:var(--ink-faint);font-family:var(--mono)}
+  input[type=file]{display:none}
+
+  .filemeta{margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);line-height:1.7;background:var(--panel-2);border-radius:6px;padding:8px 10px;display:none}
+  .filemeta.show{display:block}
+  .filemeta .k{color:var(--ink-faint)}
+  .filemeta .v{color:var(--cyan)}
+
+  .demorow{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+
+  label.field{display:block;margin-bottom:14px}
+  label.field .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--ink-dim);margin-bottom:6px;gap:8px}
+  label.field .lab .val{font-family:var(--mono);color:var(--cyan);font-size:12.5px;flex-shrink:0}
+  select,input[type=number]{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
+  select:focus,input[type=number]:focus{border-color:var(--cyan-deep)}
+  input[type=range]{width:100%;accent-color:var(--cyan)}
+  .checklist{max-height:184px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+  .checklist label{display:flex;align-items:center;gap:7px;padding:3px 2px;margin:0;font-family:var(--mono);font-size:12.5px;color:var(--ink);cursor:pointer}
+  .checklist label:hover{color:var(--cyan)}
+  .checklist input[type=checkbox]{width:auto;margin:0;flex-shrink:0;accent-color:var(--cyan);cursor:pointer}
+  .checklist .empty{display:block;color:var(--ink-faint);font-size:11.5px;padding:4px 2px}
+  .selectrow{display:flex;gap:8px;margin-bottom:6px}
+  .miniBtn{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);cursor:pointer;transition:border-color .15s,color .15s}
+  .miniBtn:hover{border-color:var(--cyan-deep);color:var(--cyan)}
+  .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.45}
+  .checkline input{accent-color:var(--cyan);margin-top:2px}
+  .checkline .sub{display:block;color:var(--ink-faint);font-size:11px;font-family:var(--mono)}
+
+  .run{width:100%;padding:12px;border:none;border-radius:7px;background:var(--cyan);color:#062522;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--sans);letter-spacing:.02em;transition:filter .15s,transform .05s}
+  .run:hover{filter:brightness(1.08)}
+  .run:active{transform:translateY(1px)}
+  .run:disabled{background:var(--line);color:var(--ink-faint);cursor:not-allowed}
+  .hint{font-size:11.5px;color:var(--ink-faint);margin-top:10px;line-height:1.6}
+
+  .placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-faint);text-align:center;gap:14px;padding:40px}
+  .placeholder .mark{font-family:var(--mono);font-size:44px;color:var(--line);letter-spacing:.05em}
+  .placeholder .mark .a{color:var(--cyan-deep)}
+  .placeholder p{max-width:420px;font-size:13.5px;line-height:1.7}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:22px}
+  .metric{background:var(--panel);padding:13px 15px}
+  .metric .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .metric .v{font-family:var(--mono);font-size:20px;color:var(--ink);margin-top:3px;font-weight:600}
+  .metric .v small{font-size:12px;color:var(--ink-dim);font-weight:400}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:20px}
+  .card h3{font-size:14px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:9px}
+  .card .desc{font-size:12px;color:var(--ink-dim);margin:0 0 14px;font-family:var(--mono)}
+
+  .plotctl{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+  .plotctl .fld{display:flex;flex-direction:column;gap:4px;min-width:104px}
+  .plotctl .fld > span{font-size:11px;color:var(--ink-faint);font-family:var(--mono)}
+  .plotctl select{padding:5px 8px;font-size:11.5px}
+  .plotctl input[type=range]{width:120px}
+  .plotctl .cbx{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-dim);font-family:var(--mono);padding-bottom:6px;cursor:pointer}
+  .plotctl .cbx input{accent-color:var(--cyan);cursor:pointer}
+
+  .svgscroll{overflow:auto;border-radius:6px;background:transparent;border:1px solid var(--line)}
+  svg{display:block}
+
+  .tablewrap{overflow:auto;max-height:400px;border:1px solid var(--line);border-radius:6px}
+  table{border-collapse:collapse;font-family:var(--mono);font-size:11.5px;width:100%}
+  th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{position:sticky;top:0;background:var(--panel-2);color:var(--ink-dim);font-weight:600;z-index:1}
+  td:first-child,th:first-child{text-align:left;color:var(--ink-dim);position:sticky;left:0;background:var(--panel-2)}
+  tbody td{color:var(--ink)}
+  td.pos{color:var(--danger)}
+  td.neg{color:#3b7fd4}
+
+  .downloads{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .dl{font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);color:var(--cyan);cursor:pointer;transition:border-color .15s}
+  .dl:hover{border-color:var(--cyan-deep)}
+
+  pre.summary{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:14px 16px;overflow:auto;line-height:1.55;margin:0;white-space:pre}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:11px 18px;border-radius:7px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:50;display:none;max-width:90vw}
+  footer{border-top:1px solid var(--line);padding:16px 28px;color:var(--ink-faint);font-size:12px;font-family:var(--mono);display:flex;gap:10px 20px;flex-wrap:wrap;align-items:center}
+  footer .credit{color:var(--ink-dim)}
+  footer .credit b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="langtog" id="langtog">
+    <button data-lang="ja" class="on">JA</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <div class="langtog" id="themetog">
+    <button data-theme="dark" title="Dark">☾</button>
+    <button data-theme="light" class="on" title="Light">☀</button>
+  </div>
+  <div class="brand"><span class="glyph">◧</span>PCA&nbsp;&amp;&nbsp;BIPLOT</div>
+  <h1 data-i18n="h1">主成分分析</h1>
+  <div class="eq" data-i18n-html="eq"></div>
+</header>
+
+<div class="wrap">
+  <aside class="control">
+
+    <div class="group">
+      <h2 data-i18n="g_data">データ</h2>
+      <div class="dropzone" id="drop">
+        <div class="big" data-i18n="drop_big">CSVをドロップ / クリック</div>
+        <div class="small" data-i18n="drop_small">1行=1標本 · 列=変数</div>
+      </div>
+      <input type="file" id="file" accept=".csv,.tsv,.txt">
+      <div class="filemeta" id="meta"></div>
+      <div class="demorow">
+        <button class="dl" id="demo1" data-i18n="demo1_btn">◇ デモ1 (USArrests)</button>
+        <button class="dl" id="demo2" data-i18n="demo2_btn">◇ デモ2 (mtcars)</button>
+      </div>
+      <div class="hint" data-i18n-html="demo_credit" style="margin-top:8px;line-height:1.6"></div>
+      <div class="hint" data-i18n="demo_tip" style="margin-top:6px;line-height:1.6"></div>
+    </div>
+
+    <div class="group" id="varGroup" style="display:none">
+      <h2 data-i18n="g_vars">変数選択</h2>
+      <label class="field">
+        <span class="lab"><span data-i18n="v_label">個体のラベル</span></span>
+        <select id="labelcol" size="1"></select>
+      </label>
+      <label class="field">
+        <span class="lab"><span data-i18n="v_vars">分析に使う変数 (数値)</span> <span class="val" id="varCount">0</span></span>
+        <div class="selectrow">
+          <button type="button" class="miniBtn" id="varSelectAll" data-i18n="btn_selectall">すべて選択</button>
+          <button type="button" class="miniBtn" id="varClearAll" data-i18n="btn_clearall">クリア</button>
+        </div>
+        <div class="checklist" id="vars"></div>
+      </label>
+      <div class="hint" data-i18n="v_hint">チェックした数値列だけを主成分分析に使います。</div>
+    </div>
+
+    <div class="group" id="flipGroup" style="display:none">
+      <h2 data-i18n="g_flip">符号の反転</h2>
+      <div class="checklist" id="fliplist"></div>
+      <div class="hint" data-i18n="flip_hint">チェックした変数は符号を反転（−1倍）してから分析します。</div>
+    </div>
+
+    <div class="group" id="optGroup" style="display:none">
+      <h2 data-i18n="g_opt">主成分分析の設定</h2>
+      <div class="checkline">
+        <input type="checkbox" id="doScale" checked>
+        <label for="doScale"><span data-i18n="cb_scale">変数を標準化する（相関行列を使う）</span>
+          <span class="sub" data-i18n="cb_scale_sub">OFFで分散共分散行列を使う</span></label>
+      </div>
+      <div class="hint" data-i18n="opt_hint">標準化すると各変数の分散が1にそろい、単位の影響を受けません。</div>
+    </div>
+
+    <div class="group" id="runGroup" style="display:none">
+      <button class="run" id="run" data-i18n="run">主成分分析を実行</button>
+      <div class="hint" data-i18n="hint">相関行列（または分散共分散行列）を固有値分解して主成分を求めます。Rの prcomp() に準じた出力形式です。計算はすべてブラウザ内で完結し、データは外部送信されません。</div>
+    </div>
+
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="placeholder" id="placeholder">
+      <div class="mark"><span class="a">◧</span></div>
+      <p data-i18n="ph_main">左でCSVを読み込むか、デモデータ (USArrests / mtcars) を試してください。</p>
+      <p data-i18n="ph_sub" style="font-size:12px;color:var(--ink-faint)">数値の変数を選んで主成分分析を実行します。寄与率・負荷量・主成分得点に加えて、バイプロットを描画します。</p>
+    </div>
+    <div id="results" style="display:none"></div>
+  </main>
+</div>
+
+<footer>
+  <span class="credit" data-i18n-html="f_model">PCA · Principal Component Analysis</span>
+  <span class="credit"><b data-i18n="f_org">滋賀大学データサイエンス学系</b> · <span data-i18n="f_name">佐藤健一</span></span>
+  <span class="credit" data-i18n-html="f_license"></span>
+  <button class="dl" id="saveApp" style="margin-left:auto" data-i18n="save_app">💾 GitHubから最新版を保存</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+let LANG='ja';
+
+/* ================= i18n ================= */
+const I18N={
+  ja:{
+    h1:'主成分分析',
+    eq:'z = <span style="color:var(--amber)">a₁x₁ + ⋯ + aₚxₚ</span>　（分散最大）',
+    g_data:'データ', g_vars:'変数選択', g_flip:'符号の反転', g_opt:'主成分分析の設定',
+    drop_big:'CSVをドロップ / クリック', drop_small:'1行=1標本 · 列=変数',
+    demo1_btn:'◇ デモ1 (USArrests)', demo2_btn:'◇ デモ2 (mtcars)',
+    demo_credit:'出典（いずれもRの標準データセット・datasetsパッケージ）: デモ1「USArrests」1973年の米国50州における人口10万人あたりの暴力犯罪検挙数と都市人口率（McNeil, D.R. 1977 <em>Interactive Data Analysis</em>, Wiley; 原典 World Almanac and Book of Facts 1975 / Statistical Abstracts of the United States 1975） — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/USArrests.html" target="_blank" rel="noopener">R documentation</a>。デモ2「mtcars」1974年 Motor Trend 誌による自動車32車種の燃費と設計・性能11項目（Henderson &amp; Velleman, 1981, <em>Biometrics</em> 37, 391–411） — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html" target="_blank" rel="noopener">R documentation</a>。いずれも値は改変せずそのまま収録しています。',
+    demo_tip:'ヒント: USArrests は変数が4つだけで、Rの prcomp()・biplot() の公式例そのものです。mtcars は11変数で、排気量(disp)が100単位・ギア比(drat)が3〜5と単位が大きく異なるため、「標準化する」のON/OFFで結果が劇的に変わります。標準化の意味を確かめるのに向いています。',
+    v_label:'個体のラベル', v_vars:'分析に使う変数 (数値)',
+    btn_selectall:'すべて選択', btn_clearall:'クリア',
+    v_hint:'チェックした数値列だけを主成分分析に使います。文字列の列は「個体のラベル」として散布図・バイプロットの点の名前に使えます。',
+    flip_hint:'チェックした変数は符号を反転（−1倍）してから分析します。値が小さいほど良い変数（タイムなど）を、大きいほど良い向きにそろえたいときに使います。',
+    cb_scale:'変数を標準化する（相関行列を使う）',
+    cb_scale_sub:'OFFで分散共分散行列を使う',
+    opt_hint:'標準化すると各変数の分散が1にそろい、単位の影響を受けません（Rの prcomp(x, scale.=TRUE) に相当）。OFFにすると分散の大きい変数が主成分を支配します。',
+    run:'主成分分析を実行', run_busy:'計算中…',
+    hint:'相関行列（または分散共分散行列）をヤコビ法で固有値分解して主成分を求めます。Rの prcomp() に準じた出力形式です。計算はすべてブラウザ内で完結し、データは外部送信されません。',
+    ph_main:'左でCSVを読み込むか、デモデータ (USArrests / mtcars) を試してください。',
+    ph_sub:'数値の変数を選んで主成分分析を実行します。寄与率・負荷量・主成分得点に加えて、バイプロットを描画します。',
+    f_model:'PCA · 主成分分析', save_app:'💾 GitHubから最新版を保存',
+    f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一',
+    f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MITライセンス</a>',
+    m_n:'標本数', m_p:'変数の数', m_dropped:'欠測で除外', m_pc1:'第1主成分の寄与率', m_pc12:'第2主成分までの累積', m_scaled:'標準化',
+    sec_imp:'寄与率', sec_imp_d:'各主成分の標準偏差・寄与率・累積寄与率。Rの summary(prcomp(...))$importance に対応します。',
+    sec_scree:'寄与率のグラフ（スクリープロット）', sec_scree_d:'棒が各主成分の寄与率、折れ線が累積寄与率です。',
+    sec_biplot:'バイプロット', sec_biplot_d:'点が個体の主成分得点、矢印が変数の負荷量です。矢印の向きが近い変数どうしは相関が高く、矢印の方向にある個体はその変数の値が大きいことを示します。',
+    sec_score:'主成分得点の散布図', sec_score_d:'個体を2つの主成分軸上に配置したものです。',
+    sec_load:'負荷量（固有ベクトル）', sec_load_d:'各変数が主成分にどれだけ寄与するかを表します。Rの prcomp(...)$rotation に対応します。',
+    sec_loadbar:'主成分ごとの負荷量', sec_loadbar_d:'正を赤、負を青で表示します。値の大きい変数がその主成分の意味を決めます。',
+    sec_scoretbl:'主成分得点', sec_scoretbl_d:'Rの prcomp(...)$x に対応します。',
+    ax_x:'横軸', ax_y:'縦軸', ax_flipx:'横軸を反転', ax_flipy:'縦軸を反転',
+    ax_arrow:'矢印の長さ', ax_fontsize:'文字の大きさ', ax_showlab:'ラベルを表示',
+    pc_label:'PC',
+    sign_note:'注意: 主成分の符号（向き）は数学的に任意です。このアプリでは各主成分で絶対値が最大の負荷量が正になるようにそろえているため、Rの prcomp() と符号が逆になることがあります。軸の反転で合わせられます。',
+    dl_title:'ダウンロード', dl_scores:'scores.csv (主成分得点)', dl_load:'loadings.csv (負荷量)', dl_log:'pca_model.log (設定・結果)',
+    col_var:'変数', col_sdev:'Standard deviation', col_prop:'Proportion of Variance', col_cum:'Cumulative Proportion',
+    toast_nofile:'CSVを読み込んでください',
+    toast_novar:'変数を2つ以上選択してください',
+    toast_parsefail:'CSVの解析に失敗しました',
+    toast_constant:'選んだ変数の中に、値がすべて同じ列（分散0）があります: {v}。標準化できないので、その変数を外すか標準化をOFFにしてください。',
+    toast_fewrows:'標本数が足りません（2以上必要です）。',
+    toast_demo1:'USArrestsデータを読み込みました (50標本)',
+    toast_demo2:'mtcarsデータを読み込みました (32標本)',
+    toast_calcerr:'計算エラー: {m}',
+    meta_file:'file', meta_rows:'標本', meta_cols:'変数',
+    call_data:'（読み込んだCSV）', lab_rownum:'（行番号）'
+  },
+  en:{
+    h1:'Principal Component Analysis',
+    eq:'z = <span style="color:var(--amber)">a₁x₁ + ⋯ + aₚxₚ</span>　(max variance)',
+    g_data:'Data', g_vars:'Variables', g_flip:'Sign flip', g_opt:'PCA options',
+    drop_big:'Drop a CSV / click', drop_small:'1 row = 1 sample · columns = variables',
+    demo1_btn:'◇ Demo 1 (USArrests)', demo2_btn:'◇ Demo 2 (mtcars)',
+    demo_credit:'Source (both are standard R datasets, the "datasets" package): Demo 1 "USArrests" — arrests per 100,000 residents for violent crimes in each of the 50 US states in 1973, plus the percent urban population (McNeil, D.R. 1977, <em>Interactive Data Analysis</em>, Wiley; originally from the World Almanac and Book of Facts 1975 and the Statistical Abstracts of the United States 1975) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/USArrests.html" target="_blank" rel="noopener">R documentation</a>. Demo 2 "mtcars" — fuel consumption and ten aspects of design and performance for 32 cars, from the 1974 <em>Motor Trend</em> magazine (Henderson &amp; Velleman, 1981, <em>Biometrics</em> 37, 391–411) — <a href="https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/mtcars.html" target="_blank" rel="noopener">R documentation</a>. Both are reproduced unmodified.',
+    demo_tip:'Tip: USArrests has only four variables and is the very example used in R\'s own prcomp() and biplot() help pages. mtcars has eleven variables on wildly different scales (displacement in the hundreds, rear-axle ratio between 3 and 5), so turning "standardize" on and off changes the result dramatically — a good way to see what standardizing actually does.',
+    v_label:'Point labels', v_vars:'Variables to analyse (numeric)',
+    btn_selectall:'Select all', btn_clearall:'Clear',
+    v_hint:'Only the ticked numeric columns enter the PCA. A text column can be used as the point label in the score plot and biplot.',
+    flip_hint:'Ticked variables are multiplied by -1 before the analysis. Useful when a smaller value means "better" (a race time, say) and you want every variable oriented the same way.',
+    cb_scale:'Standardize the variables (use the correlation matrix)',
+    cb_scale_sub:'When off, the covariance matrix is used',
+    opt_hint:'Standardizing gives every variable unit variance, so units do not matter (equivalent to R\'s prcomp(x, scale.=TRUE)). With it off, high-variance variables dominate the components.',
+    run:'Run PCA', run_busy:'Computing…',
+    hint:'Eigen-decomposes the correlation (or covariance) matrix by the Jacobi method. Output follows R\'s prcomp(). Everything runs in your browser; no data is uploaded.',
+    ph_main:'Load a CSV on the left, or try the demo data (USArrests / mtcars).',
+    ph_sub:'Choose the numeric variables and run the PCA. Reports the importance of components, loadings and scores, and draws a biplot.',
+    f_model:'PCA · principal component analysis', save_app:'💾 Save Latest HTML from GitHub',
+    f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
+    f_license:'<a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>',
+    m_n:'Samples', m_p:'Variables', m_dropped:'Dropped (missing)', m_pc1:'PC1 proportion', m_pc12:'Cumulative to PC2', m_scaled:'Standardized',
+    sec_imp:'Importance of components', sec_imp_d:'Standard deviation, proportion of variance and cumulative proportion for each component — R\'s summary(prcomp(...))$importance.',
+    sec_scree:'Scree plot', sec_scree_d:'Bars are the proportion of variance of each component; the line is the cumulative proportion.',
+    sec_biplot:'Biplot', sec_biplot_d:'Points are the scores of the individuals, arrows the loadings of the variables. Variables whose arrows point in similar directions are strongly correlated, and individuals lying along an arrow score high on that variable.',
+    sec_score:'Score plot', sec_score_d:'The individuals placed on two principal component axes.',
+    sec_load:'Loadings (eigenvectors)', sec_load_d:'How much each variable contributes to each component — R\'s prcomp(...)$rotation.',
+    sec_loadbar:'Loadings by component', sec_loadbar_d:'Positive in red, negative in blue. The largest entries give the component its meaning.',
+    sec_scoretbl:'Scores', sec_scoretbl_d:'R\'s prcomp(...)$x.',
+    ax_x:'x axis', ax_y:'y axis', ax_flipx:'flip x', ax_flipy:'flip y',
+    ax_arrow:'arrow length', ax_fontsize:'font size', ax_showlab:'show labels',
+    pc_label:'PC',
+    sign_note:'Note: the sign (direction) of a principal component is mathematically arbitrary. This app orients each component so that its largest-magnitude loading is positive, so signs may come out opposite to R\'s prcomp(). Use the flip controls to match.',
+    dl_title:'Downloads', dl_scores:'scores.csv (component scores)', dl_load:'loadings.csv (loadings)', dl_log:'pca_model.log (settings & results)',
+    col_var:'Variable', col_sdev:'Standard deviation', col_prop:'Proportion of Variance', col_cum:'Cumulative Proportion',
+    toast_nofile:'Please load a CSV first',
+    toast_novar:'Please select at least two variables',
+    toast_parsefail:'Failed to parse CSV',
+    toast_constant:'One of the chosen variables is constant (zero variance): {v}. It cannot be standardized — drop it, or turn standardizing off.',
+    toast_fewrows:'Not enough samples (at least 2 are required).',
+    toast_demo1:'Loaded the USArrests data (50 samples)',
+    toast_demo2:'Loaded the mtcars data (32 samples)',
+    toast_calcerr:'Computation error: {m}',
+    meta_file:'file', meta_rows:'samples', meta_cols:'variables',
+    call_data:'(loaded CSV)', lab_rownum:'(row number)'
+  }
+};
+function t(k){const d=I18N[LANG];return (d&&d[k]!=null)?d[k]:(I18N.ja[k]!=null?I18N.ja[k]:k);}
+function applyI18n(){
+  $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  $$('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  const runBtn=$('#run');if(runBtn&&!runBtn.dataset.busy)runBtn.textContent=t('run');
+  $$('#langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
+  document.documentElement.lang=LANG;
+  if(DATA){rebuildLabelSel();rebuildFlipList();}
+  if(LAST) render(LAST);
+}
+
+/* ================= state ================= */
+let DATA=null;   // {rows:[{col:val}], cols:[...], filename}
+let LAST=null;   // last fitted result for re-render
+// biplot / score-plot view state, preserved across re-renders (theme + language switches)
+let VIEW={dimX:0,dimY:1,flipX:false,flipY:false,arrowMul:1,fontMul:1,showLab:true};
+
+let toastTimer=null;
+function toast(msg){const el=$('#toast');el.textContent=msg;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',5200);}
+
+/* ================= CSV ingest (self-contained parser; RFC4180 quotes, auto delimiter) ================= */
+function parseCSVRows(text){
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(text.endsWith('\n'))text=text.slice(0,-1);
+  const firstLine=text.split('\n')[0]||'';
+  const delim=(firstLine.split('\t').length>firstLine.split(',').length)?'\t':',';
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+    else{if(c==='"')q=true;else if(c===delim){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=c;}
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(r=>!(r.length===1&&r[0].trim()===''));
+}
+function ingestParsed(res,filename){
+  const cols=res.meta.fields.filter(c=>c!=null&&c!=='');
+  const rows=res.data.filter(r=>cols.some(c=>r[c]!=null&&String(r[c]).trim()!==''));
+  DATA={rows,cols,filename};
+  buildVarUI();
+  $('#meta').classList.add('show');
+  $('#meta').innerHTML=`<span class="k">${t('meta_file')}</span> <span class="v">${filename}</span><br>`+
+    `<span class="k">${t('meta_rows')}</span> <span class="v">${rows.length}</span> · `+
+    `<span class="k">${t('meta_cols')}</span> <span class="v">${cols.length}</span>`;
+  $('#varGroup').style.display='';
+  $('#flipGroup').style.display='';
+  $('#optGroup').style.display='';
+  $('#runGroup').style.display='';
+}
+function ingestText(text,filename){
+  const rows=parseCSVRows(text);
+  if(!rows.length){toast(t('toast_parsefail'));return;}
+  const fields=rows[0].map(h=>String(h).trim());
+  const data=rows.slice(1).map(r=>{const o={};fields.forEach((f,i)=>o[f]=r[i]!=null?r[i]:'');return o;});
+  ingestParsed({meta:{fields},data},filename);
+}
+
+// blank cells and the literal tokens R writes for missing data
+const MISSING_TOKENS=new Set(['','NA','NaN','na','N/A','null','NULL']);
+function isMissingVal(v){return v==null||MISSING_TOKENS.has(String(v).trim());}
+
+/* detect if a column is numeric (>=95% of non-blank values parse as a number) */
+function isNumericCol(col){
+  let n=0,num=0;
+  for(const r of DATA.rows){const v=r[col];if(isMissingVal(v))continue;n++;
+    const s=String(v).trim();const f=parseFloat(s);
+    if(isFinite(f)&&!isNaN(f)&&/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(s))num++;
+  }
+  return n>0&&num/n>=0.95;
+}
+
+/* ================= variable selection UI ================= */
+function buildVarUI(){
+  rebuildLabelSel();
+  rebuildVarList();
+}
+// label column: any column may be used; default = the first non-numeric column, else row numbers
+function rebuildLabelSel(){
+  const sel=$('#labelcol');const prev=sel.value;
+  sel.innerHTML='';
+  const none=document.createElement('option');none.value='';none.textContent=t('lab_rownum');sel.appendChild(none);
+  DATA.cols.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+  const firstText=DATA.cols.find(c=>!isNumericCol(c));
+  const keep=[...sel.options].some(o=>o.value===prev)?prev:null;
+  sel.value=(keep!==null&&keep!=='')?keep:(firstText||'');
+  sel.onchange=rebuildVarList;
+}
+function rebuildVarList(){
+  const lab=$('#labelcol').value;const list=$('#vars');
+  const prevChecked={};$$('#vars input').forEach(cb=>prevChecked[cb.value]=cb.checked);
+  list.innerHTML='';
+  const numericCols=DATA.cols.filter(c=>c!==lab&&isNumericCol(c));
+  if(!numericCols.length){
+    const p=document.createElement('span');p.className='empty';
+    p.textContent=(LANG==='ja')?'（数値の列が見つかりません）':'(no numeric column found)';
+    list.appendChild(p);updateVarCount();rebuildFlipList();return;
+  }
+  numericCols.forEach(c=>{
+    const l=document.createElement('label');
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=c;
+    cb.checked=(c in prevChecked)?prevChecked[c]:true;
+    cb.onchange=()=>{updateVarCount();rebuildFlipList();};
+    const sp=document.createElement('span');sp.textContent=c;
+    l.appendChild(cb);l.appendChild(sp);list.appendChild(l);
+  });
+  updateVarCount();
+  rebuildFlipList();
+}
+function updateVarCount(){$('#varCount').textContent=$$('#vars input:checked').length;}
+// one row per SELECTED variable; ticking it multiplies that variable by -1 before the PCA
+function rebuildFlipList(){
+  const fl=$('#fliplist');
+  const prevChecked={};$$('#fliplist input').forEach(cb=>prevChecked[cb.value]=cb.checked);
+  fl.innerHTML='';
+  const chosen=[...$$('#vars input:checked')].map(cb=>cb.value);
+  if(!chosen.length){
+    const p=document.createElement('span');p.className='empty';
+    p.textContent=(LANG==='ja')?'（変数を選ぶと表示されます）':'(select a variable to see it here)';
+    fl.appendChild(p);return;
+  }
+  chosen.forEach(c=>{
+    const l=document.createElement('label');
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=c;
+    cb.checked=(c in prevChecked)?prevChecked[c]:false;
+    const sp=document.createElement('span');sp.textContent=c;
+    l.appendChild(cb);l.appendChild(sp);fl.appendChild(l);
+  });
+}
+
+/* ================= numeric core ================= */
+// Symmetric eigendecomposition by the cyclic Jacobi method. The rotation below is applied as
+// A -> R^T A R with R=[[c,s],[-s,c]]; the angle that zeroes a[p][q] under THAT convention is
+// atan2(2*apq, aqq-app) (NOT app-aqq). Getting this backwards silently fails to converge and
+// smears the eigenvalues toward their mean while preserving the trace, so it still looks
+// plausible -- exactly the bug that was found and fixed in dfm_ca.html.
+function jacobiEigen(A){
+  const n=A.length;
+  const a=A.map(r=>r.slice());
+  const V=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<120;sweep++){
+    let off=0;for(let p=0;p<n;p++)for(let q=p+1;q<n;q++)off+=a[p][q]*a[p][q];
+    if(off<1e-22)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){
+      if(Math.abs(a[p][q])<1e-300)continue;
+      const app=a[p][p],aqq=a[q][q],apq=a[p][q];
+      const phi=0.5*Math.atan2(2*apq,aqq-app);
+      const c=Math.cos(phi),s=Math.sin(phi);
+      for(let i=0;i<n;i++){const aip=a[i][p],aiq=a[i][q];a[i][p]=c*aip-s*aiq;a[i][q]=s*aip+c*aiq;}
+      for(let i=0;i<n;i++){const api=a[p][i],aqi=a[q][i];a[p][i]=c*api-s*aqi;a[q][i]=s*api+c*aqi;}
+      for(let i=0;i<n;i++){const vip=V[i][p],viq=V[i][q];V[i][p]=c*vip-s*viq;V[i][q]=s*vip+c*viq;}
+    }
+  }
+  const raw=[];for(let i=0;i<n;i++)raw.push(a[i][i]);
+  const order=raw.map((v,i)=>i).sort((x,y)=>raw[y]-raw[x]);
+  return {evals:order.map(i=>raw[i]),evecs:order.map(i=>V.map(row=>row[i]))};
+}
+
+// PCA on the (centred, optionally scaled) data matrix M (n x p).
+// Mirrors R's prcomp: sdev = sqrt(eigenvalues of the covariance matrix of the working matrix),
+// rotation = eigenvectors, scores = Z %*% rotation. The covariance uses the (n-1) denominator,
+// matching both stats::var and the sd used by base::scale.
+function computePCA(M,varNames,labels,doScale){
+  const n=M.length,p=varNames.length;
+  const mean=new Array(p).fill(0);
+  for(let j=0;j<p;j++){let s=0;for(let i=0;i<n;i++)s+=M[i][j];mean[j]=s/n;}
+  const sd=new Array(p).fill(1);
+  for(let j=0;j<p;j++){let s=0;for(let i=0;i<n;i++){const d=M[i][j]-mean[j];s+=d*d;}sd[j]=Math.sqrt(s/(n-1));}
+  if(doScale){
+    for(let j=0;j<p;j++)if(!(sd[j]>0))throw new Error('constant:'+varNames[j]);
+  }
+  const Z=[];
+  for(let i=0;i<n;i++){const r=new Array(p);for(let j=0;j<p;j++)r[j]=(M[i][j]-mean[j])/(doScale?sd[j]:1);Z.push(r);}
+  const S=Array.from({length:p},()=>new Array(p).fill(0));
+  for(let a=0;a<p;a++)for(let b=a;b<p;b++){
+    let s=0;for(let i=0;i<n;i++)s+=Z[i][a]*Z[i][b];
+    s/=(n-1);S[a][b]=s;S[b][a]=s;
+  }
+  const {evals,evecs}=jacobiEigen(S);
+  const sdev=evals.map(v=>Math.sqrt(Math.max(0,v)));
+  // The sign of an eigenvector is arbitrary. Fix it deterministically so that repeated runs and
+  // the downloaded CSVs always agree: orient each component so its largest-magnitude loading is
+  // positive. R's prcomp makes no such choice, so signs can differ from R (see sign_note).
+  const rotation=evecs.map(v=>{
+    let mi=0;for(let j=1;j<p;j++)if(Math.abs(v[j])>Math.abs(v[mi]))mi=j;
+    const sgn=v[mi]<0?-1:1;
+    return v.map(x=>x*sgn);
+  });
+  const scores=Z.map(row=>rotation.map(v=>{let s=0;for(let j=0;j<p;j++)s+=row[j]*v[j];return s;}));
+  const tot=evals.reduce((a,b)=>a+Math.max(0,b),0)||1;
+  const prop=evals.map(v=>Math.max(0,v)/tot);
+  const cum=[];let c=0;prop.forEach(v=>{c+=v;cum.push(c);});
+  return {n,p,varNames,labels,mean,sd,doScale,evals,sdev,rotation,scores,prop,cum};
+}
+
+function fmt(x,d){if(!isFinite(x))return String(x);return x.toFixed(d==null?4:d);}
+function pct(x){return (x*100).toFixed(1)+'%';}
+function lpad(s,w){s=String(s);return ' '.repeat(Math.max(0,w-s.length))+s;}
+function rpad(s,w){s=String(s);return s+' '.repeat(Math.max(0,w-s.length));}
+
+/* ================= run ================= */
+function run(){
+  if(!DATA){toast(t('toast_nofile'));return;}
+  const chosen=[...$$('#vars input:checked')].map(cb=>cb.value);
+  if(chosen.length<2){toast(t('toast_novar'));return;}
+  const labCol=$('#labelcol').value;
+  const flipSet=new Set([...$$('#fliplist input:checked')].map(cb=>cb.value));
+  const doScale=$('#doScale').checked;
+
+  const btn=$('#run');btn.dataset.busy='1';btn.textContent=t('run_busy');btn.disabled=true;
+  setTimeout(()=>{
+    try{
+      // drop rows with a missing or unparsable value in any chosen variable (R's prcomp would error)
+      const M=[],labels=[];let dropped=0;
+      DATA.rows.forEach((r,i)=>{
+        const row=new Array(chosen.length);let ok=true;
+        for(let j=0;j<chosen.length;j++){
+          const v=r[chosen[j]];
+          if(isMissingVal(v)){ok=false;break;}
+          const f=parseFloat(String(v).trim());
+          if(!isFinite(f)){ok=false;break;}
+          row[j]=flipSet.has(chosen[j])?-f:f;
+        }
+        if(!ok){dropped++;return;}
+        M.push(row);
+        labels.push(labCol?String(r[labCol]).trim():String(i+1));
+      });
+      if(M.length<2){toast(t('toast_fewrows'));throw new Error('__handled__');}
+      const R=computePCA(M,chosen,labels,doScale);
+      R.dropped=dropped;R.flipped=[...flipSet].filter(v=>chosen.includes(v));
+      R.labCol=labCol;R.filename=DATA.filename;
+      // reset the view only when the component count changed (keeps the user's axis choice otherwise)
+      if(VIEW.dimX>=R.p||VIEW.dimY>=R.p){VIEW.dimX=0;VIEW.dimY=Math.min(1,R.p-1);}
+      LAST=R;
+      render(LAST);
+    }catch(e){
+      if(e&&/^constant:/.test(e.message))toast(t('toast_constant').replace('{v}',e.message.slice(9)));
+      else if(e&&e.message!=='__handled__')toast(t('toast_calcerr').replace('{m}',e.message));
+      if(!e||e.message!=='__handled__')console.error(e);
+    }
+    btn.dataset.busy='';btn.textContent=t('run');btn.disabled=false;
+  },30);
+}
+
+/* ================= render helpers ================= */
+function el(tag,attrs,children){
+  const svgTags=['svg','g','rect','circle','line','path','text','tspan','polygon'];
+  const e=document.createElementNS(svgTags.includes(tag)?'http://www.w3.org/2000/svg':'http://www.w3.org/1999/xhtml',tag);
+  if(attrs)for(const k in attrs){if(k==='text')e.textContent=attrs[k];else e.setAttribute(k,attrs[k]);}
+  if(children)children.forEach(c=>e.appendChild(c));
+  return e;
+}
+function figure(svgEl,basename){
+  const wrap=el('div',{});
+  const sc=el('div',{class:'svgscroll'});sc.appendChild(svgEl);wrap.appendChild(sc);
+  const dls=el('div',{class:'downloads'});
+  const bs=el('button',{class:'dl',text:'SVG'});bs.onclick=()=>downloadSVGfile(svgEl,basename+'.svg');
+  dls.appendChild(bs);wrap.appendChild(dls);
+  return wrap;
+}
+function svgStandalone(svgEl){
+  const clone=svgEl.cloneNode(true);const NS='http://www.w3.org/2000/svg';
+  const style=document.createElementNS(NS,'style');
+  style.textContent='text{font-family:ui-monospace,Menlo,monospace}';
+  clone.insertBefore(style,clone.firstChild);clone.setAttribute('xmlns',NS);
+  return '<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
+}
+function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function saveText(name,text){saveBlob(new Blob([text],{type:'text/plain;charset=utf-8'}),name);}
+function downloadSVGfile(svgEl,name){saveBlob(new Blob([svgStandalone(svgEl)],{type:'image/svg+xml;charset=utf-8'}),name);}
+function csvCell(v){if(v==null)v='';v=String(v);if(/[",\n]/.test(v))return '"'+v.replace(/"/g,'""')+'"';return v;}
+
+const PCLBL=k=>t('pc_label')+(k+1);
+// plot ink is always drawn dark on a white plot ground so the downloaded SVG stands alone
+const INK='#000',FAINT='#999',RED='#dc2626',BLUE='#3b7fd4',AMBER='#b07617';
+
+/* ================= plots ================= */
+function screeSvg(R){
+  const W=720,H=340,pad={l:56,r:52,t:22,b:52};
+  const k=R.p,bw=(W-pad.l-pad.r)/k;
+  const svg=el('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
+  svg.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'#fff'}));
+  const yS=v=>H-pad.b-v*(H-pad.t-pad.b);
+  // gridlines at 0,25,50,75,100%
+  [0,0.25,0.5,0.75,1].forEach(g=>{
+    svg.appendChild(el('line',{x1:pad.l,y1:yS(g),x2:W-pad.r,y2:yS(g),stroke:'#e5e5e5','stroke-width':1}));
+    const tx=el('text',{x:pad.l-8,y:yS(g)+4,'text-anchor':'end','font-size':11,fill:FAINT});tx.textContent=(g*100)+'%';svg.appendChild(tx);
+  });
+  R.prop.forEach((v,i)=>{
+    const x=pad.l+i*bw;
+    svg.appendChild(el('rect',{x:x+bw*0.18,y:yS(v),width:bw*0.64,height:(H-pad.b)-yS(v),fill:AMBER,'fill-opacity':0.85}));
+    const tx=el('text',{x:x+bw/2,y:H-pad.b+16,'text-anchor':'middle','font-size':10,fill:INK});tx.textContent=PCLBL(i);svg.appendChild(tx);
+  });
+  // cumulative proportion polyline
+  let d='';
+  R.cum.forEach((v,i)=>{const x=pad.l+i*bw+bw/2;d+=(i?' L ':'M ')+x+' '+yS(v);});
+  svg.appendChild(el('path',{d:d,fill:'none',stroke:RED,'stroke-width':2}));
+  R.cum.forEach((v,i)=>{svg.appendChild(el('circle',{cx:pad.l+i*bw+bw/2,cy:yS(v),r:3.2,fill:RED}));});
+  svg.appendChild(el('line',{x1:pad.l,y1:H-pad.b,x2:W-pad.r,y2:H-pad.b,stroke:INK,'stroke-width':1}));
+  svg.appendChild(el('line',{x1:pad.l,y1:pad.t,x2:pad.l,y2:H-pad.b,stroke:INK,'stroke-width':1}));
+  const lg=el('text',{x:W-pad.r,y:pad.t+4,'text-anchor':'end','font-size':11,fill:RED});
+  lg.textContent=(LANG==='ja')?'— 累積寄与率':'— cumulative';svg.appendChild(lg);
+  const lg2=el('text',{x:W-pad.r,y:pad.t+20,'text-anchor':'end','font-size':11,fill:AMBER});
+  lg2.textContent=(LANG==='ja')?'■ 寄与率':'■ proportion';svg.appendChild(lg2);
+  return figure(svg,'pca_scree');
+}
+
+// Score plot and biplot share one renderer: `withArrows` adds the loading arrows.
+function scatterSvg(R,withArrows,basename){
+  const W=720,H=720,pad=64;
+  const dx=VIEW.dimX,dy=VIEW.dimY;
+  const sx=VIEW.flipX?-1:1,sy=VIEW.flipY?-1:1;
+  const fs=8*VIEW.fontMul;
+  const px=R.scores.map(s=>s[dx]*sx),py=R.scores.map(s=>s[dy]*sy);
+  let minX=Math.min(...px),maxX=Math.max(...px),minY=Math.min(...py),maxY=Math.max(...py);
+  minX=Math.min(minX,0);maxX=Math.max(maxX,0);minY=Math.min(minY,0);maxY=Math.max(maxY,0);
+  const cX=(minX+maxX)/2,cY=(minY+maxY)/2;
+  // square canvas + equal data range on both axes, so distances and angles read correctly
+  const half=(Math.max(maxX-minX,maxY-minY)/2||1)*1.12;
+  const sc=(W-2*pad)/(2*half);
+  const mx=W/2-cX*sc,my=H/2+cY*sc;
+  const X=v=>mx+v*sc,Y=v=>my-v*sc;
+  const svg=el('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
+  svg.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'#fff'}));
+  svg.appendChild(el('line',{x1:X(cX-half),y1:Y(0),x2:X(cX+half),y2:Y(0),stroke:'#ddd','stroke-width':1}));
+  svg.appendChild(el('line',{x1:X(0),y1:Y(cY-half),x2:X(0),y2:Y(cY+half),stroke:'#ddd','stroke-width':1}));
+  // individuals
+  R.scores.forEach((s,i)=>{
+    const x=X(s[dx]*sx),y=Y(s[dy]*sy);
+    svg.appendChild(el('circle',{cx:x,cy:y,r:3,fill:'#666','fill-opacity':0.8}));
+    if(VIEW.showLab){
+      const tx=el('text',{x:x+4.5,y:y+fs*0.34,'font-size':fs,fill:INK});
+      tx.textContent=R.labels[i];svg.appendChild(tx);
+    }
+  });
+  if(withArrows){
+    // scale the arrows so the longest reaches ~78% of the half-range, then apply the user multiplier
+    let maxLen=0;
+    for(let j=0;j<R.p;j++){
+      const a=R.rotation[dx][j]*sx,b=R.rotation[dy][j]*sy;
+      const L=Math.sqrt(a*a+b*b);if(L>maxLen)maxLen=L;
+    }
+    const amul=(maxLen>0?(half*0.78/maxLen):1)*VIEW.arrowMul;
+    for(let j=0;j<R.p;j++){
+      const ax=R.rotation[dx][j]*sx*amul,ay=R.rotation[dy][j]*sy*amul;
+      const x1=X(0),y1=Y(0),x2=X(ax),y2=Y(ay);
+      svg.appendChild(el('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:RED,'stroke-width':1.6}));
+      // arrow head
+      const ang=Math.atan2(y2-y1,x2-x1),hl=9,hw=3.6;
+      const hx=x2-hl*Math.cos(ang),hy=y2-hl*Math.sin(ang);
+      svg.appendChild(el('polygon',{points:[x2+','+y2,
+        (hx-hw*Math.sin(ang))+','+(hy+hw*Math.cos(ang)),
+        (hx+hw*Math.sin(ang))+','+(hy-hw*Math.cos(ang))].join(' '),fill:RED}));
+      const lx=x2+(x2>=x1?5:-5),anchor=(x2>=x1)?'start':'end';
+      const tv=el('text',{x:lx,y:y2+(y2>=y1?11:-4),'font-size':fs+2.5,'font-weight':700,fill:RED,'text-anchor':anchor});
+      tv.textContent=R.varNames[j];svg.appendChild(tv);
+    }
+  }
+  const xl=el('text',{x:W/2,y:H-18,'text-anchor':'middle','font-size':12,fill:INK});
+  xl.textContent=PCLBL(dx)+' ('+pct(R.prop[dx])+')'+(VIEW.flipX?' ×(-1)':'');svg.appendChild(xl);
+  const yl=el('text',{x:20,y:H/2,'text-anchor':'middle','font-size':12,fill:INK,transform:'rotate(-90 20 '+(H/2)+')'});
+  yl.textContent=PCLBL(dy)+' ('+pct(R.prop[dy])+')'+(VIEW.flipY?' ×(-1)':'');svg.appendChild(yl);
+  return figure(svg,basename);
+}
+
+// One bar per variable for a single component; positive red, negative blue (as in the textbook's
+// mybarplot). The y-axis is fixed to the global min/max over ALL components so the panels are
+// comparable when the user steps through them.
+function loadingBarSvg(R,k){
+  const W=720,H=320,pad={l:56,r:24,t:26,b:78};
+  const bw=(W-pad.l-pad.r)/R.p;
+  let lo=0,hi=0;
+  R.rotation.forEach(v=>v.forEach(x=>{if(x<lo)lo=x;if(x>hi)hi=x;}));
+  const span=(hi-lo)||1;lo-=span*0.08;hi+=span*0.08;
+  const yS=v=>H-pad.b-(v-lo)/(hi-lo)*(H-pad.t-pad.b);
+  const svg=el('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
+  svg.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'#fff'}));
+  const y0=yS(0);
+  svg.appendChild(el('line',{x1:pad.l,y1:y0,x2:W-pad.r,y2:y0,stroke:INK,'stroke-width':1}));
+  svg.appendChild(el('line',{x1:pad.l,y1:pad.t,x2:pad.l,y2:H-pad.b,stroke:INK,'stroke-width':1}));
+  [lo,(lo+hi)/2,hi].forEach(g=>{
+    const tx=el('text',{x:pad.l-8,y:yS(g)+4,'text-anchor':'end','font-size':10,fill:FAINT});tx.textContent=g.toFixed(2);svg.appendChild(tx);
+  });
+  R.rotation[k].forEach((v,j)=>{
+    const x=pad.l+j*bw;
+    const yv=yS(v);
+    svg.appendChild(el('rect',{x:x+bw*0.2,y:Math.min(yv,y0),width:bw*0.6,height:Math.abs(yv-y0),fill:v>0?RED:BLUE,'fill-opacity':0.85}));
+    const tx=el('text',{x:x+bw/2,y:H-pad.b+8,'font-size':10,fill:INK,'text-anchor':'end',
+      transform:'rotate(-90 '+(x+bw/2)+' '+(H-pad.b+8)+')'});
+    tx.textContent=R.varNames[j];svg.appendChild(tx);
+  });
+  const ti=el('text',{x:pad.l,y:16,'font-size':13,'font-weight':700,fill:INK});
+  ti.textContent=PCLBL(k)+'  ('+pct(R.prop[k])+')';svg.appendChild(ti);
+  return figure(svg,'pca_loading_'+PCLBL(k));
+}
+
+/* ================= tables ================= */
+function importanceTable(R){
+  const wrap=el('div',{class:'tablewrap'});
+  const tb=el('table',{});
+  const thead=el('thead',{});const htr=el('tr',{});
+  htr.appendChild(el('th',{text:''}));
+  for(let k=0;k<R.p;k++)htr.appendChild(el('th',{text:PCLBL(k)}));
+  thead.appendChild(htr);tb.appendChild(thead);
+  const body=el('tbody',{});
+  const rows=[[t('col_sdev'),R.sdev],[t('col_prop'),R.prop],[t('col_cum'),R.cum]];
+  rows.forEach(([nm,arr])=>{
+    const tr=el('tr',{});tr.appendChild(el('td',{text:nm}));
+    arr.forEach(v=>tr.appendChild(el('td',{text:fmt(v,4)})));
+    body.appendChild(tr);
+  });
+  tb.appendChild(body);wrap.appendChild(tb);return wrap;
+}
+function loadingTable(R){
+  const wrap=el('div',{class:'tablewrap'});
+  const tb=el('table',{});
+  const thead=el('thead',{});const htr=el('tr',{});
+  htr.appendChild(el('th',{text:t('col_var')}));
+  for(let k=0;k<R.p;k++)htr.appendChild(el('th',{text:PCLBL(k)}));
+  thead.appendChild(htr);tb.appendChild(thead);
+  const body=el('tbody',{});
+  R.varNames.forEach((nm,j)=>{
+    const tr=el('tr',{});tr.appendChild(el('td',{text:nm}));
+    for(let k=0;k<R.p;k++){
+      const v=R.rotation[k][j];
+      tr.appendChild(el('td',{text:fmt(v,4),class:v>0?'pos':'neg'}));
+    }
+    body.appendChild(tr);
+  });
+  tb.appendChild(body);wrap.appendChild(tb);return wrap;
+}
+function scoreTable(R){
+  const wrap=el('div',{class:'tablewrap'});
+  const tb=el('table',{});
+  const thead=el('thead',{});const htr=el('tr',{});
+  htr.appendChild(el('th',{text:R.labCol||t('lab_rownum')}));
+  const kmax=Math.min(R.p,8);
+  for(let k=0;k<kmax;k++)htr.appendChild(el('th',{text:PCLBL(k)}));
+  thead.appendChild(htr);tb.appendChild(thead);
+  const body=el('tbody',{});
+  R.scores.forEach((s,i)=>{
+    const tr=el('tr',{});tr.appendChild(el('td',{text:R.labels[i]}));
+    for(let k=0;k<kmax;k++)tr.appendChild(el('td',{text:fmt(s[k],4)}));
+    body.appendChild(tr);
+  });
+  tb.appendChild(body);wrap.appendChild(tb);return wrap;
+}
+
+/* ================= render ================= */
+function card(titleKey,descKey,body){
+  const c=el('div',{class:'card'});
+  c.appendChild(el('h3',{text:t(titleKey)}));
+  if(descKey)c.appendChild(el('div',{class:'desc',text:t(descKey)}));
+  if(body)c.appendChild(body);
+  return c;
+}
+// the axis / arrow / label controls shared by the biplot and the score plot
+function plotControls(R,onChange){
+  const box=el('div',{class:'plotctl'});
+  const mkSel=(labKey,cur,cb)=>{
+    const f=el('div',{class:'fld'});f.appendChild(el('span',{text:t(labKey)}));
+    const s=el('select',{});
+    for(let k=0;k<R.p;k++){const o=el('option',{value:k,text:PCLBL(k)+' ('+pct(R.prop[k])+')'});s.appendChild(o);}
+    s.value=cur;s.onchange=()=>{cb(+s.value);onChange();};
+    f.appendChild(s);return f;
+  };
+  box.appendChild(mkSel('ax_x',VIEW.dimX,v=>VIEW.dimX=v));
+  box.appendChild(mkSel('ax_y',VIEW.dimY,v=>VIEW.dimY=v));
+  const mkCbx=(labKey,cur,cb)=>{
+    const l=el('label',{class:'cbx'});
+    const i=el('input',{type:'checkbox'});i.checked=cur;i.onchange=()=>{cb(i.checked);onChange();};
+    l.appendChild(i);l.appendChild(el('span',{text:t(labKey)}));return l;
+  };
+  box.appendChild(mkCbx('ax_flipx',VIEW.flipX,v=>VIEW.flipX=v));
+  box.appendChild(mkCbx('ax_flipy',VIEW.flipY,v=>VIEW.flipY=v));
+  box.appendChild(mkCbx('ax_showlab',VIEW.showLab,v=>VIEW.showLab=v));
+  const mkRange=(labKey,cur,min,max,step,cb)=>{
+    const f=el('div',{class:'fld'});f.appendChild(el('span',{text:t(labKey)}));
+    const r=el('input',{type:'range',min:min,max:max,step:step});r.value=cur;
+    r.oninput=()=>{cb(+r.value);onChange();};
+    f.appendChild(r);return f;
+  };
+  box.appendChild(mkRange('ax_fontsize',VIEW.fontMul,0.6,2.4,0.1,v=>VIEW.fontMul=v));
+  return box;
+}
+
+function render(R){
+  $('#placeholder').style.display='none';
+  const box=$('#results');box.style.display='';box.innerHTML='';
+
+  const met=el('div',{class:'metrics'});
+  const addM=(k,v,small)=>{
+    const m=el('div',{class:'metric'});m.appendChild(el('div',{class:'k',text:k}));
+    const vv=el('div',{class:'v',text:v});
+    if(small){const s=el('small',{text:' '+small});vv.appendChild(s);}
+    m.appendChild(vv);met.appendChild(m);
+  };
+  addM(t('m_n'),String(R.n));
+  addM(t('m_p'),String(R.p));
+  addM(t('m_pc1'),pct(R.prop[0]));
+  addM(t('m_pc12'),R.p>1?pct(R.cum[1]):pct(R.cum[0]));
+  addM(t('m_scaled'),R.doScale?'ON':'OFF');
+  if(R.dropped)addM(t('m_dropped'),String(R.dropped));
+  box.appendChild(met);
+
+  // importance + scree
+  const impCard=card('sec_imp','sec_imp_d',importanceTable(R));
+  box.appendChild(impCard);
+  box.appendChild(card('sec_scree','sec_scree_d',screeSvg(R)));
+
+  // biplot (the centrepiece) -- controls redraw both plots in place
+  const rerender=()=>render(LAST);
+  const biCard=card('sec_biplot','sec_biplot_d',null);
+  biCard.appendChild(plotControls(R,rerender));
+  const arrowFld=el('div',{class:'plotctl'});
+  const af=el('div',{class:'fld'});af.appendChild(el('span',{text:t('ax_arrow')}));
+  const ar=el('input',{type:'range',min:0.2,max:3,step:0.1});ar.value=VIEW.arrowMul;
+  ar.oninput=()=>{VIEW.arrowMul=+ar.value;rerender();};
+  af.appendChild(ar);arrowFld.appendChild(af);biCard.appendChild(arrowFld);
+  biCard.appendChild(scatterSvg(R,true,'pca_biplot'));
+  biCard.appendChild(el('div',{class:'hint',text:t('sign_note')}));
+  box.appendChild(biCard);
+
+  // score plot (same axes, no arrows)
+  box.appendChild(card('sec_score','sec_score_d',scatterSvg(R,false,'pca_scores')));
+
+  // loadings
+  box.appendChild(card('sec_load','sec_load_d',loadingTable(R)));
+  const lbCard=card('sec_loadbar','sec_loadbar_d',null);
+  const lsel=el('div',{class:'plotctl'});
+  const lf=el('div',{class:'fld'});lf.appendChild(el('span',{text:t('pc_label')}));
+  const ls=el('select',{});
+  for(let k=0;k<R.p;k++)ls.appendChild(el('option',{value:k,text:PCLBL(k)}));
+  ls.value=Math.min(VIEW.dimX,R.p-1);
+  ls.onchange=()=>{lbCard.replaceChild(loadingBarSvg(R,+ls.value),lbCard.lastChild);};
+  lf.appendChild(ls);lsel.appendChild(lf);lbCard.appendChild(lsel);
+  lbCard.appendChild(loadingBarSvg(R,Math.min(VIEW.dimX,R.p-1)));
+  box.appendChild(lbCard);
+
+  // scores table
+  box.appendChild(card('sec_scoretbl','sec_scoretbl_d',scoreTable(R)));
+
+  // downloads
+  const dlCard=el('div',{class:'card'});
+  dlCard.appendChild(el('h3',{text:t('dl_title')}));
+  const dls=el('div',{class:'downloads'});
+  const b1=el('button',{class:'dl',text:t('dl_scores')});b1.onclick=()=>downloadScores(R);
+  const b2=el('button',{class:'dl',text:t('dl_load')});b2.onclick=()=>downloadLoadings(R);
+  const b3=el('button',{class:'dl',text:t('dl_log')});b3.onclick=()=>saveText('pca_model.log',buildLog(R));
+  dls.appendChild(b1);dls.appendChild(b2);dls.appendChild(b3);
+  dlCard.appendChild(dls);box.appendChild(dlCard);
+}
+
+/* ================= downloads ================= */
+function downloadScores(R){
+  let csv='﻿'+csvCell(R.labCol||'id');
+  for(let k=0;k<R.p;k++)csv+=','+csvCell(PCLBL(k));
+  csv+='\n';
+  R.scores.forEach((s,i)=>{
+    csv+=csvCell(R.labels[i]);
+    for(let k=0;k<R.p;k++)csv+=','+s[k];
+    csv+='\n';
+  });
+  saveBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),'scores.csv');
+}
+function downloadLoadings(R){
+  let csv='﻿'+csvCell(t('col_var'));
+  for(let k=0;k<R.p;k++)csv+=','+csvCell(PCLBL(k));
+  csv+='\n';
+  R.varNames.forEach((nm,j)=>{
+    csv+=csvCell(nm);
+    for(let k=0;k<R.p;k++)csv+=','+R.rotation[k][j];
+    csv+='\n';
+  });
+  saveBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),'loadings.csv');
+}
+
+// A compact R-console-like summary, mirroring what summary(prcomp(...)) and $rotation print.
+function buildSummaryText(R){
+  const L=[];
+  L.push('Importance of components:');
+  const heads=[''],rowsOut=[[t('col_sdev')],[t('col_prop')],[t('col_cum')]];
+  for(let k=0;k<R.p;k++){
+    heads.push(PCLBL(k));
+    rowsOut[0].push(fmt(R.sdev[k],4));
+    rowsOut[1].push(fmt(R.prop[k],4));
+    rowsOut[2].push(fmt(R.cum[k],4));
+  }
+  const wid=heads.map((h,i)=>Math.max(h.length,...rowsOut.map(r=>String(r[i]).length)));
+  L.push(heads.map((h,i)=>i===0?rpad(h,wid[0]):lpad(h,wid[i])).join(' '));
+  rowsOut.forEach(r=>L.push(r.map((v,i)=>i===0?rpad(v,wid[0]):lpad(v,wid[i])).join(' ')));
+  L.push('');
+  L.push('Rotation (loadings):');
+  // the log mimics the R console, so its headers stay English regardless of the UI language
+  const h2=['Variable'];for(let k=0;k<R.p;k++)h2.push(PCLBL(k));
+  const body=R.varNames.map((nm,j)=>{
+    const r=[nm];for(let k=0;k<R.p;k++)r.push(fmt(R.rotation[k][j],4));return r;
+  });
+  const w2=h2.map((h,i)=>Math.max(h.length,...body.map(r=>String(r[i]).length)));
+  L.push(h2.map((h,i)=>i===0?rpad(h,w2[0]):lpad(h,w2[i])).join(' '));
+  body.forEach(r=>L.push(r.map((v,i)=>i===0?rpad(v,w2[0]):lpad(v,w2[i])).join(' ')));
+  return L.join('\n');
+}
+function buildLog(R){
+  const L=[];
+  L.push('# Principal Component Analysis (PCA) -- log');
+  try{L.push('generated : '+new Date().toISOString());}catch(e){}
+  L.push('');
+  L.push('[Settings]');
+  L.push('data      : '+(R.filename||t('call_data')));
+  L.push('labels    : '+(R.labCol||t('lab_rownum')));
+  L.push('variables : '+R.varNames.join(', '));
+  L.push('n         : '+R.n+',  p: '+R.p);
+  L.push('scaled    : '+(R.doScale?'TRUE (correlation matrix)':'FALSE (covariance matrix)'));
+  if(R.flipped&&R.flipped.length)L.push('sign flip : '+R.flipped.join(', '));
+  if(R.dropped)L.push('dropped   : '+R.dropped+' row(s) with missing values');
+  L.push('');
+  L.push(buildSummaryText(R));
+  L.push('');
+  L.push(t('sign_note'));
+  return L.join('\n')+'\n';
+}
+
+/* ================= demo data =================
+   USArrests: violent-crime arrest rates per 100,000 residents in each of the 50 US states in
+   1973, plus the percent of the population living in urban areas (McNeil, D.R. 1977,
+   Interactive Data Analysis, Wiley; originally the World Almanac and Book of Facts 1975 and the
+   Statistical Abstracts of the United States 1975). Bundled in R's "datasets" package and used
+   as the worked example in R's own ?prcomp and ?biplot. The measurements are factual data, not
+   creative expression, and are reproduced here unchanged/unmodified. */
+function usArrestsCSV(){
+  return `state,Murder,Assault,UrbanPop,Rape
+Alabama,13.2,236,58,21.2
+Alaska,10,263,48,44.5
+Arizona,8.1,294,80,31
+Arkansas,8.8,190,50,19.5
+California,9,276,91,40.6
+Colorado,7.9,204,78,38.7
+Connecticut,3.3,110,77,11.1
+Delaware,5.9,238,72,15.8
+Florida,15.4,335,80,31.9
+Georgia,17.4,211,60,25.8
+Hawaii,5.3,46,83,20.2
+Idaho,2.6,120,54,14.2
+Illinois,10.4,249,83,24
+Indiana,7.2,113,65,21
+Iowa,2.2,56,57,11.3
+Kansas,6,115,66,18
+Kentucky,9.7,109,52,16.3
+Louisiana,15.4,249,66,22.2
+Maine,2.1,83,51,7.8
+Maryland,11.3,300,67,27.8
+Massachusetts,4.4,149,85,16.3
+Michigan,12.1,255,74,35.1
+Minnesota,2.7,72,66,14.9
+Mississippi,16.1,259,44,17.1
+Missouri,9,178,70,28.2
+Montana,6,109,53,16.4
+Nebraska,4.3,102,62,16.5
+Nevada,12.2,252,81,46
+New Hampshire,2.1,57,56,9.5
+New Jersey,7.4,159,89,18.8
+New Mexico,11.4,285,70,32.1
+New York,11.1,254,86,26.1
+North Carolina,13,337,45,16.1
+North Dakota,0.8,45,44,7.3
+Ohio,7.3,120,75,21.4
+Oklahoma,6.6,151,68,20
+Oregon,4.9,159,67,29.3
+Pennsylvania,6.3,106,72,14.9
+Rhode Island,3.4,174,87,8.3
+South Carolina,14.4,279,48,22.5
+South Dakota,3.8,86,45,12.8
+Tennessee,13.2,188,59,26.9
+Texas,12.7,201,80,25.5
+Utah,3.2,120,80,22.9
+Vermont,2.2,48,32,11.2
+Virginia,8.5,156,63,20.7
+Washington,4,145,73,26.2
+West Virginia,5.7,81,39,9.3
+Wisconsin,2.6,53,66,10.8
+Wyoming,6.8,161,60,15.6`;
+}
+/* mtcars: fuel consumption and ten aspects of design and performance for 32 automobiles from
+   the 1973-74 model years, extracted from the 1974 Motor Trend US magazine (Henderson and
+   Velleman, 1981, "Building multiple regression models interactively", Biometrics 37, 391-411).
+   Bundled in R's "datasets" package. The measurements are factual data, not creative
+   expression, and are reproduced here unchanged/unmodified. */
+function mtcarsCSV(){
+  return `car,mpg,cyl,disp,hp,drat,wt,qsec,vs,am,gear,carb
+Mazda RX4,21,6,160,110,3.9,2.62,16.46,0,1,4,4
+Mazda RX4 Wag,21,6,160,110,3.9,2.875,17.02,0,1,4,4
+Datsun 710,22.8,4,108,93,3.85,2.32,18.61,1,1,4,1
+Hornet 4 Drive,21.4,6,258,110,3.08,3.215,19.44,1,0,3,1
+Hornet Sportabout,18.7,8,360,175,3.15,3.44,17.02,0,0,3,2
+Valiant,18.1,6,225,105,2.76,3.46,20.22,1,0,3,1
+Duster 360,14.3,8,360,245,3.21,3.57,15.84,0,0,3,4
+Merc 240D,24.4,4,146.7,62,3.69,3.19,20,1,0,4,2
+Merc 230,22.8,4,140.8,95,3.92,3.15,22.9,1,0,4,2
+Merc 280,19.2,6,167.6,123,3.92,3.44,18.3,1,0,4,4
+Merc 280C,17.8,6,167.6,123,3.92,3.44,18.9,1,0,4,4
+Merc 450SE,16.4,8,275.8,180,3.07,4.07,17.4,0,0,3,3
+Merc 450SL,17.3,8,275.8,180,3.07,3.73,17.6,0,0,3,3
+Merc 450SLC,15.2,8,275.8,180,3.07,3.78,18,0,0,3,3
+Cadillac Fleetwood,10.4,8,472,205,2.93,5.25,17.98,0,0,3,4
+Lincoln Continental,10.4,8,460,215,3,5.424,17.82,0,0,3,4
+Chrysler Imperial,14.7,8,440,230,3.23,5.345,17.42,0,0,3,4
+Fiat 128,32.4,4,78.7,66,4.08,2.2,19.47,1,1,4,1
+Honda Civic,30.4,4,75.7,52,4.93,1.615,18.52,1,1,4,2
+Toyota Corolla,33.9,4,71.1,65,4.22,1.835,19.9,1,1,4,1
+Toyota Corona,21.5,4,120.1,97,3.7,2.465,20.01,1,0,3,1
+Dodge Challenger,15.5,8,318,150,2.76,3.52,16.87,0,0,3,2
+AMC Javelin,15.2,8,304,150,3.15,3.435,17.3,0,0,3,2
+Camaro Z28,13.3,8,350,245,3.73,3.84,15.41,0,0,3,4
+Pontiac Firebird,19.2,8,400,175,3.08,3.845,17.05,0,0,3,2
+Fiat X1-9,27.3,4,79,66,4.08,1.935,18.9,1,1,4,1
+Porsche 914-2,26,4,120.3,91,4.43,2.14,16.7,0,1,5,2
+Lotus Europa,30.4,4,95.1,113,3.77,1.513,16.9,1,1,5,2
+Ford Pantera L,15.8,8,351,264,4.22,3.17,14.5,0,1,5,4
+Ferrari Dino,19.7,6,145,175,3.62,2.77,15.5,0,1,5,6
+Maserati Bora,15,8,301,335,3.54,3.57,14.6,0,1,5,8
+Volvo 142E,21.4,4,121,109,4.11,2.78,18.6,1,1,4,2`;
+}
+
+/* ================= wiring ================= */
+const drop=$('#drop'),fileInput=$('#file');
+drop.onclick=()=>fileInput.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)readFile(f);};
+fileInput.onchange=e=>{const f=e.target.files[0];if(f)readFile(f);};
+function readFile(f){const rd=new FileReader();rd.onload=()=>ingestText(rd.result,f.name);rd.readAsText(f);}
+$('#demo1').onclick=()=>{ingestText(usArrestsCSV(),'USArrests');toast(t('toast_demo1'));};
+$('#demo2').onclick=()=>{ingestText(mtcarsCSV(),'mtcars');toast(t('toast_demo2'));};
+$('#varSelectAll').onclick=()=>{$$('#vars input').forEach(cb=>cb.checked=true);updateVarCount();rebuildFlipList();};
+$('#varClearAll').onclick=()=>{$$('#vars input').forEach(cb=>cb.checked=false);updateVarCount();rebuildFlipList();};
+
+$('#run').onclick=run;
+
+$('#langtog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.lang;applyI18n();});
+$('#themetog').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.setAttribute('data-theme',b.dataset.theme);$$('#themetog button').forEach(x=>x.classList.toggle('on',x===b));if(LAST)render(LAST);});
+
+async function saveSelf(){
+  try{
+    const res=await fetch(location.href.split('?')[0]);
+    const html=await res.text();
+    const name=(location.pathname.split('/').pop()||'pca_model.html');
+    saveBlob(new Blob([html],{type:'text/html;charset=utf-8'}),name);
+  }catch(e){toast('保存に失敗しました: '+e.message);}
+}
+$('#saveApp').onclick=saveSelf;
+
+(function(){try{const q=new URLSearchParams(location.search).get('lang');if(q==='en'||q==='ja')LANG=q;}catch(e){}})();
+applyI18n();
+</script>
+</body>
+</html>

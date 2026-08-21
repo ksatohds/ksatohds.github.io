@@ -146,9 +146,20 @@ title: Software
 
   </div>
 
-  <h3 class="subsection-title" data-ja="回帰・統計モデリング" style="margin-top: 30px;">Regression &amp; statistical modeling</h3>
+  <h3 class="subsection-title" data-ja="回帰・多変量解析" style="margin-top: 30px;">Regression &amp; multivariate analysis</h3>
 
   <div class="gallery-grid sw-stat">
+
+    <div class="gallery-item">
+      <div class="gallery-body">
+        <h3 data-ja="主成分分析（バイプロット）">Principal component analysis (biplot)</h3>
+        <p data-ja="相関行列（標準化ON）または分散共分散行列を固有値分解して主成分を求めます。寄与率・スクリープロット・負荷量・主成分得点に加えて、個体の得点と変数の負荷量を同一平面に描くバイプロットを表示します。使う変数の選択、標準化の有無、符号の反転、表示する主成分軸の組み合わせを対話的に変更できます。Rの prcomp() の出力を再現します。">Eigen-decomposes the correlation matrix (standardize on) or the covariance matrix to obtain the principal components. Reports the importance of components, a scree plot, loadings and scores, and draws a biplot placing the scores of the individuals and the loadings of the variables on the same plane. Variable selection, standardizing, sign flipping and the choice of component axes are all interactive. Output reproduces R's prcomp().</p>
+        <div class="gallery-links">
+          <a href="{{ '/html_app/pca_model.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
+        </div>
+      </div>
+    </div>
 
     <div class="gallery-item">
       <div class="gallery-body">
