@@ -259,6 +259,8 @@ const I18N={
     sec_scoretbl:'主成分得点', sec_scoretbl_d:'Rの prcomp(...)$x に対応します。',
     ax_x:'横軸', ax_y:'縦軸', ax_flipx:'横軸を反転', ax_flipy:'縦軸を反転',
     ax_arrow:'矢印の長さ', ax_fontsize:'文字の大きさ', ax_showlab:'ラベルを表示',
+    ax_nolap:'ラベルの重なりを回避 (nolap)', ax_nolapdiv:'ラベルの行数',
+    nolap_note:'「ラベルの重なりを回避」はRパッケージ nolap (v0.0.2) のアルゴリズムを移植したものです。図を格子状のセルに分け、同じセルに複数のラベルが入ったときは、最も近い空きセルへ1つずつ移動します。点そのものは正しい位置のまま動かさず、動いたラベルには引き出し線を引きます。横方向の分割数はラベルの文字幅から自動で決めます（ラベルは縦より横に長いため、正方形のセルでは左右の隣と重なってしまうためです）。スライダーで変えられるのは縦の行数で、増やすほどラベルは元の位置に近づきます。',
     pc_label:'PC',
     sign_note:'注意: 主成分の符号（向き）は数学的に任意です。このアプリでは各主成分で絶対値が最大の負荷量が正になるようにそろえているため、Rの prcomp() と符号が逆になることがあります。軸の反転で合わせられます。',
     dl_title:'ダウンロード', dl_scores:'scores.csv (主成分得点)', dl_load:'loadings.csv (負荷量)', dl_log:'pca_model.log (設定・結果)',
@@ -306,6 +308,8 @@ const I18N={
     sec_scoretbl:'Scores', sec_scoretbl_d:'R\'s prcomp(...)$x.',
     ax_x:'x axis', ax_y:'y axis', ax_flipx:'flip x', ax_flipy:'flip y',
     ax_arrow:'arrow length', ax_fontsize:'font size', ax_showlab:'show labels',
+    ax_nolap:'avoid label overlap (nolap)', ax_nolapdiv:'label rows',
+    nolap_note:'"Avoid label overlap" ports the algorithm of the R package nolap (v0.0.2): the plot is cut into grid cells, and whenever several labels land in the same cell they are moved one at a time to the nearest empty cell. The points themselves stay at their true coordinates; a leader line connects any label that moved. The horizontal division count is derived automatically from the width of the labels themselves (a label is much wider than it is tall, so square cells would still let neighbours collide). The slider sets the number of vertical rows: more rows keeps labels closer to their points.',
     pc_label:'PC',
     sign_note:'Note: the sign (direction) of a principal component is mathematically arbitrary. This app orients each component so that its largest-magnitude loading is positive, so signs may come out opposite to R\'s prcomp(). Use the flip controls to match.',
     dl_title:'Downloads', dl_scores:'scores.csv (component scores)', dl_load:'loadings.csv (loadings)', dl_log:'pca_model.log (settings & results)',
@@ -337,7 +341,9 @@ function applyI18n(){
 let DATA=null;   // {rows:[{col:val}], cols:[...], filename}
 let LAST=null;   // last fitted result for re-render
 // biplot / score-plot view state, preserved across re-renders (theme + language switches)
-let VIEW={dimX:0,dimY:1,flipX:false,flipY:false,arrowMul:1,fontMul:1,showLab:true};
+let VIEW={dimX:0,dimY:1,flipX:false,flipY:false,arrowMul:1,fontMul:1,showLab:true,
+          nolap:true,nolapDiv:34};
+let LASTGRID=null; // grid actually used by the last nolap pass, reported under the biplot
 
 let toastTimer=null;
 function toast(msg){const el=$('#toast');el.textContent=msg;el.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',5200);}
@@ -515,6 +521,99 @@ function computePCA(M,varNames,labels,doScale){
   return {n,p,varNames,labels,mean,sd,doScale,evals,sdev,rotation,scores,prop,cum};
 }
 
+/* ---- nolap: spread overlapping labels into distinct grid cells --------------
+   A port of the R package nolap v0.0.2 (https://github.com/ksatohds/nolap).
+   The plane is cut into xdiv x ydiv cells. Whenever several points share a cell
+   they are relocated one at a time, each to its NEAREST empty cell. Because every
+   move fills exactly one empty cell, the number of surplus points decreases
+   strictly and the loop ends after at most n moves -- this is the v0.0.2 change
+   that removed the seed-dependent infinite loop of v0.0.1.
+
+   Adapted for annotation rather than plotting: here the POINT stays at its true
+   position and only its LABEL is relocated (with a leader line when it moves),
+   because in a biplot the point coordinates are the result, not decoration.
+   Both plots use a square canvas with the same data range on x and y, so one
+   grid count serves both axes. */
+function nolapRng(seed){
+  let s=(seed>>>0)||1;
+  return function(){s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};
+}
+function nolapOnce(i0,j0,xdiv,ydiv,seed){
+  const n=i0.length,rnd=nolapRng(seed);
+  const cnt=new Int32Array(xdiv*ydiv);
+  const pi=Int32Array.from(i0),pj=Int32Array.from(j0);
+  for(let k=0;k<n;k++)cnt[pi[k]*ydiv+pj[k]]++;
+  for(let guard=0;guard<n;guard++){
+    let m=0;for(let c=0;c<cnt.length;c++)if(cnt[c]>m)m=cnt[c];
+    if(m<=1)break;
+    const crowded=[];for(let c=0;c<cnt.length;c++)if(cnt[c]===m)crowded.push(c);
+    const cc=crowded[Math.floor(rnd()*crowded.length)]|0;
+    const ci=(cc/ydiv)|0,cj=cc%ydiv;
+    let best=Infinity,ties=[];
+    for(let c=0;c<cnt.length;c++){
+      if(cnt[c]!==0)continue;
+      const ei=(c/ydiv)|0,ej=c%ydiv;
+      const d2=(ei-ci)*(ei-ci)+(ej-cj)*(ej-cj);
+      if(d2<best){best=d2;ties=[c];}else if(d2===best)ties.push(c);
+    }
+    if(!ties.length)break; // no empty cell left (grid too small); leave as is
+    const ec=ties[Math.floor(rnd()*ties.length)]|0;
+    let mv=-1;for(let k=0;k<n;k++)if(pi[k]===ci&&pj[k]===cj){mv=k;break;}
+    if(mv<0)break;
+    pi[mv]=(ec/ydiv)|0;pj[mv]=ec%ydiv;
+    cnt[cc]=m-1;cnt[ec]=1;
+  }
+  let ssd=0;
+  for(let k=0;k<n;k++){const di=i0[k]-pi[k],dj=j0[k]-pj[k];ssd+=Math.sqrt(di*di+dj*dj);}
+  return {pi,pj,ssd};
+}
+// xs/ys are pixel coordinates inside [x0,x0+w] x [y0,y0+h]; returns the cell centre
+// each label should be drawn at, plus a moved flag. nseed random restarts are tried
+// and the layout with the smallest total displacement (ssd) is kept, as in nolap().
+// Rough on-screen width of the labels, used to pick the horizontal grid count.
+// The MAXIMUM is used, not a percentile: a cell narrower than the longest label
+// lets that label spill into its neighbours, which is exactly the overlap the grid
+// is meant to prevent. CJK glyphs are about one em wide against ~0.62 em for ASCII.
+function estLabelWidth(labels,fs){
+  if(!labels.length)return fs;
+  const cjk=/[　-ヿ㐀-䶿一-鿿＀-￯]/;
+  let mx=fs*2;
+  labels.forEach(s=>{
+    let u=0;for(const ch of String(s))u+=cjk.test(ch)?1:0.62;
+    if(u*fs>mx)mx=u*fs;
+  });
+  return mx;
+}
+function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed){
+  const n=xs.length;
+  if(!n)return {x:[],y:[],moved:[]};
+  // grow the grid until it can hold every point (R's nolap errors here instead;
+  // silently enlarging is friendlier in a browser and never loses a label). Growing
+  // makes the cells smaller than a label, so some overlap can survive -- the caller is
+  // told via `grew` so it can say so rather than quietly showing a worse picture.
+  const grew=(xdiv*ydiv<n);
+  while(xdiv*ydiv<n){xdiv++;ydiv++;}
+  const cw=w/xdiv,ch=h/ydiv;
+  const clamp=(v,lo,hi)=>v<lo?lo:(v>hi?hi:v);
+  const i0=new Int32Array(n),j0=new Int32Array(n);
+  for(let k=0;k<n;k++){
+    i0[k]=clamp(Math.floor((xs[k]-x0)/cw),0,xdiv-1);
+    j0[k]=clamp(Math.floor((ys[k]-y0)/ch),0,ydiv-1);
+  }
+  let best=null;
+  for(let s=1;s<=Math.max(1,nseed);s++){
+    const r=nolapOnce(i0,j0,xdiv,ydiv,s);
+    if(!best||r.ssd<best.ssd)best=r;
+  }
+  const X=new Array(n),Y=new Array(n),moved=new Array(n);
+  for(let k=0;k<n;k++){
+    X[k]=x0+(best.pi[k]+0.5)*cw;
+    Y[k]=y0+(best.pj[k]+0.5)*ch;
+    moved[k]=(best.pi[k]!==i0[k]||best.pj[k]!==j0[k]);
+  }
+  return {x:X,y:Y,moved:moved,xdiv:xdiv,ydiv:ydiv,grew:grew};
+}
+
 function fmt(x,d){if(!isFinite(x))return String(x);return x.toFixed(d==null?4:d);}
 function pct(x){return (x*100).toFixed(1)+'%';}
 function lpad(s,w){s=String(s);return ' '.repeat(Math.max(0,w-s.length))+s;}
@@ -646,15 +745,49 @@ function scatterSvg(R,withArrows,basename){
   svg.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'#fff'}));
   svg.appendChild(el('line',{x1:X(cX-half),y1:Y(0),x2:X(cX+half),y2:Y(0),stroke:'#ddd','stroke-width':1}));
   svg.appendChild(el('line',{x1:X(0),y1:Y(cY-half),x2:X(0),y2:Y(cY+half),stroke:'#ddd','stroke-width':1}));
-  // individuals
+  // individuals: the dots always sit at their true coordinates
+  const ptX=R.scores.map(s=>X(s[dx]*sx)),ptY=R.scores.map(s=>Y(s[dy]*sy));
   R.scores.forEach((s,i)=>{
-    const x=X(s[dx]*sx),y=Y(s[dy]*sy);
-    svg.appendChild(el('circle',{cx:x,cy:y,r:3,fill:'#666','fill-opacity':0.8}));
-    if(VIEW.showLab){
-      const tx=el('text',{x:x+4.5,y:y+fs*0.34,'font-size':fs,fill:INK});
-      tx.textContent=R.labels[i];svg.appendChild(tx);
-    }
+    svg.appendChild(el('circle',{cx:ptX[i],cy:ptY[i],r:3,fill:'#666','fill-opacity':0.8}));
   });
+  if(VIEW.showLab){
+    if(VIEW.nolap){
+      // labels only are pushed into distinct grid cells; a leader line keeps each
+      // label tied to the dot it belongs to.
+      // The data range is the same on both axes, but a text label is far wider than
+      // it is tall, so SQUARE cells are the wrong shape for what is being packed:
+      // one label would still collide with its left/right neighbours. The vertical
+      // divisions are the user's control (how many rows of labels can stack) and the
+      // horizontal count is derived from the widest labels actually being drawn.
+      const wPx=estLabelWidth(R.labels,fs);
+      const xdiv=Math.max(3,Math.floor((W-pad)/wPx));
+      // a row shorter than the text would let labels touch vertically, so cap the
+      // requested row count at what the current font size actually allows. A rendered
+      // text box is about 1.4x the font size once ascent and descent are counted, so
+      // 1.45 leaves a hair of clearance -- measured, not assumed.
+      const ydivMax=Math.max(3,Math.floor((H-pad)/(fs*1.45)));
+      const ydiv=Math.max(3,Math.min(VIEW.nolapDiv,ydivMax));
+      // Capacity implied by the geometry: how many labels this plot can separate at the
+      // current font size. Worth reporting, because once xdiv*ydiv < n no choice of grid
+      // can remove the overlaps and the only remedy is a smaller font or fewer labels.
+      const pl=nolapPlace(ptX,ptY,pad*0.5,pad*0.5,W-pad,H-pad,xdiv,ydiv,10);
+      LASTGRID={xdiv:pl.xdiv,ydiv:pl.ydiv,ydivMax:ydivMax,cells:pl.xdiv*pl.ydiv,
+                n:R.labels.length,labW:Math.round(wPx),rowH:+(fs*1.45).toFixed(1),tight:pl.grew};
+      R.labels.forEach((lb,i)=>{
+        if(pl.moved[i])svg.appendChild(el('line',{x1:ptX[i],y1:ptY[i],x2:pl.x[i],y2:pl.y[i],
+          stroke:'#bbb','stroke-width':0.7}));
+      });
+      R.labels.forEach((lb,i)=>{
+        const tx=el('text',{x:pl.x[i],y:pl.y[i]+fs*0.34,'font-size':fs,fill:INK,'text-anchor':'middle'});
+        tx.textContent=lb;svg.appendChild(tx);
+      });
+    }else{
+      R.labels.forEach((lb,i)=>{
+        const tx=el('text',{x:ptX[i]+4.5,y:ptY[i]+fs*0.34,'font-size':fs,fill:INK});
+        tx.textContent=lb;svg.appendChild(tx);
+      });
+    }
+  }
   if(withArrows){
     // scale the arrows so the longest reaches ~78% of the half-range, then apply the user multiplier
     let maxLen=0;
@@ -796,6 +929,7 @@ function plotControls(R,onChange){
   box.appendChild(mkCbx('ax_flipx',VIEW.flipX,v=>VIEW.flipX=v));
   box.appendChild(mkCbx('ax_flipy',VIEW.flipY,v=>VIEW.flipY=v));
   box.appendChild(mkCbx('ax_showlab',VIEW.showLab,v=>VIEW.showLab=v));
+  box.appendChild(mkCbx('ax_nolap',VIEW.nolap,v=>VIEW.nolap=v));
   const mkRange=(labKey,cur,min,max,step,cb)=>{
     const f=el('div',{class:'fld'});f.appendChild(el('span',{text:t(labKey)}));
     const r=el('input',{type:'range',min:min,max:max,step:step});r.value=cur;
@@ -803,6 +937,9 @@ function plotControls(R,onChange){
     f.appendChild(r);return f;
   };
   box.appendChild(mkRange('ax_fontsize',VIEW.fontMul,0.6,2.4,0.1,v=>VIEW.fontMul=v));
+  // one grid count serves both axes: the canvas is square and the data range is
+  // the same on x and y, so the cells are square too
+  box.appendChild(mkRange('ax_nolapdiv',VIEW.nolapDiv,10,70,1,v=>VIEW.nolapDiv=v));
   return box;
 }
 
@@ -839,8 +976,23 @@ function render(R){
   const ar=el('input',{type:'range',min:0.2,max:3,step:0.1});ar.value=VIEW.arrowMul;
   ar.oninput=()=>{VIEW.arrowMul=+ar.value;rerender();};
   af.appendChild(ar);arrowFld.appendChild(af);biCard.appendChild(arrowFld);
+  LASTGRID=null;
   biCard.appendChild(scatterSvg(R,true,'pca_biplot'));
+  if(LASTGRID){
+    const g=LASTGRID,tight=g.tight;
+    const msg=(LANG==='ja')
+      ? 'グリッドの目安: 横 '+g.xdiv+' （図の幅 ÷ 最長ラベル '+g.labW+'px） × 縦 '+g.ydiv+
+        ' （図の高さ ÷ 1行 '+g.rowH+'px、上限 '+g.ydivMax+'） = '+g.cells+' セル / ラベル '+g.n+' 個。'+
+        (tight?' ラベルの大きさに対してセルが足りず、格子を細かくして詰めました。セルがラベルより狭いため重なりが残ることがあります。文字を小さくするか、ラベルを減らしてください。'
+              :' セル数が足りているので、重なりはすべて解消できます。')
+      : 'Grid guideline: '+g.xdiv+' across (plot width / longest label '+g.labW+'px) x '+g.ydiv+
+        ' down (plot height / row '+g.rowH+'px, max '+g.ydivMax+') = '+g.cells+' cells for '+g.n+' labels.'+
+        (tight?' Too few cells for labels this size, so the grid was subdivided to fit them; cells are now narrower than a label and some overlap can remain. Reduce the font size or the number of labels.'
+              :' Enough cells, so every overlap can be resolved.');
+    biCard.appendChild(el('div',{class:'hint',text:msg}));
+  }
   biCard.appendChild(el('div',{class:'hint',text:t('sign_note')}));
+  biCard.appendChild(el('div',{class:'hint',text:t('nolap_note')}));
   box.appendChild(biCard);
 
   // score plot (same axes, no arrows)

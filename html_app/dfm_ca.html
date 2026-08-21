@@ -58,6 +58,8 @@
   label.field .lab .val{font-family:var(--mono);color:var(--cyan);font-size:12.5px;flex-shrink:0}
   select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:8px 10px;font-family:var(--mono);font-size:12.5px;outline:none}
   select:focus{border-color:var(--cyan-deep)}
+  .checkline{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-dim);line-height:1.45}
+  .checkline input{accent-color:var(--cyan);margin-top:2px}
   .checklist{max-height:184px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
   .checklist label{display:flex;align-items:center;gap:7px;padding:3px 2px;margin:0;font-family:var(--mono);font-size:12.5px;color:var(--ink);cursor:pointer}
   .checklist label:hover{color:var(--cyan)}
@@ -153,6 +155,10 @@
         <span class="lab"><span data-i18n="c_wordsize">単語の文字 (×6pt)</span> <span class="val" id="wordSizeVal">2.0</span></span>
         <input type="range" id="wordSize" min="1" max="5" value="2" step="0.5">
       </label>
+      <div class="checkline" style="margin-bottom:12px">
+        <input type="checkbox" id="nolap" checked>
+        <label for="nolap"><span data-i18n="c_nolap">ラベルの重なりを回避 (nolap)</span></label>
+      </div>
       <label class="field">
         <span class="lab"><span data-i18n="dim_x">横軸</span></span>
         <select id="dimX"></select>
@@ -199,7 +205,7 @@ const I18N={
     demo_credit:'デモは宮沢賢治「<b>銀河鉄道の夜</b>」（1933年没・<b>パブリックドメイン</b>）1作品を約150字ずつに区切って作成した文書単語行列です（157文書 × 95語、値は語の出現頻度）。属性は作者自身の全9章にもとづく <b>場面</b>（起=1〜3章・承=4〜6章・転=7〜8章・結=9章）／<b>章</b>（9水準）／<b>舞台</b>（地上・銀河）の3列で、章の途中では区切っていません。第9章だけで全体の51%を占めるため「結」が最も大きな場面になります。1作品にそろえたのは、作者も文体も語彙も共通にしたうえで場面の違いだけを見るためです（95語のうち75語は2つ以上の場面に出現します）。翻刻は<a href="https://www.aozora.gr.jp/cards/000081/card456.html" target="_blank" rel="noopener">青空文庫</a>により、同文庫の求めに従い記します — 底本: 『新編銀河鉄道の夜』新潮文庫（新潮社）、入力: 中村隆生・野口英司、校正: 野口英司。',
     g_group:'グループ変数（カテゴリ）', group_empty:'ファイルを読み込むと候補が表示されます。',
     group_hint:'カテゴリ属性（水準数 2〜20）を最大2つ選べます。2つ選ぶと交互作用（例: 男性_20代）を内部で作成します。',
-    g_disp:'表示', c_words:'表示語数', freq_ge:'頻度 ≥ {x}', c_catsize:'グループ変数の文字 (×6pt)', c_wordsize:'単語の文字 (×6pt)', dim_x:'横軸', dim_y:'縦軸',
+    g_disp:'表示', c_words:'表示語数', freq_ge:'頻度 ≥ {x}', c_catsize:'グループ変数の文字 (×6pt)', c_wordsize:'単語の文字 (×6pt)', c_nolap:'ラベルの重なりを回避 (nolap)', dim_x:'横軸', dim_y:'縦軸',
     ph_main:'左で属性列付きの文書単語行列CSVを読み込むか、デモを試してください。',
     ph_sub:'カテゴリ属性と語のクロス集計に対応分析を適用し、属性カテゴリと語を同一平面に布置するバイプロットを描きます。',
     f_model:'対応分析 · バイプロット（symmetric map）', f_org:'滋賀大学データサイエンス学系', f_name:'佐藤健一',
@@ -223,7 +229,7 @@ const I18N={
     demo_credit:'Demo: a document-feature matrix built from a single public-domain work, Kenji Miyazawa\'s <b>Night on the Galactic Railroad</b> (the author died in 1933), cut into pieces of about 150 characters (157 documents x 95 terms; values are word counts). The attributes follow the author\'s own nine chapter headings: <b>act</b> (ki = ch. 1-3, sho = ch. 4-6, ten = ch. 7-8, ketsu = ch. 9), <b>chapter</b> (9 levels) and <b>setting</b> (on earth / on the galaxy). No chapter is split. Chapter 9 alone is 51% of the work, which is why the last act is the largest. One work rather than three: with the author, the register and most of the vocabulary held constant, the only thing left to separate the documents is the scene (75 of the 95 terms occur in two or more acts). The transcription is from <a href="https://www.aozora.gr.jp/cards/000081/card456.html" target="_blank" rel="noopener">Aozora Bunko</a>; as Aozora asks: 底本 Shinpen Ginga Tetsudo no Yoru, Shincho Bunko; 入力 Takao Nakamura and Eiji Noguchi; 校正 Eiji Noguchi.',
     g_group:'Group variables (categorical)', group_empty:'Candidates appear here after a file is loaded.',
     group_hint:'Pick up to 2 categorical attributes (2–20 levels). Picking 2 builds their interaction internally (e.g. male_20s).',
-    g_disp:'Display', c_words:'Words shown', freq_ge:'freq ≥ {x}', c_catsize:'Category text (×6pt)', c_wordsize:'Word text (×6pt)', dim_x:'X axis', dim_y:'Y axis',
+    g_disp:'Display', c_words:'Words shown', freq_ge:'freq ≥ {x}', c_catsize:'Category text (×6pt)', c_wordsize:'Word text (×6pt)', c_nolap:'avoid label overlap (nolap)', dim_x:'X axis', dim_y:'Y axis',
     ph_main:'Load a DFM CSV that has attribute columns on the left, or try the demo.',
     ph_sub:'Correspondence analysis on the attribute×word crosstab, drawing a biplot that places categories and words on one plane.',
     f_model:'Correspondence analysis · biplot (symmetric map)', f_org:'Faculty of Data Science, Shiga University', f_name:'Kenichi Satoh',
@@ -321,6 +327,99 @@ function buildCT(groups){
 
 // ---------- correspondence analysis ----------
 // Jacobi eigenvalue decomposition of a symmetric matrix. Returns eigenvalues (desc) and eigenvectors (columns).
+/* ---- nolap: spread overlapping labels into distinct grid cells --------------
+   A port of the R package nolap v0.0.2 (https://github.com/ksatohds/nolap).
+   The plane is cut into xdiv x ydiv cells. Whenever several points share a cell
+   they are relocated one at a time, each to its NEAREST empty cell. Because every
+   move fills exactly one empty cell, the number of surplus points decreases
+   strictly and the loop ends after at most n moves -- this is the v0.0.2 change
+   that removed the seed-dependent infinite loop of v0.0.1.
+
+   Adapted for annotation rather than plotting: here the POINT stays at its true
+   position and only its LABEL is relocated (with a leader line when it moves),
+   because in a biplot the point coordinates are the result, not decoration.
+   Both plots use a square canvas with the same data range on x and y, so one
+   grid count serves both axes. */
+function nolapRng(seed){
+  let s=(seed>>>0)||1;
+  return function(){s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};
+}
+function nolapOnce(i0,j0,xdiv,ydiv,seed){
+  const n=i0.length,rnd=nolapRng(seed);
+  const cnt=new Int32Array(xdiv*ydiv);
+  const pi=Int32Array.from(i0),pj=Int32Array.from(j0);
+  for(let k=0;k<n;k++)cnt[pi[k]*ydiv+pj[k]]++;
+  for(let guard=0;guard<n;guard++){
+    let m=0;for(let c=0;c<cnt.length;c++)if(cnt[c]>m)m=cnt[c];
+    if(m<=1)break;
+    const crowded=[];for(let c=0;c<cnt.length;c++)if(cnt[c]===m)crowded.push(c);
+    const cc=crowded[Math.floor(rnd()*crowded.length)]|0;
+    const ci=(cc/ydiv)|0,cj=cc%ydiv;
+    let best=Infinity,ties=[];
+    for(let c=0;c<cnt.length;c++){
+      if(cnt[c]!==0)continue;
+      const ei=(c/ydiv)|0,ej=c%ydiv;
+      const d2=(ei-ci)*(ei-ci)+(ej-cj)*(ej-cj);
+      if(d2<best){best=d2;ties=[c];}else if(d2===best)ties.push(c);
+    }
+    if(!ties.length)break; // no empty cell left (grid too small); leave as is
+    const ec=ties[Math.floor(rnd()*ties.length)]|0;
+    let mv=-1;for(let k=0;k<n;k++)if(pi[k]===ci&&pj[k]===cj){mv=k;break;}
+    if(mv<0)break;
+    pi[mv]=(ec/ydiv)|0;pj[mv]=ec%ydiv;
+    cnt[cc]=m-1;cnt[ec]=1;
+  }
+  let ssd=0;
+  for(let k=0;k<n;k++){const di=i0[k]-pi[k],dj=j0[k]-pj[k];ssd+=Math.sqrt(di*di+dj*dj);}
+  return {pi,pj,ssd};
+}
+// xs/ys are pixel coordinates inside [x0,x0+w] x [y0,y0+h]; returns the cell centre
+// each label should be drawn at, plus a moved flag. nseed random restarts are tried
+// and the layout with the smallest total displacement (ssd) is kept, as in nolap().
+// Rough on-screen width of the labels, used to pick the horizontal grid count.
+// The MAXIMUM is used, not a percentile: a cell narrower than the longest label
+// lets that label spill into its neighbours, which is exactly the overlap the grid
+// is meant to prevent. CJK glyphs are about one em wide against ~0.62 em for ASCII.
+function estLabelWidth(labels,fs){
+  if(!labels.length)return fs;
+  const cjk=/[　-ヿ㐀-䶿一-鿿＀-￯]/;
+  let mx=fs*2;
+  labels.forEach(s=>{
+    let u=0;for(const ch of String(s))u+=cjk.test(ch)?1:0.62;
+    if(u*fs>mx)mx=u*fs;
+  });
+  return mx;
+}
+function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed){
+  const n=xs.length;
+  if(!n)return {x:[],y:[],moved:[]};
+  // grow the grid until it can hold every point (R's nolap errors here instead;
+  // silently enlarging is friendlier in a browser and never loses a label). Growing
+  // makes the cells smaller than a label, so some overlap can survive -- the caller is
+  // told via `grew` so it can say so rather than quietly showing a worse picture.
+  const grew=(xdiv*ydiv<n);
+  while(xdiv*ydiv<n){xdiv++;ydiv++;}
+  const cw=w/xdiv,ch=h/ydiv;
+  const clamp=(v,lo,hi)=>v<lo?lo:(v>hi?hi:v);
+  const i0=new Int32Array(n),j0=new Int32Array(n);
+  for(let k=0;k<n;k++){
+    i0[k]=clamp(Math.floor((xs[k]-x0)/cw),0,xdiv-1);
+    j0[k]=clamp(Math.floor((ys[k]-y0)/ch),0,ydiv-1);
+  }
+  let best=null;
+  for(let s=1;s<=Math.max(1,nseed);s++){
+    const r=nolapOnce(i0,j0,xdiv,ydiv,s);
+    if(!best||r.ssd<best.ssd)best=r;
+  }
+  const X=new Array(n),Y=new Array(n),moved=new Array(n);
+  for(let k=0;k<n;k++){
+    X[k]=x0+(best.pi[k]+0.5)*cw;
+    Y[k]=y0+(best.pj[k]+0.5)*ch;
+    moved[k]=(best.pi[k]!==i0[k]||best.pj[k]!==j0[k]);
+  }
+  return {x:X,y:Y,moved:moved,xdiv:xdiv,ydiv:ydiv,grew:grew};
+}
+
 function jacobiEigen(A){
   const n=A.length;
   const a=A.map(r=>r.slice());
@@ -381,6 +480,9 @@ function correspondence(N,catLabels,words){
   return {catLabels:cats,words:wds,rowCoord,colCoord,rowMass:r,colMass:c,colCount:cS,eval:idx.map(k=>evals[k]),pct,dims:D,n};
 }
 
+let NOLAP_ON=true;   // "avoid label overlap" toggle (nolap port)
+let LASTGRID=null;   // grid actually used, reported under the plot
+
 // ---------- biplot ----------
 function biplotSvg(ca,dimX,dimY,topN,catMul,wordMul){
   const W=720,H=720,pad=60,RED='#dc2626'; // square canvas + equal data range on both axes -> distances read correctly
@@ -400,22 +502,47 @@ function biplotSvg(ca,dimX,dimY,topN,catMul,wordMul){
   // origin cross
   svg.appendChild(svgEl('line',{x1:X(cX-half),y1:Y(0),x2:X(cX+half),y2:Y(0),stroke:'#ddd','stroke-width':1}));
   svg.appendChild(svgEl('line',{x1:X(0),y1:Y(cY-half),x2:X(0),y2:Y(cY+half),stroke:'#ddd','stroke-width':1}));
-  // words: small grey points + black labels
+  // dots first: these always sit at their true coordinates, whatever the labels do
   const gW=svgEl('g',{});
-  wIdx.forEach(j=>{
-    const px=X(G[j][dimX]),py=Y(G[j][dimY]);
-    gW.appendChild(svgEl('circle',{cx:px,cy:py,r:2.5,fill:'#888'}));
-    const tx=svgEl('text',{x:px+4,y:py+wordFs*0.32,'font-size':wordFs,'font-family':cssv('--sans'),fill:'#000'});tx.textContent=words[j];gW.appendChild(tx);
-  });
+  wIdx.forEach(j=>{gW.appendChild(svgEl('circle',{cx:X(G[j][dimX]),cy:Y(G[j][dimY]),r:2.5,fill:'#888'}));});
   svg.appendChild(gW);
-  // categories: small red dots + bold red labels (drawn on top)
   const gC=svgEl('g',{});
-  cats.forEach((c,i)=>{
-    const px=X(F[i][dimX]),py=Y(F[i][dimY]);
-    gC.appendChild(svgEl('circle',{cx:px,cy:py,r:3.5,fill:RED}));
-    const tx=svgEl('text',{x:px+6,y:py+catFs*0.34,'font-size':catFs,'font-family':cssv('--sans'),'font-weight':700,fill:RED});tx.textContent=c;gC.appendChild(tx);
-  });
+  cats.forEach((c,i)=>{gC.appendChild(svgEl('circle',{cx:X(F[i][dimX]),cy:Y(F[i][dimY]),r:3.5,fill:RED}));});
   svg.appendChild(gC);
+
+  // Labels. Words and categories are packed in ONE nolap pass over the combined set, so a
+  // word cannot land on a category either; the grid is sized by the larger font and the
+  // longest label of the two. See nolapPlace() above.
+  const gL=svgEl('g',{});
+  const items=wIdx.map(j=>({s:words[j],x:X(G[j][dimX]),y:Y(G[j][dimY]),fs:wordFs,cat:false}))
+    .concat(cats.map((c,i)=>({s:c,x:X(F[i][dimX]),y:Y(F[i][dimY]),fs:catFs,cat:true})));
+  if(NOLAP_ON&&items.length){
+    const bigFs=Math.max(wordFs,catFs);
+    const wPx=estLabelWidth(items.map(o=>o.s),bigFs);
+    const xdiv=Math.max(3,Math.floor((W-pad)/wPx));
+    const ydiv=Math.max(3,Math.floor((H-pad)/(bigFs*1.45)));
+    const pl=nolapPlace(items.map(o=>o.x),items.map(o=>o.y),pad*0.5,pad*0.5,W-pad,H-pad,xdiv,ydiv,10);
+    LASTGRID={xdiv:pl.xdiv,ydiv:pl.ydiv,cells:pl.xdiv*pl.ydiv,n:items.length,
+              labW:Math.round(wPx),rowH:+(bigFs*1.45).toFixed(1),tight:pl.grew};
+    items.forEach((o,k)=>{
+      if(pl.moved[k])gL.appendChild(svgEl('line',{x1:o.x,y1:o.y,x2:pl.x[k],y2:pl.y[k],stroke:'#ccc','stroke-width':0.6}));
+    });
+    items.forEach((o,k)=>{
+      const tx=svgEl('text',{x:pl.x[k],y:pl.y[k]+o.fs*0.34,'font-size':o.fs,'font-family':cssv('--sans'),
+        'text-anchor':'middle',fill:o.cat?RED:'#000'});
+      if(o.cat)tx.setAttribute('font-weight',700);
+      tx.textContent=o.s;gL.appendChild(tx);
+    });
+  }else{
+    LASTGRID=null;
+    items.forEach(o=>{
+      const tx=svgEl('text',{x:o.x+(o.cat?6:4),y:o.y+o.fs*(o.cat?0.34:0.32),'font-size':o.fs,
+        'font-family':cssv('--sans'),fill:o.cat?RED:'#000'});
+      if(o.cat)tx.setAttribute('font-weight',700);
+      tx.textContent=o.s;gL.appendChild(tx);
+    });
+  }
+  svg.appendChild(gL);
   // axis labels with inertia %
   const xl=svgEl('text',{x:W/2,y:H-16,'font-size':12,'font-family':cssv('--sans'),fill:'#000','text-anchor':'middle'});
   xl.textContent=t('dim_label')+' '+(dimX+1)+' ('+ca.pct[dimX].toFixed(1)+'%)';svg.appendChild(xl);
@@ -514,6 +641,7 @@ function buildLog(ca,dimX,dimY,topN,catMul,wordMul){
   L.push('words_shown          = '+topN+' of '+ca.words.length+'  (top-N by frequency)');
   L.push('category_text_x6pt   = '+(+$('#catSize').value).toFixed(1));
   L.push('word_text_x6pt       = '+(+$('#wordSize').value).toFixed(1));
+  L.push('nolap_label_overlap  = '+(NOLAP_ON?'on':'off')+(NOLAP_ON&&LASTGRID?'  (grid '+LASTGRID.xdiv+'x'+LASTGRID.ydiv+' = '+LASTGRID.cells+' cells for '+LASTGRID.n+' labels)':''));
   L.push('x_axis               = '+t('dim_label')+' '+(dimX+1));
   L.push('y_axis               = '+t('dim_label')+' '+(dimY+1));
   L.push('');
@@ -610,6 +738,7 @@ $('#catSize').oninput=e=>$('#catSizeVal').textContent=(+e.target.value).toFixed(
 $('#catSize').onchange=()=>renderCA();
 $('#wordSize').oninput=e=>$('#wordSizeVal').textContent=(+e.target.value).toFixed(1);
 $('#wordSize').onchange=()=>renderCA();
+$('#nolap').onchange=e=>{NOLAP_ON=e.target.checked;renderCA();};
 $('#dimX').onchange=()=>renderCA();
 $('#dimY').onchange=()=>renderCA();
 
