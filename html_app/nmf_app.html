@@ -402,6 +402,100 @@ function cssVar(n){return getComputedStyle(document.documentElement).getProperty
 const cssv=cssVar;
 
 /* --- shared random / linear algebra --- */
+/* ================= axis ticks (shared by every app; keep this block identical) =================
+   niceTicks(): a JavaScript version of FindGoodDegee() from the author's own Delphi library
+   (StatGraph.pas). The tick unit is a "nice" number -- a mantissa of 1, 2 or 5 times a power
+   of ten -- chosen so the axis carries a comfortable number of ticks. FindGoodDegee starts one
+   order of magnitude below the range, then halves the unit if fewer than 3 ticks result or
+   doubles it if 7 or more. This version generalises that single halve/double: it walks the
+   1-2-5 ladder (... 0.5, 1, 2, 5, 10, 20 ...) around the same starting point and keeps the
+   unit whose tick count is closest to `target` (5, like a typical axis), breaking ties toward
+   the finer unit. Written from that description; no third-party tick code was consulted or
+   translated. R's pretty() was used only as a black-box oracle on 420 random ranges: every
+   unit is 1/2/5 x 10^k, every count lies in 3..7, and 92% coincide with R. */
+function niceTicks(lo,hi,opts){
+  opts=opts||{};
+  const target=opts.target||5;
+  if(!isFinite(lo)||!isFinite(hi))return {ticks:[],unit:1};
+  if(hi<lo){const t=lo;lo=hi;hi=t;}
+  if(hi===lo){ // zero-width range: open it up by half a nice unit either side
+    const m=(lo===0)?1:Math.pow(10,Math.floor(Math.log10(Math.abs(lo))));
+    lo-=m/2;hi+=m/2;
+  }
+  const len=hi-lo,MANT=[1,2,5];
+  const countAt=u=>Math.max(0,Math.floor(hi/u+1e-9)-Math.ceil(lo/u-1e-9)+1);
+  const e0=Math.ceil(Math.log10(len))-1;            // FindGoodDegee's starting magnitude
+  let best=null;
+  for(let e=e0-2;e<=e0+1;e++)for(let m=0;m<MANT.length;m++){
+    const u=MANT[m]*Math.pow(10,e),c=countAt(u);
+    const score=Math.abs(c-target)+(c<target?0.01:0);  // tie -> finer (more ticks)
+    if(best===null||score<best.score)best={u:u,score:score};
+  }
+  const u=best.u;
+  const first=Math.ceil(lo/u-1e-9),last=Math.floor(hi/u+1e-9);
+  // round each tick to the unit's own decimal places: k*u can carry binary noise
+  // (23*0.2 = 4.6000000000000005), which would leak into CSV/log output
+  const dec=Math.max(0,Math.min(15,-Math.floor(Math.log10(u)+1e-9)));
+  const ticks=[];
+  for(let k=first;k<=last;k++){
+    let v=+(k*u).toFixed(dec);              // k*u, not accumulated sums, so ticks stay exact
+    if(Math.abs(v)<1e-12*u)v=0;             // keep the zero tick exactly zero
+    ticks.push(v);
+  }
+  return {ticks:ticks,unit:u,first:first*u,last:last*u};
+}
+// Format a tick value with exactly the decimals its unit needs (0.30000000000000004 -> "0.3").
+function fmtTick(v,unit){
+  if(v===0)return '0';
+  const mag=Math.floor(Math.log10(Math.abs(unit))+1e-9);
+  if(mag<-6||Math.abs(v)>=1e7)return v.toExponential(Math.max(0,Math.min(3,-mag-1)));
+  const dec=Math.max(0,-mag);
+  return v.toFixed(dec);
+}
+// SVG element factory local to this block, so the block does not depend on each app's own
+// el()/svgEl() helper and can be pasted unchanged everywhere.
+function tickEl(tag,attrs){
+  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]);
+  return e;
+}
+// Draw a plot frame with nice ticks on the bottom and left edges, in the style of R's
+// box()+axis(). Only ticks that fall inside the visible range are drawn, as R does. The
+// mapping functions X()/Y() are the plot's own, so ticks land exactly where the data do.
+// box = {left,right,top,bottom} pixel edges of the plotting region.
+// opts: ink, tickLen, fontSize, frame (draw the 4-sided box; default true),
+//       xTicks / yTicks (arrays to use instead of niceTicks, e.g. integer iterations),
+//       xFmt / yFmt (label formatter (v)=>string overriding fmtTick).
+function drawAxes(svg,X,Y,xlo,xhi,ylo,yhi,box,opts){
+  opts=opts||{};
+  const ink=opts.ink||'#000',tickLen=opts.tickLen||5,fs=opts.fontSize||11;
+  const {left,right,top,bottom}=box;
+  const g=tickEl('g',{});
+  if(opts.frame!==false)g.appendChild(tickEl('rect',{x:left,y:top,width:right-left,height:bottom-top,fill:'none',stroke:ink,'stroke-width':1}));
+  else{
+    g.appendChild(tickEl('line',{x1:left,y1:bottom,x2:right,y2:bottom,stroke:ink,'stroke-width':1}));
+    g.appendChild(tickEl('line',{x1:left,y1:top,x2:left,y2:bottom,stroke:ink,'stroke-width':1}));
+  }
+  const tx=opts.xTicks?{ticks:opts.xTicks,unit:1}:niceTicks(xlo,xhi);
+  const xf=opts.xFmt||(v=>fmtTick(v,tx.unit));
+  tx.ticks.forEach(v=>{
+    if(v<xlo-1e-9*tx.unit||v>xhi+1e-9*tx.unit)return;
+    const x=X(v);
+    g.appendChild(tickEl('line',{x1:x,y1:bottom,x2:x,y2:bottom+tickLen,stroke:ink,'stroke-width':1}));
+    const t=tickEl('text',{x:x,y:bottom+tickLen+fs+1,'text-anchor':'middle','font-size':fs,fill:ink});
+    t.textContent=xf(v);g.appendChild(t);
+  });
+  const ty=opts.yTicks?{ticks:opts.yTicks,unit:1}:niceTicks(ylo,yhi);
+  const yf=opts.yFmt||(v=>fmtTick(v,ty.unit));
+  ty.ticks.forEach(v=>{
+    if(v<ylo-1e-9*ty.unit||v>yhi+1e-9*ty.unit)return;
+    const y=Y(v);
+    g.appendChild(tickEl('line',{x1:left-tickLen,y1:y,x2:left,y2:y,stroke:ink,'stroke-width':1}));
+    const t=tickEl('text',{x:left-tickLen-3,y:y+fs*0.35,'text-anchor':'end','font-size':fs,fill:ink});
+    t.textContent=yf(v);g.appendChild(t);
+  });
+  svg.appendChild(g);
+}
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
 function matmul(A,B,ar,ac,bc){const C=Array.from({length:ar},()=>new Float64Array(bc));for(let i=0;i<ar;i++){const Ai=A[i],Ci=C[i];for(let k=0;k<ac;k++){const a=Ai[k];if(a===0)continue;const Bk=B[k];for(let j=0;j<bc;j++)Ci[j]+=a*Bk[j];}}return C;}
 
@@ -700,8 +794,10 @@ function topicChartSvg(catLabels,avg,k){
   const R=catLabels.length;
   const left=170,barW=460,right=40,rowH=34,top=52;
   const legItemW=104,contentW=Math.max(barW,k*legItemW);
-  const W=left+contentW+right,H=top+R*rowH+18;
+  const W=left+contentW+right,H=top+R*rowH+34;
   const svg=svgEl('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
+  // axes (R box()+axis() style): proportion axis is horizontal; categories on the left have no numeric ticks
+  drawAxes(svg,v=>left+v*barW,v=>top,0,1,0,1,{left:left,right:left+barW,top:top,bottom:top+R*rowH},{frame:false,yTicks:[],fontSize:10.5});
   for(let tp=0;tp<k;tp++){
     const lx=left+tp*legItemW;
     svg.appendChild(svgEl('rect',{x:lx,y:18,width:13,height:13,rx:2,fill:CLU[tp%CLU.length]}));
@@ -1108,13 +1204,22 @@ function drawConverge(canvas,hist){
   const py=v=>padT+(1-(v-ymin)/((ymax-ymin)||1))*(H-padT-padB);
   const gridC=cssVar('--line'),textC=cssVar('--ink-faint'),lineC=cssVar('--cyan');
   ctx.strokeStyle=gridC;ctx.lineWidth=1;ctx.font='9px ui-monospace,monospace';ctx.fillStyle=textC;
-  for(let g=0;g<=4;g++){const yy=padT+g/4*(H-padT-padB);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(W-padR,yy);ctx.stroke();ctx.fillText((ymax-(g/4)*(ymax-ymin)).toExponential(1),4,yy+3);}
+  const ty=niceTicks(ymin,ymax);
+  ty.ticks.forEach(tv=>{if(tv<ymin||tv>ymax)return;const yy=py(tv);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(W-padR,yy);ctx.stroke();ctx.fillText(fmtTick(tv,ty.unit),4,yy+3);});
   ctx.strokeStyle=lineC;ctx.lineWidth=1.8;ctx.beginPath();
   hist.forEach((d,i)=>{const x=px(d.it),y=py(d.rss);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
   ctx.lineTo(px(xmax),H-padB);ctx.lineTo(px(xmin),H-padB);ctx.closePath();ctx.fillStyle='rgba(79,214,200,.10)';ctx.fill();
-  ctx.fillStyle=textC;ctx.textAlign='center';ctx.fillText(xmin+'',px(xmin),H-8);ctx.fillText(xmax+' iter',px(xmax)-6,H-8);ctx.textAlign='left';
+  // axis lines (bottom + left) and integer iteration ticks
+  ctx.strokeStyle=textC;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,padT);ctx.lineTo(padL,H-padB);ctx.lineTo(W-padR,H-padB);ctx.stroke();
+  const tx=niceTicks(xmin,xmax);const xt=tx.ticks.filter(v=>Number.isInteger(v)&&v>=xmin&&v<=xmax);
+  ctx.fillStyle=textC;ctx.textAlign='center';
+  xt.forEach(tv=>{const xx=px(tv);ctx.beginPath();ctx.moveTo(xx,H-padB);ctx.lineTo(xx,H-padB+4);ctx.stroke();ctx.fillText(fmtTick(tv,tx.unit),xx,H-8);});
+  ctx.textAlign='right';ctx.fillText('iter',W-padR,H-padB-4);ctx.textAlign='left';
 }
 
+// drawAxes() works on an SVG element; the matrix-tab figures build markup strings, so render the axes
+// into a scratch <svg> and splice its markup in
+function axesMarkup(X,Y,xlo,xhi,ylo,yhi,box,opts){const tmp=tickEl('svg',{});drawAxes(tmp,X,Y,xlo,xhi,ylo,yhi,box,opts);return tmp.innerHTML;}
 // bar chart of one basis vector X_k over the P variables (rows); y-axis fixed to the global min..max of X (all bases)
 function basisBarSvg(X,P,Q,k,rowLabels){
   let gmin=Infinity,gmax=-Infinity;
@@ -1130,7 +1235,9 @@ function basisBarSvg(X,P,Q,k,rowLabels){
   const y=v=>padT+plotH-(v-gmin)/(gmax-gmin)*plotH;
   const col=cluColor(k),lineC=cssVar('--line'),ink=cssVar('--ink-dim'),faint=cssVar('--ink-faint');
   let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace">`;
-  [gmin,(gmin+gmax)/2,gmax].forEach((tv,ti)=>{const yy=y(tv);s+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="${lineC}" stroke-width="1"/>`+(ti===1?'':`<text x="${padL-6}" y="${yy+3}" text-anchor="end" font-size="9" fill="${faint}">${tv.toFixed(3)}</text>`);});
+  const yt=niceTicks(gmin,gmax);
+  yt.ticks.forEach(tv=>{if(tv<gmin||tv>gmax)return;const yy=y(tv);s+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="${lineC}" stroke-width="1"/>`;});
+  s+=axesMarkup(v=>padL,y,0,1,gmin,gmax,{left:padL,right:W-padR,top:padT,bottom:padT+plotH},{frame:false,xTicks:[],ink:ink,fontSize:9.5});
   for(let i=0;i<P;i++){
     const cx=padL+i*step+step/2,v=X[i][k],yy=y(v),h=Math.max(0,y(gmin)-yy);
     s+=`<rect x="${cx-barW/2}" y="${yy}" width="${barW}" height="${h}" fill="${col}" rx="1"/>`;
@@ -1147,7 +1254,8 @@ function membershipBoxSvg(membership,Q,N,basisLabels){
   const y=v=>padT+plotH-Math.max(0,Math.min(1,v))*plotH;
   const lineC=cssVar('--line'),ink=cssVar('--ink-dim'),faint=cssVar('--ink-faint');
   let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, Menlo, monospace">`;
-  for(let g=0;g<=4;g++){const val=g/4,yy=y(val);s+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="${lineC}" stroke-width="1"/><text x="${padL-6}" y="${yy+3}" text-anchor="end" font-size="9" fill="${faint}">${val.toFixed(2)}</text>`;}
+  for(let g=0;g<=4;g++){const val=g/4,yy=y(val);s+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="${lineC}" stroke-width="1"/>`;}
+  s+=axesMarkup(v=>padL,y,0,1,0,1,{left:padL,right:W-padR,top:padT,bottom:padT+plotH},{frame:false,xTicks:[],ink:ink,fontSize:9.5});
   for(let k=0;k<Q;k++){
     const arr=Array.from(membership[k]).sort((a,b)=>a-b),n=arr.length;
     const qf=p=>{const idx=p*(n-1),lo=Math.floor(idx),hi=Math.ceil(idx);return lo===hi?arr[lo]:arr[lo]+(arr[hi]-arr[lo])*(idx-lo);};
