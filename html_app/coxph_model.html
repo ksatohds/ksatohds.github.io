@@ -228,7 +228,7 @@ const I18N={
     drop_big:'CSVをドロップ / クリック', drop_small:'1行=1標本 · 列=変数',
     demo1_btn:'◇ デモ1 (aml)', demo2_btn:'◇ デモ2 (pharmacoSmoking)',
     demo_credit:'出典（いずれも制限の緩いライセンスで公開されているデータです）: デモ1「<a href="https://stat.ethz.ch/R-manual/R-devel/library/boot/html/aml.html" target="_blank" rel="noopener">aml</a>」急性骨髄性白血病に対する維持化学療法の臨床試験（Embury et al., 1977, Stanford University）— Rの推奨パッケージ <a href="https://cran.r-project.org/package=boot" target="_blank" rel="noopener">boot</a>（ライセンス <strong>Unlimited</strong>）収録、データ出典: Miller, R.G. (1981) <em>Survival Analysis</em>, John Wiley。time=寛解期間(週)、cens は 1=再発 / 0=打ち切り、group は 1=維持療法あり / 2=なし。値は改変せずそのまま収録しています。デモ2「pharmacoSmoking」禁煙治療後に再喫煙するまでの時間 — パッケージ <a href="https://cran.r-project.org/package=asaur" target="_blank" rel="noopener">asaur</a>（ライセンス <strong>CC0</strong>＝パブリックドメイン献呈、Dirk F. Moore <em>Applied Survival Analysis Using R</em>, Springer の付属データ）収録。講義スクリプトに合わせ ttr&gt;0 の113例に絞り、longestNoSmoke&gt;=100 を 1 とする2値変数 longestNoSmoke2 を加えた6列を収録しています。',
-    demo_tip:'ヒント: aml は説明変数が group（1=維持療法あり, 2=なし）の1列だけという最も単純な例です。数値のまま扱うと係数名は group になりますが、「カテゴリカル変数」欄で group にチェックを入れるとダミー変数化され group2 と表示されます（推定値は同じです）。pharmacoSmoking は4変数（うち3つはカテゴリ）の多変量の例で、ダミー変数の参照カテゴリはアルファベット順で最初の水準になります。',
+    demo_tip:'ヒント: aml は説明変数が group（1=維持療法あり, 2=なし）の1列だけという最も単純な例です。デモを読み込むと group は自動的にダミー変数化され group2 と表示されます。「カテゴリカル変数」欄のチェックを外すと数値のまま扱われ、係数名は group になります（推定値は同じです）。pharmacoSmoking は4変数（うち3つはカテゴリ）の多変量の例で、ダミー変数の参照カテゴリはアルファベット順で最初の水準になります。',
     v_time:'追跡期間 time（数値）', v_status:'打ち切り指標 status', v_event:'イベント（死亡・再発）とする値',
     event_hint:'選んだ値をイベント発生、それ以外の値をすべて打ち切りとして扱います。打ち切りの符号はデータによって異なります（0/1、1/2、"dead"/"alive" など。まれに 1 が打ち切りのこともあります）が、ここで実際の値を選ぶだけで対応できます。',
     v_features:'説明変数 (複数選択可)',
@@ -279,7 +279,7 @@ const I18N={
     drop_big:'Drop a CSV / click', drop_small:'1 row = 1 sample · columns = variables',
     demo1_btn:'◇ Demo 1 (aml)', demo2_btn:'◇ Demo 2 (pharmacoSmoking)',
     demo_credit:'Source (both are published under maximally permissive terms): Demo 1 \'<a href=\'https://stat.ethz.ch/R-manual/R-devel/library/boot/html/aml.html\' target=\'_blank\' rel=\'noopener\'>aml</a>\' — a Stanford trial of maintenance chemotherapy for acute myelogenous leukaemia (Embury et al., 1977), in the recommended R package <a href=\'https://cran.r-project.org/package=boot\' target=\'_blank\' rel=\'noopener\'>boot</a> (licence <strong>Unlimited</strong>); values taken from Miller, R.G. (1981), <em>Survival Analysis</em>, John Wiley. time = length of complete remission in weeks, cens = 1 relapse / 0 censored, group = 1 maintenance / 2 none; reproduced unmodified. Demo 2 \'pharmacoSmoking\' — time to relapse after smoking-cessation therapy, from the package <a href=\'https://cran.r-project.org/package=asaur\' target=\'_blank\' rel=\'noopener\'>asaur</a> (licence <strong>CC0</strong>, a public-domain dedication; companion data for Dirk F. Moore, <em>Applied Survival Analysis Using R</em>, Springer). Restricted to ttr &gt; 0 (113 patients) and to the six columns used in the lecture script, with longestNoSmoke2 = 1 when longestNoSmoke &gt;= 100.',
-    demo_tip:'Tip: aml is about as simple as a Cox model gets — one covariate, group (1 = maintenance, 2 = none). Left numeric the coefficient is called group; tick group in the \'Categorical variables\' list to dummy-code it and it becomes group2, with the same estimate. pharmacoSmoking is the multivariable counterpart (four covariates, three of them categorical); dummy coding uses the alphabetically first level as the reference.',
+    demo_tip:'Tip: aml is about as simple as a Cox model gets — one covariate, group (1 = maintenance, 2 = none). Loading the demo dummy-codes it automatically, so the coefficient is called group2; untick group in the \'Categorical variables\' list to treat it as numeric instead (the coefficient is then called group, with the same estimate). pharmacoSmoking is the multivariable counterpart (four covariates, three of them categorical); dummy coding uses the alphabetically first level as the reference.',
     v_time:'Follow-up time', v_status:'Status (censoring indicator)', v_event:'Value that means an event',
     event_hint:'The chosen value counts as an event; every other value is treated as censored. Censoring conventions differ between data sets (0/1, 1/2 as in survival::lung, "dead"/"alive", occasionally 1 = censored) — just pick the value that means an event.',
     v_features:'Features (multiple)',
@@ -1501,7 +1501,15 @@ function pharmacoCSV(){
 }
 
 function readFile(f){const rd=new FileReader();rd.onload=()=>ingestText(rd.result,f.name);rd.readAsText(f);}
-$('#demo1').onclick=()=>{ingestText(amlCSV(),'aml');toast(t('toast_demo1'));};
+$('#demo1').onclick=()=>{
+  ingestText(amlCSV(),'aml');
+  // aml's only covariate, group (1=maintenance/2=none), is a 2-level numeric code: dummy-coding
+  // it gives the identical coefficient to leaving it continuous (see demo_tip), so default it to
+  // checked here rather than leaving the user to discover and tick it manually.
+  const groupCb=[...$$('#catlist input')].find(el=>el.value==='group');
+  if(groupCb)groupCb.checked=true;
+  toast(t('toast_demo1'));
+};
 $('#demo2').onclick=()=>{ingestText(pharmacoCSV(),'keep');toast(t('toast_demo2'));};
 $('#numAsCat').onchange=()=>{if(DATA)rebuildFeatureList();};
 $('#featSelectAll').onclick=()=>{$$('#features input').forEach(cb=>cb.checked=true);updateFeatCount();rebuildCatList();};
