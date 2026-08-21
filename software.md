@@ -87,6 +87,7 @@ title: Software
 <div class="section">
   <h2 class="section-title" data-ja="HTMLアプリ">HTML apps</h2>
   <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="いずれもインストール不要。データはブラウザ内で処理され、外部に送信されません。各アプリは日本語・英語の表示切替に対応しています。">All run without installation. Your data is processed in the browser and never uploaded. Each app has its own Japanese/English toggle.</p>
+  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px; font-size: 0.92rem;" data-ja="各アプリに収録しているデモデータの出典とライセンスは <a href='https://github.com/ksatohds/ksatohds.github.io/blob/main/THIRD-PARTY-DATA.md' target='_blank' rel='noopener'>第三者データについて</a> にまとめています。">The provenance and licences of the demo data bundled with each app are listed in <a href="https://github.com/ksatohds/ksatohds.github.io/blob/main/THIRD-PARTY-DATA.md" target="_blank" rel="noopener">THIRD-PARTY-DATA.md</a>.</p>
 
   <div style="background: var(--color-white); border: 1px solid var(--color-border); border-radius: 6px; padding: 16px 20px; margin: 8px 0 26px; max-width: 800px;">
     <p style="margin: 0 0 8px; font-weight: 600; color: var(--color-primary);" data-ja="テキストから可視化まで、CSVでつながります">From text to visuals — connected by one CSV</p>
