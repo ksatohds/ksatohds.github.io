@@ -679,18 +679,17 @@ function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed,halfW,halfH,fixed){
   return {x:X,y:Y,moved:moved,xdiv:xdiv,ydiv:ydiv,grew:grew};
 }
 
-/* ---- axis ticks ------------------------------------------------------------------------
-   A JavaScript version of FindGoodDegee() from the author's own Delphi library
-   (StatGraph.pas): the tick unit is a "nice" number -- a mantissa of 1, 2 or 5 times a
-   power of ten -- chosen so that the axis carries a comfortable number of ticks.
-   FindGoodDegee starts one order of magnitude below the range, then halves the unit if
-   fewer than 3 ticks result or doubles it if 7 or more. This version generalises that
-   single halve/double: it walks the 1-2-5 ladder (... 0.5, 1, 2, 5, 10, 20 ...) around
-   the same starting point and keeps the unit whose tick count is closest to `target`
-   (5, like a typical axis), breaking ties toward the finer unit. Written from that
-   description; no third-party tick code was consulted or translated. R's pretty() was
-   used only as a black-box oracle on 420 random ranges to sanity-check the output:
-   every unit is 1/2/5 x 10^k, every count lies in 3..7, and 92% coincide with R. */
+/* ================= axis ticks (shared by every app; keep this block identical) =================
+   niceTicks(): a JavaScript version of FindGoodDegee() from the author's own Delphi library
+   (StatGraph.pas). The tick unit is a "nice" number -- a mantissa of 1, 2 or 5 times a power
+   of ten -- chosen so the axis carries a comfortable number of ticks. FindGoodDegee starts one
+   order of magnitude below the range, then halves the unit if fewer than 3 ticks result or
+   doubles it if 7 or more. This version generalises that single halve/double: it walks the
+   1-2-5 ladder (... 0.5, 1, 2, 5, 10, 20 ...) around the same starting point and keeps the
+   unit whose tick count is closest to `target` (5, like a typical axis), breaking ties toward
+   the finer unit. Written from that description; no third-party tick code was consulted or
+   translated. R's pretty() was used only as a black-box oracle on 420 random ranges: every
+   unit is 1/2/5 x 10^k, every count lies in 3..7, and 92% coincide with R. */
 function niceTicks(lo,hi,opts){
   opts=opts||{};
   const target=opts.target||5;
@@ -730,38 +729,51 @@ function fmtTick(v,unit){
   const dec=Math.max(0,-mag);
   return v.toFixed(dec);
 }
-
+// SVG element factory local to this block, so the block does not depend on each app's own
+// el()/svgEl() helper and can be pasted unchanged everywhere.
+function tickEl(tag,attrs){
+  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]);
+  return e;
+}
 // Draw a plot frame with nice ticks on the bottom and left edges, in the style of R's
 // box()+axis(). Only ticks that fall inside the visible range are drawn, as R does. The
 // mapping functions X()/Y() are the plot's own, so ticks land exactly where the data do.
-// Returns nothing; appends to `svg`. Reusable by any app that draws a rectangular plot.
+// box = {left,right,top,bottom} pixel edges of the plotting region.
+// opts: ink, tickLen, fontSize, frame (draw the 4-sided box; default true),
+//       xTicks / yTicks (arrays to use instead of niceTicks, e.g. integer iterations),
+//       xFmt / yFmt (label formatter (v)=>string overriding fmtTick).
 function drawAxes(svg,X,Y,xlo,xhi,ylo,yhi,box,opts){
   opts=opts||{};
   const ink=opts.ink||'#000',tickLen=opts.tickLen||5,fs=opts.fontSize||11;
-  const {left,right,top,bottom}=box;   // pixel edges of the plotting region
-  const g=el('g',{});
-  // frame
-  g.appendChild(el('rect',{x:left,y:top,width:right-left,height:bottom-top,fill:'none',stroke:ink,'stroke-width':1}));
-  // x ticks
-  const tx=niceTicks(xlo,xhi);
+  const {left,right,top,bottom}=box;
+  const g=tickEl('g',{});
+  if(opts.frame!==false)g.appendChild(tickEl('rect',{x:left,y:top,width:right-left,height:bottom-top,fill:'none',stroke:ink,'stroke-width':1}));
+  else{
+    g.appendChild(tickEl('line',{x1:left,y1:bottom,x2:right,y2:bottom,stroke:ink,'stroke-width':1}));
+    g.appendChild(tickEl('line',{x1:left,y1:top,x2:left,y2:bottom,stroke:ink,'stroke-width':1}));
+  }
+  const tx=opts.xTicks?{ticks:opts.xTicks,unit:1}:niceTicks(xlo,xhi);
+  const xf=opts.xFmt||(v=>fmtTick(v,tx.unit));
   tx.ticks.forEach(v=>{
     if(v<xlo-1e-9*tx.unit||v>xhi+1e-9*tx.unit)return;
     const x=X(v);
-    g.appendChild(el('line',{x1:x,y1:bottom,x2:x,y2:bottom+tickLen,stroke:ink,'stroke-width':1}));
-    const t=el('text',{x:x,y:bottom+tickLen+fs+1,'text-anchor':'middle','font-size':fs,fill:ink});
-    t.textContent=fmtTick(v,tx.unit);g.appendChild(t);
+    g.appendChild(tickEl('line',{x1:x,y1:bottom,x2:x,y2:bottom+tickLen,stroke:ink,'stroke-width':1}));
+    const t=tickEl('text',{x:x,y:bottom+tickLen+fs+1,'text-anchor':'middle','font-size':fs,fill:ink});
+    t.textContent=xf(v);g.appendChild(t);
   });
-  // y ticks
-  const ty=niceTicks(ylo,yhi);
+  const ty=opts.yTicks?{ticks:opts.yTicks,unit:1}:niceTicks(ylo,yhi);
+  const yf=opts.yFmt||(v=>fmtTick(v,ty.unit));
   ty.ticks.forEach(v=>{
     if(v<ylo-1e-9*ty.unit||v>yhi+1e-9*ty.unit)return;
     const y=Y(v);
-    g.appendChild(el('line',{x1:left-tickLen,y1:y,x2:left,y2:y,stroke:ink,'stroke-width':1}));
-    const t=el('text',{x:left-tickLen-3,y:y+fs*0.35,'text-anchor':'end','font-size':fs,fill:ink});
-    t.textContent=fmtTick(v,ty.unit);g.appendChild(t);
+    g.appendChild(tickEl('line',{x1:left-tickLen,y1:y,x2:left,y2:y,stroke:ink,'stroke-width':1}));
+    const t=tickEl('text',{x:left-tickLen-3,y:y+fs*0.35,'text-anchor':'end','font-size':fs,fill:ink});
+    t.textContent=yf(v);g.appendChild(t);
   });
   svg.appendChild(g);
 }
+
 function fmt(x,d){if(!isFinite(x))return String(x);return x.toFixed(d==null?4:d);}
 function pct(x){return (x*100).toFixed(1)+'%';}
 function lpad(s,w){s=String(s);return ' '.repeat(Math.max(0,w-s.length))+s;}
