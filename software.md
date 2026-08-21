@@ -173,6 +173,17 @@ title: Software
       </div>
     </div>
 
+    <div class="gallery-item sw-stat">
+      <div class="gallery-body">
+        <h3 data-ja="コックス比例ハザードモデル（生存時間解析）">Cox proportional hazards model (survival analysis)</h3>
+        <p data-ja="目的変数の代わりに追跡期間と打ち切り指標を指定して、コックス回帰を当てはめます。同時発生はEfron法（Rの既定）で扱い、ニュートン・ラフソン法で部分尤度を最大化します。ハザード比と95%信頼区間、一致度(Concordance)、尤度比・Wald・スコア(ログランク)検定を表示し、比例ハザード性の確認用にカプラン・マイヤー曲線・log-logプロット・Schoenfeld残差も描画します。Rのsummary(coxph(...))の出力を再現します。">Fits a Cox regression from a follow-up time and a censoring indicator instead of a single response. Ties use the Efron approximation (R's default) and the partial likelihood is maximised by Newton-Raphson. Reports hazard ratios with 95% confidence intervals, the concordance, and the likelihood-ratio, Wald and score (logrank) tests, plus Kaplan-Meier, log-log and Schoenfeld-residual plots for checking proportional hazards. Output reproduces R's summary(coxph(...)).</p>
+        <div class="gallery-links">
+          <a href="{{ '/html_app/coxph_model.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
