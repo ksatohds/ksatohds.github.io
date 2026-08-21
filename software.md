@@ -162,6 +162,17 @@ title: Software
       </div>
     </div>
 
+    <div class="gallery-item sw-stat">
+      <div class="gallery-body">
+        <h3 data-ja="ロジスティック回帰">Logistic regression</h3>
+        <p data-ja="IRWLS（フィッシャー・スコアリング）で最尤推定します。目的変数は2値でなくてもよく、カテゴリカルな列を選んで「1とする値」を指定すれば、それ以外の値は0として扱われます。オッズ比・ROC曲線・混同行列も表示します。Rのsummary(glm(..., family=&quot;binomial&quot;))の出力を再現します。">Fits a logistic regression by maximum likelihood (IRWLS / Fisher scoring). The response need not be binary: pick any categorical column and choose which value counts as 1, and every other value becomes 0. Also reports odds ratios, an ROC curve and a confusion matrix. Output reproduces R's summary(glm(..., family="binomial")).</p>
+        <div class="gallery-links">
+          <a href="{{ '/html_app/logistic_model.html' | relative_url }}" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/ksatohds.github.io/tree/main/html_app">GitHub</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
