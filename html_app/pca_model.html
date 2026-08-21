@@ -258,7 +258,7 @@ const I18N={
     sec_loadbar:'主成分ごとの負荷量', sec_loadbar_d:'正を赤、負を青で表示します。値の大きい変数がその主成分の意味を決めます。',
     sec_scoretbl:'主成分得点', sec_scoretbl_d:'Rの prcomp(...)$x に対応します。',
     ax_x:'横軸', ax_y:'縦軸', ax_flipx:'横軸を反転', ax_flipy:'縦軸を反転',
-    ax_arrow:'矢印の長さ', ax_fontsize:'文字の大きさ', ax_showlab:'ラベルを表示',
+    ax_arrow:'矢印の長さ', ax_fontsize:'文字の大きさ', ax_showlab:'ラベルを表示', ax_showdot:'点を表示',
     ax_nolap:'ラベルの重なりを回避 (nolap)', ax_nolapdiv:'ラベルの行数',
     nolap_note:'「ラベルの重なりを回避」はRパッケージ nolap (v0.0.2) のアルゴリズムを移植したものです。図を格子状のセルに分け、同じセルに複数のラベルが入ったときは、最も近い空きセルへ1つずつ移動します。点そのものは正しい位置のまま動かさず、動いたラベルには引き出し線を引きます。横方向の分割数はラベルの文字幅から自動で決めます（ラベルは縦より横に長いため、正方形のセルでは左右の隣と重なってしまうためです）。スライダーで変えられるのは縦の行数で、増やすほどラベルは元の位置に近づきます。',
     pc_label:'PC',
@@ -307,7 +307,7 @@ const I18N={
     sec_loadbar:'Loadings by component', sec_loadbar_d:'Positive in red, negative in blue. The largest entries give the component its meaning.',
     sec_scoretbl:'Scores', sec_scoretbl_d:'R\'s prcomp(...)$x.',
     ax_x:'x axis', ax_y:'y axis', ax_flipx:'flip x', ax_flipy:'flip y',
-    ax_arrow:'arrow length', ax_fontsize:'font size', ax_showlab:'show labels',
+    ax_arrow:'arrow length', ax_fontsize:'font size', ax_showlab:'show labels', ax_showdot:'show points',
     ax_nolap:'avoid label overlap (nolap)', ax_nolapdiv:'label rows',
     nolap_note:'"Avoid label overlap" ports the algorithm of the R package nolap (v0.0.2): the plot is cut into grid cells, and whenever several labels land in the same cell they are moved one at a time to the nearest empty cell. The points themselves stay at their true coordinates; a leader line connects any label that moved. The horizontal division count is derived automatically from the width of the labels themselves (a label is much wider than it is tall, so square cells would still let neighbours collide). The slider sets the number of vertical rows: more rows keeps labels closer to their points.',
     pc_label:'PC',
@@ -342,7 +342,7 @@ let DATA=null;   // {rows:[{col:val}], cols:[...], filename}
 let LAST=null;   // last fitted result for re-render
 // biplot / score-plot view state, preserved across re-renders (theme + language switches)
 let VIEW={dimX:0,dimY:1,flipX:false,flipY:false,arrowMul:1,fontMul:1,showLab:true,
-          nolap:true,nolapDiv:34};
+          nolap:true,nolapDiv:34,showDot:true};
 let LASTGRID=null; // grid actually used by the last nolap pass, reported under the biplot
 
 let toastTimer=null;
@@ -705,6 +705,10 @@ function halo(tx,fs){
 const PCLBL=k=>t('pc_label')+(k+1);
 // plot ink is always drawn dark on a white plot ground so the downloaded SVG stands alone
 const INK='#000',FAINT='#999',RED='#dc2626',BLUE='#3b7fd4',AMBER='#b07617';
+// Pastel blue for the individuals: a tint of the app's own BLUE so the two agree, light
+// enough to sit under the black labels without competing with the red variable arrows.
+// The darker rim keeps a 3px dot crisp -- a flat pastel fill alone reads as a smudge.
+const DOT='#9ec5e8',DOT_EDGE='#5a8fc4';
 
 /* ================= plots ================= */
 function screeSvg(R){
@@ -797,8 +801,10 @@ function scatterSvg(R,withArrows,basename){
   });
 
   // ---- dots ----
-  R.scores.forEach((s,i)=>{
-    svg.appendChild(el('circle',{cx:ptX[i],cy:ptY[i],r:3,fill:'#666','fill-opacity':0.8}));
+  // the dots are optional: with nolap moving the labels away, some readers prefer the
+  // labels alone. The leader lines stay either way -- they still mark the true position.
+  if(VIEW.showDot)R.scores.forEach((s,i)=>{
+    svg.appendChild(el('circle',{cx:ptX[i],cy:ptY[i],r:3.4,fill:DOT,stroke:DOT_EDGE,'stroke-width':0.9}));
   });
 
   // ---- arrows ----
@@ -953,6 +959,7 @@ function plotControls(R,onChange){
   box.appendChild(mkCbx('ax_flipx',VIEW.flipX,v=>VIEW.flipX=v));
   box.appendChild(mkCbx('ax_flipy',VIEW.flipY,v=>VIEW.flipY=v));
   box.appendChild(mkCbx('ax_showlab',VIEW.showLab,v=>VIEW.showLab=v));
+  box.appendChild(mkCbx('ax_showdot',VIEW.showDot,v=>VIEW.showDot=v));
   box.appendChild(mkCbx('ax_nolap',VIEW.nolap,v=>VIEW.nolap=v));
   const mkRange=(labKey,cur,min,max,step,cb)=>{
     const f=el('div',{class:'fld'});f.appendChild(el('span',{text:t(labKey)}));
