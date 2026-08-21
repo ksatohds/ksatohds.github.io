@@ -427,46 +427,103 @@ function rebuildCatList(){
 }
 
 /* ================= numeric helpers ================= */
-// Lanczos approximation of log(Gamma(x)) (Numerical Recipes g=7, n=9)
+/* ================= special functions (own implementations) =================
+   Everything below is written from the published formulas -- DLMF (https://dlmf.nist.gov)
+   chapters 5 (gamma), 8 (incomplete gamma/beta) and 7 (error function) -- and verified
+   numerically against R's lgamma/pt/pf/pnorm/pchisq as a black box. No third-party
+   numerical code was copied or translated. */
+
+// log Gamma(x) for x > 0: Stirling's series (DLMF 5.11.1) after shifting the argument up
+// to >= 15 with Gamma(x+1) = x Gamma(x). At z >= 15 the series through z^-13 is accurate
+// to well below double precision, so no fitted coefficient table is needed.
 function logGamma(x){
-  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,
-    -176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
-  if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-logGamma(1-x);
-  x-=1;let a=c[0];const g=7,t=x+g+0.5;
-  for(let i=1;i<g+2;i++)a+=c[i]/(x+i);
-  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+  if(!(x>0))return NaN;
+  let shift=0;
+  while(x<15){shift+=Math.log(x);x+=1;}
+  const z2=1/(x*x);
+  // Bernoulli-number terms B_{2k}/(2k(2k-1) z^{2k-1}), k=1..7
+  const series=(1/12-(1/360-(1/1260-(1/1680-(1/1188-(691/360360-(1/156)*z2)*z2)*z2)*z2)*z2)*z2)/x;
+  return (x-0.5)*Math.log(x)-x+0.5*Math.log(2*Math.PI)+series-shift;
 }
-// continued fraction for the regularized incomplete beta function (Numerical Recipes betacf)
-function betacf(x,a,b){
-  const MAXIT=200,EPS=3e-16,FPMIN=1e-300;
-  const qab=a+b,qap=a+1,qam=a-1;
-  let c=1,d=1-qab*x/qap;if(Math.abs(d)<FPMIN)d=FPMIN;d=1/d;let h=d;
-  for(let m=1;m<=MAXIT;m++){
-    const m2=2*m;
-    let aa=m*(b-m)*x/((qam+m2)*(a+m2));
-    d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;
-    c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
-    d=1/d;h*=d*c;
-    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
-    d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;
-    c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;
-    d=1/d;const del=d*c;h*=del;
-    if(Math.abs(del-1)<EPS)break;
+
+// Evaluate the continued fraction b0 + a1/(b1 + a2/(b2 + ...)) by the modified Lentz
+// scheme (Lentz 1976; Thompson & Barnett 1986). `a(k)` and `b(k)` give the k-th partial
+// numerator and denominator for k >= 1; b(0) is the leading term.
+function contFrac(a,b,maxIter,tol){
+  const tiny=1e-300;
+  let f=b(0);if(f===0)f=tiny;
+  let C=f,D=0;
+  for(let k=1;k<=maxIter;k++){
+    const ak=a(k),bk=b(k);
+    D=bk+ak*D;if(D===0)D=tiny;
+    C=bk+ak/C;if(C===0)C=tiny;
+    D=1/D;
+    const delta=C*D;
+    f*=delta;
+    if(Math.abs(delta-1)<tol)break;
   }
-  return h;
+  return f;
 }
-function betai(x,a,b){
+
+// Regularized incomplete beta I_x(a,b), DLMF 8.17.22: the continued fraction
+//   I_x(a,b) = x^a (1-x)^b / (a B(a,b)) * 1/(1 + d1/(1 + d2/(1 + ...)))
+// with d_{2m} = m(b-m)x/((a+2m-1)(a+2m)) and d_{2m+1} = -(a+m)(a+b+m)x/((a+2m)(a+2m+1)).
+// It converges fastest for x < (a+1)/(a+b+2); beyond that the symmetry
+// I_x(a,b) = 1 - I_{1-x}(b,a) is used.
+// `xc` (optional) is 1-x supplied by the caller when it can be formed without subtraction
+// (e.g. t^2/(df+t^2) alongside df/(df+t^2)); that keeps full precision when x is within a
+// few ulp of 1, where 1-x computed here would lose most of its digits.
+function betai(x,a,b,xc){
+  if(xc===undefined)xc=1-x;
   if(x<=0)return 0;if(x>=1)return 1;
-  const bt=Math.exp(logGamma(a+b)-logGamma(a)-logGamma(b)+a*Math.log(x)+b*Math.log(1-x));
-  return (x<(a+1)/(a+b+2))?(bt*betacf(x,a,b)/a):(1-bt*betacf(1-x,b,a)/b);
+  if(x>(a+1)/(a+b+2))return 1-betai(xc,b,a,x);
+  const d=k=>{
+    const m=Math.floor(k/2);
+    return (k%2===0)
+      ? m*(b-m)*x/((a+2*m-1)*(a+2*m))
+      : -(a+m)*(a+b+m)*x/((a+2*m)*(a+2*m+1));
+  };
+  const cf=contFrac(d,()=>1,400,1e-16);
+  const front=Math.exp(a*Math.log(x)+b*Math.log(xc)-Math.log(a)+logGamma(a+b)-logGamma(a)-logGamma(b));
+  return front/cf;
 }
-// two-sided p-value for Student's t (df degrees of freedom): Pr(|T|>|t|)
-function tTwoSidedP(tv,df){const x=df/(df+tv*tv);return betai(x,df/2,0.5);}
-// upper-tail p-value for the F distribution: Pr(F(d1,d2) > f)
-// uses the reflection identity I_x(a,b) = 1 - I_{1-x}(b,a) and computes the complement
-// (1-x) directly from the formula rather than by subtraction, to avoid catastrophic
-// cancellation when the p-value is extremely small (x very close to 1)
-function fUpperP(f,d1,d2){if(f<=0)return 1;const xc=d2/(d1*f+d2);return betai(xc,d2/2,d1/2);}
+
+// Regularized incomplete gamma: lower P(a,x) and upper Q(a,x), each evaluated directly in
+// the region where its own expansion converges well, so that small tail probabilities are
+// never formed by subtraction from 1.
+//   P(a,x) = x^a e^{-x} sum_{n>=0} x^n / Gamma(a+n+1)            (DLMF 8.7.1), for x < a+1
+//   Q(a,x) = x^a e^{-x}/Gamma(a) * 1/(x + (1-a)/(1 + 1/(x + (2-a)/(1 + 2/(x + ...)))))
+//                                                                (DLMF 8.9.2), otherwise
+function gammaP(a,x){
+  if(!(x>0))return 0;
+  if(x<a+1){
+    let term=Math.exp(a*Math.log(x)-x-logGamma(a+1)),sum=term;
+    for(let n=1;n<1000;n++){term*=x/(a+n);sum+=term;if(term<sum*1e-17)break;}
+    return sum;
+  }
+  return 1-gammaQ(a,x);
+}
+function gammaQ(a,x){
+  if(!(x>0))return 1;
+  if(x<a+1)return 1-gammaP(a,x);
+  // partial numerators alternate (k-a)... : a1=1-a, a2=1, a3=2-a, a4=2, ...; denominators 1, x, 1, x, ...
+  const an=k=>(k%2===1)?((k+1)/2-a):(k/2);
+  const bn=k=>(k===0)?x:((k%2===1)?1:x);
+  const cf=contFrac(an,bn,1000,1e-16);
+  return Math.exp(a*Math.log(x)-x-logGamma(a))/cf;
+}
+
+// two-sided p-value for Student's t (df degrees of freedom): Pr(|T|>|t|) = I_{df/(df+t^2)}(df/2, 1/2)
+function tTwoSidedP(tv,df){const s=df+tv*tv;return betai(df/s,df/2,0.5,tv*tv/s);}
+// upper-tail p-value for the F distribution: Pr(F(d1,d2) > f) = I_{d2/(d2+d1 f)}(d2/2, d1/2).
+// The complement d2/(d1 f + d2) is formed directly from the formula rather than as 1-x, so
+// extremely small p-values (x very close to 1) keep their precision.
+function fUpperP(f,d1,d2){if(f<=0)return 1;const s=d1*f+d2;return betai(d2/s,d2/2,d1/2,d1*f/s);}
+// two-sided p-value for the standard normal: Pr(|Z|>|z|) = erfc(|z|/sqrt 2) = Q(1/2, z^2/2)
+// (DLMF 7.11.3), evaluated through the incomplete gamma above at full double precision.
+function normTwoSidedP(z){if(!isFinite(z))return NaN;return gammaQ(0.5,z*z/2);}
+// upper-tail chi-square p-value: Pr(X^2_df > x) = Q(df/2, x/2)
+function chisqUpperP(x,df){if(!(x>0))return 1;return gammaQ(df/2,x/2);}
 // R's default (type 7) sample quantile
 function quantileType7(sortedArr,p){
   const n=sortedArr.length;if(n===1)return sortedArr[0];

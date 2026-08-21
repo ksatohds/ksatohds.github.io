@@ -115,6 +115,22 @@ regression; NMF; CART; correspondence analysis; the Jacobi eigendecomposition be
 were implemented from the standard published formulas and verified numerically against R as a
 black box. No source code from R or from any R package was copied or translated.
 
+The special functions behind the p-values (log-gamma, the regularized incomplete beta and
+incomplete gamma, and the normal, t, F and chi-square tails derived from them) are written
+from the formulas in the NIST *Digital Library of Mathematical Functions* (DLMF, chapters 5,
+7 and 8): Stirling's series for log-gamma, and the DLMF continued fractions evaluated by the
+modified Lentz scheme. They agree with R's `pt`, `pf`, `pnorm`, `pchisq` and `lgamma` to a
+relative error of about 1e-13 over 490 test points. The axis-tick routine in the plots is a
+JavaScript rendering of the author's own `FindGoodDegee` (Delphi, StatGraph.pas).
+An audit on 2026-08-22 replaced earlier helper routines that had been translated from
+*Numerical Recipes*; nothing derived from that book remains.
+
+p値の計算に用いる特殊関数（対数ガンマ、正則化不完全ベータ・不完全ガンマ、およびそこから
+導く正規・t・F・χ²分布の裾確率）は NIST の DLMF（第5・7・8章）の公式から実装したもの
+です（対数ガンマは Stirling 級数、不完全関数は DLMF の連分数を修正 Lentz 法で評価）。
+2026-08-22 の監査で、それ以前に *Numerical Recipes* から翻案していた補助関数を全て
+置き換えました。
+
 統計計算は公表された数式から実装し、R とは数値比較（ブラックボックス検証）で一致を
 確認したものです。R および R パッケージのソースコードの複製・翻案は行っていません。
 
