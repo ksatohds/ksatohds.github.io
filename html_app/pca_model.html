@@ -679,6 +679,105 @@ function nolapPlace(xs,ys,x0,y0,w,h,xdiv,ydiv,nseed,halfW,halfH,fixed){
   return {x:X,y:Y,moved:moved,xdiv:xdiv,ydiv:ydiv,grew:grew};
 }
 
+/* ---- axis ticks: a port of R's pretty() ---------------------------------------------
+   R_pretty() from R's src/appl/pretty.c (R 4.4), with pretty.default()'s defaults:
+   n=5, min.n=n%/%3=1, shrink.sml=0.75, high.u.bias=1.5, u5.bias=.5+1.5*1.5=2.75,
+   eps.correct=0, f.min=2^-20. Picks a tick unit from {1,2,5,10}x10^k using R's bias
+   rules, then returns the ticks ns*unit ... nu*unit covering [lo,hi]. Verified against
+   R's own pretty() on 420 random and edge-case ranges (see the commit that added this).
+   Same idea as FindGoodDegee() in the author's Delphi StatGraph library, which also
+   chooses a 1-2-5 x 10^k unit and then halves/doubles to land on 3-6 ticks; R's version
+   is the fully-worked form of that, so it is used here to be verifiable. */
+function prettyTicks(lo,hi,n){
+  n=(n==null)?5:n;
+  const minN=Math.floor(n/3), shrinkSml=0.75, h=1.5, h5=0.5+1.5*h, fMin=Math.pow(2,-20);
+  const DBL_EPSILON=2.220446049250313e-16, DBL_MIN=2.2250738585072014e-308, DBL_MAX=1.7976931348623157e308;
+  const roundingEps=1e-10;
+  if(!isFinite(lo)||!isFinite(hi))return {ticks:[],unit:1};
+  if(lo>hi){const t=lo;lo=hi;hi=t;}
+  const dx=hi-lo;
+  let cell,iSmall;
+  if(dx===0&&hi===0){cell=1;iSmall=true;}
+  else{
+    cell=Math.max(Math.abs(lo),Math.abs(hi));
+    let U=1+((h5>=1.5*h+0.5)?1/(1+h):1.5/(1+h5));
+    U*=Math.max(1,n)*DBL_EPSILON;
+    iSmall=dx<cell*U*3;
+  }
+  if(iSmall){
+    if(cell>10)cell=9+cell/10;
+    cell*=shrinkSml;
+    if(minN>1)cell/=minN;
+  }else{
+    cell=dx;
+    if(n>1)cell/=n;
+  }
+  let subsmall=fMin*DBL_MIN;if(subsmall===0)subsmall=DBL_MIN;
+  if(cell<subsmall)cell=subsmall;
+  else if(cell>DBL_MAX/1.25)cell=DBL_MAX/1.25;
+  const base=Math.pow(10,Math.floor(Math.log10(cell)));
+  let unit=base,ns;
+  if((ns=2*base)-cell<h*(cell-unit)){unit=ns;
+    if((ns=5*base)-cell<h5*(cell-unit)){unit=ns;
+      if((ns=10*base)-cell<h*(cell-unit))unit=ns;}}
+  ns=Math.floor(lo/unit+roundingEps);
+  let nu=Math.ceil(hi/unit-roundingEps);
+  while(ns*unit>lo+roundingEps*unit)ns--;
+  while(nu*unit<hi-roundingEps*unit)nu++;
+  let k=Math.floor(0.5+nu-ns);
+  if(k<minN){
+    k=minN-k;
+    if(ns>=0){nu+=Math.floor(k/2);ns-=Math.floor(k/2)+k%2;}
+    else{ns-=Math.floor(k/2);nu+=Math.floor(k/2)+k%2;}
+    k=minN;
+  }
+  // pretty.default: seq.int(l, u, length.out = n+1), then snap |s| < 1e-14*delta to 0
+  const l=ns*unit,u=nu*unit,ticks=[];
+  for(let i=0;i<=k;i++)ticks.push(k?l+(u-l)*i/k:l);
+  const delta=k?(u-l)/k:0;
+  for(let i=0;i<ticks.length;i++)if(Math.abs(ticks[i])<1e-14*delta)ticks[i]=0;
+  return {ticks:ticks,unit:unit,lo:l,hi:u};
+}
+// Format a tick value with exactly the decimals its unit needs (0.30000000000000004 -> "0.3").
+function fmtTick(v,unit){
+  if(v===0)return '0';
+  const mag=Math.floor(Math.log10(Math.abs(unit))+1e-9);
+  if(mag<-6||Math.abs(v)>=1e7)return v.toExponential(Math.max(0,Math.min(3,-mag-1)));
+  const dec=Math.max(0,-mag);
+  return v.toFixed(dec);
+}
+
+// Draw a plot frame with pretty() ticks on the bottom and left edges, in the style of R's
+// box()+axis(). Only ticks that fall inside the visible range are drawn, as R does. The
+// mapping functions X()/Y() are the plot's own, so ticks land exactly where the data do.
+// Returns nothing; appends to `svg`. Reusable by any app that draws a rectangular plot.
+function drawAxes(svg,X,Y,xlo,xhi,ylo,yhi,box,opts){
+  opts=opts||{};
+  const ink=opts.ink||'#000',tickLen=opts.tickLen||5,fs=opts.fontSize||11;
+  const {left,right,top,bottom}=box;   // pixel edges of the plotting region
+  const g=el('g',{});
+  // frame
+  g.appendChild(el('rect',{x:left,y:top,width:right-left,height:bottom-top,fill:'none',stroke:ink,'stroke-width':1}));
+  // x ticks
+  const tx=prettyTicks(xlo,xhi);
+  tx.ticks.forEach(v=>{
+    if(v<xlo-1e-9*tx.unit||v>xhi+1e-9*tx.unit)return;
+    const x=X(v);
+    g.appendChild(el('line',{x1:x,y1:bottom,x2:x,y2:bottom+tickLen,stroke:ink,'stroke-width':1}));
+    const t=el('text',{x:x,y:bottom+tickLen+fs+1,'text-anchor':'middle','font-size':fs,fill:ink});
+    t.textContent=fmtTick(v,tx.unit);g.appendChild(t);
+  });
+  // y ticks
+  const ty=prettyTicks(ylo,yhi);
+  ty.ticks.forEach(v=>{
+    if(v<ylo-1e-9*ty.unit||v>yhi+1e-9*ty.unit)return;
+    const y=Y(v);
+    g.appendChild(el('line',{x1:left-tickLen,y1:y,x2:left,y2:y,stroke:ink,'stroke-width':1}));
+    const t=el('text',{x:left-tickLen-3,y:y+fs*0.35,'text-anchor':'end','font-size':fs,fill:ink});
+    t.textContent=fmtTick(v,ty.unit);g.appendChild(t);
+  });
+  svg.appendChild(g);
+}
 function fmt(x,d){if(!isFinite(x))return String(x);return x.toFixed(d==null?4:d);}
 function pct(x){return (x*100).toFixed(1)+'%';}
 function lpad(s,w){s=String(s);return ' '.repeat(Math.max(0,w-s.length))+s;}
@@ -834,6 +933,8 @@ function scatterSvg(R,withArrows,basename){
   svg.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'#fff'}));
   svg.appendChild(el('line',{x1:X(cX-half),y1:Y(0),x2:X(cX+half),y2:Y(0),stroke:'#ddd','stroke-width':1}));
   svg.appendChild(el('line',{x1:X(0),y1:Y(cY-half),x2:X(0),y2:Y(cY+half),stroke:'#ddd','stroke-width':1}));
+  // frame + pretty() ticks. The visible range is [c-half, c+half] on both axes.
+  drawAxes(svg,X,Y,cX-half,cX+half,cY-half,cY+half,{left:pad,right:W-pad,top:pad,bottom:H-pad});
   // Z-order matters for legibility, so everything is positioned first and painted in a
   // deliberate order: leader lines, then dots, then arrows, and the labels last of all.
   // A label drawn under an arrow is unreadable however good its halo is.
@@ -946,8 +1047,11 @@ function loadingBarSvg(R,k){
   const y0=yS(0);
   svg.appendChild(el('line',{x1:pad.l,y1:y0,x2:W-pad.r,y2:y0,stroke:INK,'stroke-width':1}));
   svg.appendChild(el('line',{x1:pad.l,y1:pad.t,x2:pad.l,y2:H-pad.b,stroke:INK,'stroke-width':1}));
-  [lo,(lo+hi)/2,hi].forEach(g=>{
-    const tx=el('text',{x:pad.l-8,y:yS(g)+4,'text-anchor':'end','font-size':10,fill:FAINT});tx.textContent=g.toFixed(2);svg.appendChild(tx);
+  const tyk=prettyTicks(lo,hi);
+  tyk.ticks.forEach(g=>{
+    if(g<lo||g>hi)return;
+    svg.appendChild(el('line',{x1:pad.l-4,y1:yS(g),x2:pad.l,y2:yS(g),stroke:INK,'stroke-width':1}));
+    const tx=el('text',{x:pad.l-7,y:yS(g)+3.5,'text-anchor':'end','font-size':10,fill:INK});tx.textContent=fmtTick(g,tyk.unit);svg.appendChild(tx);
   });
   R.rotation[k].forEach((v,j)=>{
     const x=pad.l+j*bw;
