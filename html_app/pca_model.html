@@ -691,6 +691,17 @@ function saveText(name,text){saveBlob(new Blob([text],{type:'text/plain;charset=
 function downloadSVGfile(svgEl,name){saveBlob(new Blob([svgStandalone(svgEl)],{type:'image/svg+xml;charset=utf-8'}),name);}
 function csvCell(v){if(v==null)v='';v=String(v);if(/[",\n]/.test(v))return '"'+v.replace(/"/g,'""')+'"';return v;}
 
+// Give a label a white halo so it stays readable wherever it crosses a dot, a leader
+// line or an arrow. paint-order:stroke draws the (fat, white) stroke first and the fill
+// on top, so the halo never eats into the glyph itself. The plot always paints a white
+// ground, so the halo is invisible except exactly where it covers something.
+function halo(tx,fs){
+  tx.setAttribute('paint-order','stroke');
+  tx.setAttribute('stroke','#fff');
+  tx.setAttribute('stroke-width',Math.max(2,fs*0.30));
+  tx.setAttribute('stroke-linejoin','round');
+  return tx;
+}
 const PCLBL=k=>t('pc_label')+(k+1);
 // plot ink is always drawn dark on a white plot ground so the downloaded SVG stands alone
 const INK='#000',FAINT='#999',RED='#dc2626',BLUE='#3b7fd4',AMBER='#b07617';
@@ -745,15 +756,15 @@ function scatterSvg(R,withArrows,basename){
   svg.appendChild(el('rect',{x:0,y:0,width:W,height:H,fill:'#fff'}));
   svg.appendChild(el('line',{x1:X(cX-half),y1:Y(0),x2:X(cX+half),y2:Y(0),stroke:'#ddd','stroke-width':1}));
   svg.appendChild(el('line',{x1:X(0),y1:Y(cY-half),x2:X(0),y2:Y(cY+half),stroke:'#ddd','stroke-width':1}));
-  // individuals: the dots always sit at their true coordinates
+  // Z-order matters for legibility, so everything is positioned first and painted in a
+  // deliberate order: leader lines, then dots, then arrows, and the labels last of all.
+  // A label drawn under an arrow is unreadable however good its halo is.
   const ptX=R.scores.map(s=>X(s[dx]*sx)),ptY=R.scores.map(s=>Y(s[dy]*sy));
-  R.scores.forEach((s,i)=>{
-    svg.appendChild(el('circle',{cx:ptX[i],cy:ptY[i],r:3,fill:'#666','fill-opacity':0.8}));
-  });
+
+  // ---- decide where each label goes (dots themselves never move) ----
+  let lab=null;
   if(VIEW.showLab){
     if(VIEW.nolap){
-      // labels only are pushed into distinct grid cells; a leader line keeps each
-      // label tied to the dot it belongs to.
       // The data range is the same on both axes, but a text label is far wider than
       // it is tall, so SQUARE cells are the wrong shape for what is being packed:
       // one label would still collide with its left/right neighbours. The vertical
@@ -767,27 +778,30 @@ function scatterSvg(R,withArrows,basename){
       // 1.45 leaves a hair of clearance -- measured, not assumed.
       const ydivMax=Math.max(3,Math.floor((H-pad)/(fs*1.45)));
       const ydiv=Math.max(3,Math.min(VIEW.nolapDiv,ydivMax));
-      // Capacity implied by the geometry: how many labels this plot can separate at the
-      // current font size. Worth reporting, because once xdiv*ydiv < n no choice of grid
-      // can remove the overlaps and the only remedy is a smaller font or fewer labels.
       const pl=nolapPlace(ptX,ptY,pad*0.5,pad*0.5,W-pad,H-pad,xdiv,ydiv,10);
+      // Capacity implied by the geometry: how many labels this plot can separate at the
+      // current font size. Worth reporting, because once the grid has to be subdivided
+      // the cells are narrower than a label and some overlap can survive.
       LASTGRID={xdiv:pl.xdiv,ydiv:pl.ydiv,ydivMax:ydivMax,cells:pl.xdiv*pl.ydiv,
                 n:R.labels.length,labW:Math.round(wPx),rowH:+(fs*1.45).toFixed(1),tight:pl.grew};
-      R.labels.forEach((lb,i)=>{
-        if(pl.moved[i])svg.appendChild(el('line',{x1:ptX[i],y1:ptY[i],x2:pl.x[i],y2:pl.y[i],
-          stroke:'#bbb','stroke-width':0.7}));
-      });
-      R.labels.forEach((lb,i)=>{
-        const tx=el('text',{x:pl.x[i],y:pl.y[i]+fs*0.34,'font-size':fs,fill:INK,'text-anchor':'middle'});
-        tx.textContent=lb;svg.appendChild(tx);
-      });
+      lab={x:pl.x,y:pl.y,moved:pl.moved,anchor:'middle',dxpx:0};
     }else{
-      R.labels.forEach((lb,i)=>{
-        const tx=el('text',{x:ptX[i]+4.5,y:ptY[i]+fs*0.34,'font-size':fs,fill:INK});
-        tx.textContent=lb;svg.appendChild(tx);
-      });
+      lab={x:ptX.map(v=>v+4.5),y:ptY.slice(),moved:ptX.map(()=>false),anchor:'start',dxpx:4.5};
     }
   }
+
+  // ---- leader lines (faint, underneath everything) ----
+  if(lab)R.labels.forEach((lb,i)=>{
+    if(lab.moved[i])svg.appendChild(el('line',{x1:ptX[i],y1:ptY[i],x2:lab.x[i],y2:lab.y[i],
+      stroke:'#bbb','stroke-width':0.7}));
+  });
+
+  // ---- dots ----
+  R.scores.forEach((s,i)=>{
+    svg.appendChild(el('circle',{cx:ptX[i],cy:ptY[i],r:3,fill:'#666','fill-opacity':0.8}));
+  });
+
+  // ---- arrows ----
   if(withArrows){
     // scale the arrows so the longest reaches ~78% of the half-range, then apply the user multiplier
     let maxLen=0;
@@ -796,21 +810,31 @@ function scatterSvg(R,withArrows,basename){
       const L=Math.sqrt(a*a+b*b);if(L>maxLen)maxLen=L;
     }
     const amul=(maxLen>0?(half*0.78/maxLen):1)*VIEW.arrowMul;
+    const varLab=[];
     for(let j=0;j<R.p;j++){
       const ax=R.rotation[dx][j]*sx*amul,ay=R.rotation[dy][j]*sy*amul;
       const x1=X(0),y1=Y(0),x2=X(ax),y2=Y(ay);
       svg.appendChild(el('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:RED,'stroke-width':1.6}));
-      // arrow head
       const ang=Math.atan2(y2-y1,x2-x1),hl=9,hw=3.6;
       const hx=x2-hl*Math.cos(ang),hy=y2-hl*Math.sin(ang);
       svg.appendChild(el('polygon',{points:[x2+','+y2,
         (hx-hw*Math.sin(ang))+','+(hy+hw*Math.cos(ang)),
         (hx+hw*Math.sin(ang))+','+(hy-hw*Math.cos(ang))].join(' '),fill:RED}));
-      const lx=x2+(x2>=x1?5:-5),anchor=(x2>=x1)?'start':'end';
-      const tv=el('text',{x:lx,y:y2+(y2>=y1?11:-4),'font-size':fs+2.5,'font-weight':700,fill:RED,'text-anchor':anchor});
-      tv.textContent=R.varNames[j];svg.appendChild(tv);
+      varLab.push({x:x2+(x2>=x1?5:-5),y:y2+(y2>=y1?11:-4),a:(x2>=x1)?'start':'end',s:R.varNames[j]});
     }
+    // variable names go on last, above their own arrows
+    varLab.forEach(o=>{
+      const tv=halo(el('text',{x:o.x,y:o.y,'font-size':fs+2.5,'font-weight':700,fill:RED,'text-anchor':o.a}),fs+2.5);
+      tv.textContent=o.s;svg.appendChild(tv);
+    });
   }
+
+  // ---- point labels, painted last so nothing can cover them ----
+  if(lab)R.labels.forEach((lb,i)=>{
+    const tx=halo(el('text',{x:lab.x[i],y:lab.y[i]+fs*0.34,'font-size':fs,fill:INK,'text-anchor':lab.anchor}),fs);
+    tx.textContent=lb;svg.appendChild(tx);
+  });
+
   const xl=el('text',{x:W/2,y:H-18,'text-anchor':'middle','font-size':12,fill:INK});
   xl.textContent=PCLBL(dx)+' ('+pct(R.prop[dx])+')'+(VIEW.flipX?' ×(-1)':'');svg.appendChild(xl);
   const yl=el('text',{x:20,y:H/2,'text-anchor':'middle','font-size':12,fill:INK,transform:'rotate(-90 20 '+(H/2)+')'});

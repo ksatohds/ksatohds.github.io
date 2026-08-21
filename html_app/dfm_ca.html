@@ -483,6 +483,17 @@ function correspondence(N,catLabels,words){
 let NOLAP_ON=true;   // "avoid label overlap" toggle (nolap port)
 let LASTGRID=null;   // grid actually used, reported under the plot
 
+// Give a label a white halo so it stays readable wherever it crosses a dot or a leader
+// line. paint-order:stroke paints the fat white stroke first and the fill on top, so the
+// halo never eats into the glyph. The plot paints a white ground, so it shows only where
+// it actually covers something.
+function halo(tx,fs){
+  tx.setAttribute('paint-order','stroke');
+  tx.setAttribute('stroke','#fff');
+  tx.setAttribute('stroke-width',Math.max(2,fs*0.30));
+  tx.setAttribute('stroke-linejoin','round');
+  return tx;
+}
 // ---------- biplot ----------
 function biplotSvg(ca,dimX,dimY,topN,catMul,wordMul){
   const W=720,H=720,pad=60,RED='#dc2626'; // square canvas + equal data range on both axes -> distances read correctly
@@ -499,6 +510,10 @@ function biplotSvg(ca,dimX,dimY,topN,catMul,wordMul){
   const mx=W/2-cX*sc,my=H/2+cY*sc;
   const X=x=>mx+x*sc,Y=y=>my-y*sc;
   const svg=svgEl('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H});
+  // The plot always paints its own white ground: the labels are black, so on the dark theme
+  // they were previously drawn onto the near-black page background and were unreadable.
+  // It also makes the downloaded SVG self-contained.
+  svg.appendChild(svgEl('rect',{x:0,y:0,width:W,height:H,fill:'#fff'}));
   // origin cross
   svg.appendChild(svgEl('line',{x1:X(cX-half),y1:Y(0),x2:X(cX+half),y2:Y(0),stroke:'#ddd','stroke-width':1}));
   svg.appendChild(svgEl('line',{x1:X(0),y1:Y(cY-half),x2:X(0),y2:Y(cY+half),stroke:'#ddd','stroke-width':1}));
@@ -528,16 +543,16 @@ function biplotSvg(ca,dimX,dimY,topN,catMul,wordMul){
       if(pl.moved[k])gL.appendChild(svgEl('line',{x1:o.x,y1:o.y,x2:pl.x[k],y2:pl.y[k],stroke:'#ccc','stroke-width':0.6}));
     });
     items.forEach((o,k)=>{
-      const tx=svgEl('text',{x:pl.x[k],y:pl.y[k]+o.fs*0.34,'font-size':o.fs,'font-family':cssv('--sans'),
-        'text-anchor':'middle',fill:o.cat?RED:'#000'});
+      const tx=halo(svgEl('text',{x:pl.x[k],y:pl.y[k]+o.fs*0.34,'font-size':o.fs,'font-family':cssv('--sans'),
+        'text-anchor':'middle',fill:o.cat?RED:'#000'}),o.fs);
       if(o.cat)tx.setAttribute('font-weight',700);
       tx.textContent=o.s;gL.appendChild(tx);
     });
   }else{
     LASTGRID=null;
     items.forEach(o=>{
-      const tx=svgEl('text',{x:o.x+(o.cat?6:4),y:o.y+o.fs*(o.cat?0.34:0.32),'font-size':o.fs,
-        'font-family':cssv('--sans'),fill:o.cat?RED:'#000'});
+      const tx=halo(svgEl('text',{x:o.x+(o.cat?6:4),y:o.y+o.fs*(o.cat?0.34:0.32),'font-size':o.fs,
+        'font-family':cssv('--sans'),fill:o.cat?RED:'#000'}),o.fs);
       if(o.cat)tx.setAttribute('font-weight',700);
       tx.textContent=o.s;gL.appendChild(tx);
     });
