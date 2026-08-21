@@ -709,11 +709,13 @@ const INK='#000',FAINT='#999',RED='#dc2626',BLUE='#3b7fd4',AMBER='#b07617';
 // enough to sit under the black labels without competing with the red variable arrows.
 // The darker rim keeps a 3px dot crisp -- a flat pastel fill alone reads as a smudge.
 const DOT='#9ec5e8',DOT_EDGE='#5a8fc4';
-// Leader line: same blue family as the dot, so the line reads as belonging to its point,
-// but a shade deeper than the dot's fill. A hairline is thinned by antialiasing, so at the
-// fill's own colour (contrast 1.81 on white) it would fade out; this sits at 2.09, just
-// above the old neutral grey (1.92), and stays far below the dot rim (3.41) and label (21).
-const LEAD='#8fb8dc';
+// Leader line: pastel purple, giving the plot three unambiguous roles -- blue for the
+// individuals, red for the variables, purple for the connector. Purple sits between the
+// other two hues, so the line reads as belonging to neither group, which is what a
+// connector should be. Chosen at contrast 2.10 on white: the same visual weight as the
+// blue it replaces (2.09), so nothing gains prominence, and still far below the dot rim
+// (3.41) and the label (21). A tint of the site's own purple (#8e5fc9).
+const LEAD='#bfa9e2';
 
 /* ================= plots ================= */
 function screeSvg(R){
