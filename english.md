@@ -96,13 +96,13 @@ title: English
   <h2 class="section-title">Publication List (English)</h2>
 
   <ol class="pub-list">
-    <li>T. Nakama, <strong class="author-highlight">K. Satoh</strong>, M. Toyosaki, K. Takemura, G. Ouchi, T. Umemura: Minimum observation time to determine ventilator liberation success and its associated factors in tracheostomized patients in intensive and high-care units in Japan: a single-center retrospective study, Acute and Critical Care, 2026. <a class="pub-link" href="https://doi.org/10.4266/acc.000338">DOI</a></li>
+    <li>T. Nakama et al.: Acute Crit Care, 2026. <a class="pub-link" href="https://doi.org/10.4266/acc.000338">DOI</a></li>
 
-    <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-026-00349-x">DOI</a> <a class="pub-link" href="https://arxiv.org/abs/2510.10375">arXiv</a></li>
+    <li><strong class="author-highlight">K. Satoh</strong>: Jpn J Stat Data Sci, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-026-00349-x">DOI</a> <a class="pub-link" href="https://arxiv.org/abs/2510.10375">arXiv</a></li>
 
-    <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, 9, 79-97, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
+    <li><strong class="author-highlight">K. Satoh</strong>: Jpn J Stat Data Sci, 9, 79-97, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
 
-    <li>T. Nakama, T. Umemura, S. Hoshino, M. Tamashiro, <strong class="author-highlight">K. Satoh</strong>, H. Sekiguchi: Mechanical Power to Predict Ventilator Liberation in Patients with a Tracheostomy, Respiratory Care, 70(8), 979-986, 2025. <a class="pub-link" href="https://doi.org/10.1089/respcare.12237">DOI</a></li>
+    <li>T. Nakama et al.: Respir Care, 70(8), 979-986, 2025. <a class="pub-link" href="https://doi.org/10.1089/respcare.12237">DOI</a></li>
 
     <li>A. Jimura et al.: ERA, Vols. 41 &amp; 42, pp. 3-22.</li>
 
