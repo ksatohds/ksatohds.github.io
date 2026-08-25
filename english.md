@@ -39,8 +39,8 @@ title: English
 
   <div class="card">
     <ul>
-      <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, in press. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
-      <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, in press.</li>
+      <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, 9, 79-97, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
+      <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-026-00349-x">DOI</a> <a class="pub-link" href="https://arxiv.org/abs/2510.10375">arXiv</a></li>
       <li>R package for NMF: nmfkc, officially registered on <a href="https://cran.r-project.org/web/packages/nmfkc/index.html">CRAN</a> (Apr 2026); see also <a href="https://ksatohds.github.io/nmfkc/">https://ksatohds.github.io/nmfkc/</a></li>
     </ul>
   </div>
@@ -98,7 +98,7 @@ title: English
   <ol class="pub-list">
     <li>T. Nakama, <strong class="author-highlight">K. Satoh</strong> et al.: Acute and Critical Care, in press.</li>
 
-    <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, in press.</li>
+    <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-026-00349-x">DOI</a> <a class="pub-link" href="https://arxiv.org/abs/2510.10375">arXiv</a></li>
 
     <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to multivariate time series data as a vector autoregression model, Japanese Journal of Statistics and Data Science, 9, 79-97, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-025-00314-0">DOI</a></li>
 
