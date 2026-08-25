@@ -96,7 +96,7 @@ title: English
   <h2 class="section-title">Publication List (English)</h2>
 
   <ol class="pub-list">
-    <li>T. Nakama, <strong class="author-highlight">K. Satoh</strong> et al.: Acute and Critical Care, in press.</li>
+    <li>T. Nakama, <strong class="author-highlight">K. Satoh</strong>, M. Toyosaki, K. Takemura, G. Ouchi, T. Umemura: Minimum observation time to determine ventilator liberation success and its associated factors in tracheostomized patients in intensive and high-care units in Japan: a single-center retrospective study, Acute and Critical Care, 2026. <a class="pub-link" href="https://doi.org/10.4266/acc.000338">DOI</a></li>
 
     <li><strong class="author-highlight">K. Satoh</strong>: Applying non-negative matrix factorization with covariates to label matrix for classification, Japanese Journal of Statistics and Data Science, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-026-00349-x">DOI</a> <a class="pub-link" href="https://arxiv.org/abs/2510.10375">arXiv</a></li>
 
