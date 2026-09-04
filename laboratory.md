@@ -86,6 +86,18 @@ title: ゼミ
 </div>
 
 <div class="section">
+  <h2 class="section-title">■学会発表</h2>
+
+  <div class="card card-research">
+    <ul class="pub-list">
+      <li>田原 弥，<strong class="author-highlight">佐藤 健一</strong>：ランダム特徴量を用いた非負値行列因子分解による教師あり分類について，2026年度統計関連学会連合大会，横浜市立大学，2026年9月.</li>
+      <li>伊達 優衣，<strong class="author-highlight">佐藤 健一</strong>：地方公共団体入札データを用いた入札談合リスク探索，2026年度統計関連学会連合大会，横浜市立大学，2026年9月.</li>
+      <li>藤田 香奈恵，<strong class="author-highlight">佐藤 健一</strong>：米国郡別健康指標データを用いた社会要因と健康アウトカムの潜在構造分析，2026年度統計関連学会連合大会，横浜市立大学，2026年9月.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
   <h2 class="section-title">■計算機環境</h2>
 
   <div class="card card-data">

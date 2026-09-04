@@ -29,6 +29,7 @@ title: 近況
   <h2 class="section-title">■研究・社会連携</h2>
   <div class="card">
     <ul class="news-list">
+      <li><span class="news-tag research">研究</span>M2学生3名が<a href="https://www.jfssa.jp/taikai/2026/">2026年度統計関連学会連合大会</a>において研究発表 横浜市立大学 2026年9月</li>
       <li><span class="news-tag talk">講演</span>滋賀県高等学校等教育研究会情報教育研究部会において「生成AIを活用したデータサイエンス入門」 2026年8月19日</li>
       <li><span class="news-tag paper">論文</span>琉球大学との共同研究が<a href="https://www.accjournal.org/">Acute and Critical Care</a>（Q1誌）に受理 2026年6月</li>
       <li><span class="news-tag talk">講演</span>トヨタ未来創生人財育成講座においてデータサイエンスに関する講演</li>
