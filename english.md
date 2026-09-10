@@ -96,6 +96,8 @@ title: English
   <h2 class="section-title">Publication List (English)</h2>
 
   <ol class="pub-list">
+    <li>N. Kondo et al.: PLOS ONE, accepted.</li>
+
     <li>T. Nakama et al.: Acute Crit Care, 2026. <a class="pub-link" href="https://doi.org/10.4266/acc.000338">DOI</a></li>
 
     <li><strong class="author-highlight">K. Satoh</strong>: Jpn J Stat Data Sci, 2026. <a class="pub-link" href="https://doi.org/10.1007/s42081-026-00349-x">DOI</a> <a class="pub-link" href="https://arxiv.org/abs/2510.10375">arXiv</a></li>
