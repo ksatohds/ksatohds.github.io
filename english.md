@@ -96,6 +96,8 @@ title: English
   <h2 class="section-title">Publication List (English)</h2>
 
   <ol class="pub-list">
+    <li><strong class="author-highlight">K. Satoh</strong>: Am J Math Manage Sci, accepted.</li>
+
     <li>N. Kondo et al.: PLOS ONE, accepted.</li>
 
     <li>T. Nakama et al.: Acute Crit Care, 2026. <a class="pub-link" href="https://doi.org/10.4266/acc.000338">DOI</a></li>

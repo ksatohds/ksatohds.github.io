@@ -29,6 +29,7 @@ title: 近況
   <h2 class="section-title">■研究・社会連携</h2>
   <div class="card">
     <ul class="news-list">
+      <li><span class="news-tag paper">論文</span>経時データを成長曲線モデルとして扱う非負値行列因子分解の手法が<a href="https://www.tandfonline.com/journals/umms20">American Journal of Mathematical and Management Sciences</a>に採択 2026年9月</li>
       <li><span class="news-tag paper">論文</span>琵琶湖の漁獲統計（1962〜1972年）に非負値行列因子分解を適用した共同研究が<a href="https://journals.plos.org/plosone/">PLOS ONE</a>に採択 2026年9月</li>
       <li><span class="news-tag research">研究</span>M2学生3名が<a href="https://www.jfssa.jp/taikai/2026/">2026年度統計関連学会連合大会</a>において研究発表 横浜市立大学 2026年9月</li>
       <li><span class="news-tag talk">講演</span>滋賀県高等学校等教育研究会情報教育研究部会において「生成AIを活用したデータサイエンス入門」 2026年8月19日</li>
