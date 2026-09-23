@@ -86,6 +86,18 @@ title: ゼミ
 </div>
 
 <div class="section">
+  <h2 class="section-title">■博士後期課程の指導（副指導）</h2>
+
+  <div class="card card-thesis">
+    <p>データサイエンス研究科の博士後期課程で2名の副指導教員を務め，2名とも2025年度に博士の学位を取得しました．</p>
+    <ul>
+      <li>COVID-19流行下における集中治療室の医療ひっ迫と臨床転帰との関連についての検討</li>
+      <li>LiNGAMのフレームワークにおける未観測な交絡変数の存在を認めた推定アルゴリズムの研究</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
   <h2 class="section-title">■学会発表</h2>
 
   <div class="card card-research">
@@ -93,6 +105,20 @@ title: ゼミ
       <li>田原 弥，<strong class="author-highlight">佐藤 健一</strong>：ランダム特徴量を用いた非負値行列因子分解による教師あり分類について，2026年度統計関連学会連合大会，横浜市立大学，2026年9月.</li>
       <li>伊達 優衣，<strong class="author-highlight">佐藤 健一</strong>：地方公共団体入札データを用いた入札談合リスク探索，2026年度統計関連学会連合大会，横浜市立大学，2026年9月.</li>
       <li>藤田 香奈恵，<strong class="author-highlight">佐藤 健一</strong>：米国郡別健康指標データを用いた社会要因と健康アウトカムの潜在構造分析，2026年度統計関連学会連合大会，横浜市立大学，2026年9月.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">■講義資料</h2>
+
+  <div class="card card-course">
+    <p>担当科目の講義資料を自作し，全文を<a href="https://x.gd/rY727">公開</a>しています（四部 計1,164ページ）．Rのコードと実行結果を本文に組み込んでいるので，手元で再現できます．</p>
+    <ul>
+      <li>回帰分析と一般化線形モデル（187ページ）</li>
+      <li>生存時間解析（621ページ，学部科目「生存時間解析」の全15回分）</li>
+      <li>成長曲線モデルと変化係数（135ページ）</li>
+      <li>NMFによるデータモデリング（221ページ）</li>
     </ul>
   </div>
 </div>

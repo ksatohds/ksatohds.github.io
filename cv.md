@@ -11,7 +11,7 @@ title: 略歴
       <img src="{{ 'image/c5c94d16fd47f40c566739f70009a821.jpg' | relative_url }}" alt="佐藤健一" class="photo-card">
     </div>
     <div style="flex: 1 1 300px;">
-      <p>佐藤　健一(さとうけんいち) 滋賀大学データサイエンス学部副学部長・教授．広島大学大学院 理学研究科 数学専攻修了．博士（理学）．広島大学原爆放射線医科学研究所准教授を経て現職．専門は統計学．応用統計学会学会賞（優秀論文賞）を3度受賞．NHK歴史探偵に6回出演．</p>
+      <p>佐藤　健一(さとうけんいち) 滋賀大学データサイエンス学部副学部長・教授．広島大学大学院 理学研究科 数学専攻修了．博士（理学）．広島大学原爆放射線医科学研究所准教授を経て現職．専門は統計学．査読付原著論文96編．応用統計学会学会賞（優秀論文賞）を3度受賞．NHK歴史探偵ほかに6回出演．</p>
     </div>
   </div>
 </div>
@@ -34,7 +34,7 @@ title: 略歴
     </div>
     <div class="year">
       <span>2001年6月〜11月</span>
-      <p><a href="https://www.ukri.org/councils/mrc/">Medical Research Council</a>（英国）・放射線ゲノム安定性部門 客員研究員</p>
+      <p><a href="https://www.ukri.org/councils/mrc/">Medical Research Council</a>（英国）・放射線ゲノム安定性部門 客員研究員（文部科学省 在外研究員〔創造開発研究〕として派遣）</p>
     </div>
     <div class="year">
       <span>2002年4月</span>
@@ -56,6 +56,14 @@ title: 略歴
       <span>2021年4月</span>
       <p>滋賀大学データサイエンス学系・教授</p>
     </div>
+    <div class="year">
+      <span>2023年4月</span>
+      <p>滋賀大学データサイエンス学部・副学部長（併任）</p>
+    </div>
+    <div class="year">
+      <span>2026年4月</span>
+      <p><a href="https://www.ohmi-dsi.jp/">一般社団法人近江データサイエンスイニシアティブ</a>・理事（併任）</p>
+    </div>
   </div>
 </div>
 
@@ -63,6 +71,7 @@ title: 略歴
   <h2 class="section-title">■受賞</h2>
 
   <ul class="award-list">
+    <li><a href="https://www.ds.shiga-u.ac.jp/information/2012/">滋賀大学データサイエンス学部 ベストティーチャー賞</a>: 第1回（2025年度春学期）の受賞者3名の一人（基礎統計活用演習A）</li>
     <li>Outstanding Presentation Award: Dr. Yujiro Kuroda, IAGG Asia/Oceania Regional Congress, June 12-14, Yokohama, 2023. (筆頭著者受賞)</li>
     <li><a href="http://www.applstat.gr.jp/">2023年度 応用統計学会</a> 学会賞（優秀論文賞）: 佐藤健一 : 応用統計学 51, 1-18, 2022.</li>
     <li>日本認知症学会/日本老年精神医学会 合同奨励賞: 黒田佑次郎 et al., 第41回日本認知症学会学術集会/第37回日本老年精神医学会, 2022. (筆頭著者受賞)</li>
@@ -73,7 +82,6 @@ title: 略歴
     <li><a href="http://www.applstat.gr.jp/">応用統計学会</a> 学会賞(優秀ポスター発表賞): 冨田哲治, 佐藤健一 et al., 2011. (筆頭著者受賞)</li>
     <li><a href="http://www.applstat.gr.jp/">2010年度 応用統計学会</a> 学会賞（優秀論文賞）: 佐藤健一, 柳原宏和, 加茂憲一: 応用統計学 38, 19-29, 2009.</li>
     <li><a href="http://www.jade.dti.ne.jp/%7Ekaizen/index.html">日本栄養改善学会</a> 学会賞: 小田光子, 佐藤健一, 岸田典子: 栄養学雑誌 65, 233-240, 2007. (筆頭著者受賞)</li>
-    <li><a href="http://www.okawa-foundation.or.jp/index.html">大川情報通信基金研究助成</a>, 助成番号02-20, 2002.</li>
   </ul>
 </div>
 
@@ -95,6 +103,9 @@ title: 略歴
   <div class="card">
     <ul>
       <li>日本統計学会, 応用統計学会</li>
+      <li><a href="https://www.applstat.gr.jp/about/organization/trustees/">応用統計学会</a> 地区代表評議員（東海近畿）: 2026〜2027年度</li>
+      <li>統計エキスパート人材育成コンソーシアム 運営委員会 副委員長: 2026年4月〜（委員: 2025年4月〜）</li>
+      <li>日本学術振興会 産学協力研究委員会「放射線の利用と生体影響 第195委員会」委員・第1分科会（基礎研究分科会）コアメンバー: 2023〜2025年</li>
       <li><a href="http://www.dnc.ac.jp/">大学入試センター</a> 教科科目第一委員会委員: 平成25年〜26年</li>
       <li><a href="http://www.mhlw.go.jp/stf/shingi/2r9852000000ahdf.html#shingi7">厚生労働省ワーキンググループ</a>: 平成23年</li>
     </ul>
@@ -105,19 +116,25 @@ title: 略歴
   <h2 class="section-title">■研究代表者</h2>
 
   <ul class="grant-list">
-    <li><span class="grant-year">2026</span> フジシール財団 研究助成</li>
-    <li><span class="grant-year">2022-2026</span> 科学研究費補助金・基盤研究(C) 「時空間データに対する非負値行列因子分解における変化係数の導入と展開」</li>
-    <li><span class="grant-year">平成29-32年</span> 科学研究費補助金・基盤研究(C)</li>
+    <li><span class="grant-year">2026</span> 公益財団法人フジシール財団 研究助成「ランダムフーリエ特徴量を用いた非負値行列因子分解によるパッケージ新素材探索基盤の開発」</li>
+    <li><span class="grant-year">2025</span> 受託事業「統計エキスパート人材育成プロジェクト」</li>
+    <li><span class="grant-year">2022-2026</span> 科学研究費補助金・基盤研究(C) 22K11930「時空間データに対する非負値行列因子分解における変化係数の導入と展開」</li>
+    <li><span class="grant-year">2022-2023</span> 共同研究「顧客の購買データ分析」（<a href="https://www.h2o-retailing.co.jp/ja/index.html">エイチ・ツー・オー リテイリング株式会社</a>）</li>
+    <li><span class="grant-year">2020-2025</span> <a href="https://www.shiga-u.ac.jp/rcse/research/project/">滋賀大学 環境総合研究センター プロジェクト研究</a>（6年連続採択）</li>
+    <li><span class="grant-year">2019-2025</span> 受託事業「地域分析に係る学術指導」（京都府政策企画部企画統計課）</li>
+    <li><span class="grant-year">2019-2020</span> 共同研究「金融業におけるデータサイエンスの応用」（<a href="https://www.smbctb.co.jp/">株式会社SMBC信託銀行</a>）</li>
+    <li><span class="grant-year">2019-2020</span> 共同研究「鍛造過程における異常分析」（<a href="https://www.metalart.co.jp/">株式会社メタルアート</a>）</li>
+    <li><span class="grant-year">平成29-32年</span> 科学研究費補助金・基盤研究(C) 17K00052「変化係数を用いた時空間データにおける地域集積性の検出と生存時間データへの応用」</li>
     <li><span class="grant-year">平成26-27年</span> 文部科学省運営費交付金特別経費</li>
-    <li><span class="grant-year">平成26-28年</span> 科学研究費補助金・基盤研究(C)</li>
-    <li><span class="grant-year">平成23-25年</span> 科学研究費補助金・若手研究(B)</li>
+    <li><span class="grant-year">平成26-28年</span> 科学研究費補助金・基盤研究(C) 26330043「空間データにおけるセミパラメトリックな変化係数の推測と生存時間データへの応用」</li>
+    <li><span class="grant-year">平成23-25年</span> 科学研究費補助金・若手研究(B) 23700337「線形な変化係数の信頼区間の精密化と共分散構造分析への応用に関する研究」</li>
     <li><span class="grant-year">平成21-22年</span> 広島県栄養士会補助金</li>
-    <li><span class="grant-year">平成21-22年</span> 科学研究費補助金・若手研究(B)</li>
-    <li><span class="grant-year">平成20-21年</span> 広島大学藤井研究助成基金</li>
+    <li><span class="grant-year">平成21-22年</span> 科学研究費補助金・若手研究(B) 21700306「経時離散データにおける線形な変化係数の推測に関する研究」</li>
+    <li><span class="grant-year">平成20-22年</span> 広島大学藤井研究助成基金「繰り返し測定データのための重回帰の理論と実データを解析するためのソフトウェア開発」</li>
     <li><span class="grant-year">平成18年</span> 圏域保健対策事業費補助金</li>
-    <li><span class="grant-year">平成15年</span> 大川情報通信基金研究助成</li>
-    <li><span class="grant-year">平成13-14年</span> 科学研究費補助金・奨励研究(A)</li>
-    <li><span class="grant-year">平成10-11年</span> 科学研究費補助金・奨励研究(A)</li>
+    <li><span class="grant-year">平成15年</span> <a href="http://www.okawa-foundation.or.jp/index.html">大川情報通信基金</a> 研究助成（助成番号02-20）「DNAチップ上の遺伝子発現データと表現型情報との相関解析ソフトウェアの開発」</li>
+    <li><span class="grant-year">平成13-14年</span> 科学研究費補助金・若手研究(B) 13780176「非線形成長曲線モデルにおける個体変動の導入とその評価」</li>
+    <li><span class="grant-year">平成10-11年</span> 科学研究費補助金・奨励研究(A) 10780149「AIC寄与量による支持率情報に基づくモデル選択に関する研究」</li>
   </ul>
 </div>
 

@@ -41,11 +41,12 @@ title: Software
     <div class="gallery-item">
       <div class="gallery-body">
         <h3>nmfkc</h3>
-        <p data-ja="カーネル共変量付き非負値行列因子分解（Non-Negative Matrix Factorization with Kernel Covariates）。CRAN登録済み。">Non-Negative Matrix Factorization with Kernel Covariates. Available on CRAN.</p>
+        <p data-ja="カーネル共変量付き非負値行列因子分解（Non-Negative Matrix Factorization with Kernel Covariates）。CRAN登録済み。R-bloggers の月次特集「April 2026 Top 40 New CRAN Packages」に選出。">Non-Negative Matrix Factorization with Kernel Covariates. Available on CRAN. Featured in R-bloggers' "April 2026 Top 40 New CRAN Packages".</p>
         <div class="gallery-links">
           <a href="https://ksatohds.github.io/nmfkc/" data-ja="ドキュメント">Docs</a>
           <a href="https://github.com/ksatohds/nmfkc">GitHub</a>
           <a href="https://cran.r-project.org/web/packages/nmfkc/index.html">CRAN</a>
+          <a href="https://www.r-bloggers.com/2026/05/april-2026-top-40-new-cran-packages/">R-bloggers</a>
         </div>
       </div>
     </div>

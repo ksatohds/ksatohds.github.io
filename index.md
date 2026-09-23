@@ -37,10 +37,10 @@ title: 近況
       <li><span class="news-tag talk">講演</span>トヨタ未来創生人財育成講座においてデータサイエンスに関する講演</li>
       <li><span class="news-tag media">放送</span><a href="https://www.web.nhk/tv/an/rekishi-tantei/pl/series-tep-VR22V15XWL/ep/GPRWGV86XV">NHK歴史探偵「信長最大の敵 大坂本願寺」</a> 6/3水22:00-22:45</li>
       <li><span class="news-tag paper">論文</span>教師あり分類の手法がJapanese Journal of Statistics and Data Scienceに受理 2026年5月</li>
-      <li><span class="news-tag talk">講演</span>村田製作所@八日市工場 においてAIに関する講演</li>
+      <li><span class="news-tag talk">講演</span>村田製作所@八日市事業所 においてAIに関する講演</li>
       <li><span class="news-tag research">研究</span>フジシール財団・研究助成に採択 2026年4月</li>
       <li><span class="news-tag tv">TV出演まとめ</span><a href="https://www.nhk-ondemand.jp/goods/G2021114244SA000/">NHK歴史探偵「細かすぎ毛利元就」</a>, <a href="https://www.nhk-ondemand.jp/goods/G2022123781SA000/?np_banID=top_nw_m_123781">NHK歴史探偵「SNSの元祖!?正岡子規」</a>, <a href="https://www.nhk.jp/p/rekishi-tantei/ts/VR22V15XWL/episode/te/85NPJ89265/">NHK歴史探偵「情報戦 関ヶ原」</a>, <a href="https://www.nhk-ondemand.jp/goods/G2023126003SA000/">BSプレミアム「決戦！関ヶ原Ⅱ大名たちの野望」</a>, <a href="https://www.nhk.jp/p/rekishi-tantei/ts/VR22V15XWL/episode/te/6XVLZRRX8Q/">NHK歴史探偵「清少納言と枕草子」</a>, <a href="https://www.web.nhk/tv/an/rekishi-tantei/pl/series-tep-VR22V15XWL/ep/GPRWGV86XV">NHK歴史探偵「信長最大の敵 大坂本願寺」</a></li>
-      <li><span class="news-tag collab">企業連携まとめ</span><a href="http://ohmi-dsi.jp/program/">滋賀大学データサイエンス人材育成プログラム</a> 主担当 (2019〜2025)年5回3時間, <a href="http://www.pref.kyoto.jp/info/gyosei/soshiki/026/index.html">京都府政策企画部企画統計課</a>様への学術指導 (2019〜2025), <a href="https://www.tosoh.co.jp/">東ソー</a>様MI教育プログラム講師(2022, 2023)6回分, <a href="https://www.h2o-retailing.co.jp/ja/index.html">H2Oリテーリング</a>様との共同研究 2023, <a href="https://www.nalux.co.jp/">ナルックス</a>様への学術指導 2023, <a href="https://www.satokogyo.co.jp/">佐藤工業</a>様への学術指導(2024), <a href="https://toyo-system.co.jp/">東洋システム</a>様への学術指導(2025), <a href="https://www.shiga-u.ac.jp/24897/">トヨタ未来創生人財育成講座</a>(2026)</li>
+      <li><span class="news-tag collab">企業連携まとめ</span><a href="http://ohmi-dsi.jp/program/">滋賀大学データサイエンス人材育成プログラム</a> 主担当 (2019〜2025)年5回3時間・累計受講者190名超, <a href="http://www.pref.kyoto.jp/info/gyosei/soshiki/026/index.html">京都府政策企画部企画統計課</a>様への学術指導 (2019〜2025), <a href="https://www.smbctb.co.jp/">SMBC信託銀行</a>様との共同研究 (2019, 2020), <a href="https://www.metalart.co.jp/">メタルアート</a>様との共同研究 (2019, 2020), <a href="https://www.tosoh.co.jp/">東ソー</a>様MI教育プログラム講師(2022, 2023)6回分, <a href="https://www.h2o-retailing.co.jp/ja/index.html">H2Oリテイリング</a>様との共同研究 (2022, 2023), <a href="https://www.nalux.co.jp/">ナルックス</a>様への学術指導 2023, <a href="https://www.satokogyo.co.jp/">佐藤工業</a>様への学術指導(2024), <a href="https://toyo-system.co.jp/">東洋システム</a>様への学術指導(2025), <a href="https://www.shiga-u.ac.jp/24897/">トヨタ未来創生人財育成講座</a>(2026)</li>
     </ul>
   </div>
 </div>
@@ -54,7 +54,7 @@ title: 近況
       <li><span class="news-tag education">学部・修士 ゼミ</span>ゼミページ参照</li>
       <li><span class="news-tag education">学部</span>基礎統計活用演習A, 基礎統計活用演習B, 医療統計論, 医療統計演習, 生存時間解析</li>
       <li><span class="news-tag education">大学院</span>統計的モデリング, 統計的モデリング実践論, モデル評価論, モデル評価実践論</li>
-      <li><span class="news-tag education">委員</span>2025-: 副学部長(総務担当), 高大接続委員会（委員長）, 統計教員育成事業WG（リーダー）, 内部質保証委員会, 自己点検・評価WG, 教育・学生支援機構教育推進部門, 教育学生支援機構高大接続・入試センター運営委員会, 財務・施設マネジメント委員会 2023-2024：副学部長(学務学生生活担当), 学務委員会委員長, 数理・DS・AI教育推進部会委員長, 学系人事委員会, 内部質保証委員会, 教育・学生支援機構(教育推進部門), 統計教員育成事業WG, 統計・因果推論教員採用WG, URA設置とりまとめ</li>
+      <li><span class="news-tag education">委員</span>2025-: 副学部長(総務担当), 高大接続委員会（委員長）, 数理・DS・AI教育推進部会（部会長）, 統計エキスパート人材育成コンソーシアム運営委員会（2025-委員, 2026-副委員長）, 統計教員育成事業WG（リーダー）, 内部質保証委員会, 自己点検・評価WG, 教育・学生支援機構教育推進部門, 教育学生支援機構高大接続・入試センター運営委員会, 財務・施設マネジメント委員会 2023-2024：副学部長(学務学生生活担当), 学務委員会委員長, 数理・DS・AI教育推進部会（部会長）, 学系人事委員会, 内部質保証委員会, 教育・学生支援機構(教育推進部門), 統計教員育成事業WG, 統計・因果推論教員採用WG, URA設置とりまとめ</li>
       <li><span class="news-tag education">教材</span>「<a href="https://www.shiga-u.ac.jp/program/education_support/ds-e-learning/">大学生のためのデータサイエンス（Ⅲ）問題解決編</a>」とりまとめ</li>
     </ul>
   </div>

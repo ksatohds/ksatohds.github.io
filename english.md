@@ -52,6 +52,14 @@ title: English
   <div class="card">
     <div class="timeline">
       <div class="year">
+        <span>Apr 2026 - Present</span>
+        <p>Director, <a href="https://www.ohmi-dsi.jp/">OHMI Data Science Initiative</a> (General Incorporated Association; concurrent)</p>
+      </div>
+      <div class="year">
+        <span>Apr 2023 - Present</span>
+        <p>Associate Dean, Faculty of Data Science, Shiga University (concurrent)</p>
+      </div>
+      <div class="year">
         <span>Apr 2021 - Present</span>
         <p>Professor, Faculty of Data Science, Shiga University</p>
       </div>
@@ -60,7 +68,7 @@ title: English
         <p>Professor, The Center for Data Science Education and Research, Shiga University</p>
       </div>
       <div class="year">
-        <span>Apr 2010 - March 2019</span>
+        <span>Jan 2010 - Mar 2019</span>
         <p>Associate Professor, <a href="https://www.hiroshima-u.ac.jp/en/rbm">Research Institute for Radiation Biology and Medicine</a>, Hiroshima University</p>
       </div>
       <div class="year">
@@ -68,8 +76,8 @@ title: English
         <p>Visiting Researcher, <a href="https://www.unsw.edu.au/">School of Mathematics and Statistics, UNSW</a>, Australia</p>
       </div>
       <div class="year">
-        <span>Jul - Nov 2001</span>
-        <p>Visiting Researcher, <a href="https://mrc.ukri.org/">MRC Harwell Institute</a>, Medical Research Council, U.K.</p>
+        <span>Jun - Nov 2001</span>
+        <p>Visiting Researcher, <a href="https://mrc.ukri.org/">MRC Harwell Institute</a>, Medical Research Council, U.K. (dispatched as an Overseas Research Fellow of MEXT, Japan)</p>
       </div>
       <div class="year">
         <span>Jun 1999</span>
@@ -84,10 +92,21 @@ title: English
 
   <div class="card">
     <ul class="award-list">
+      <li>Best Teacher Award, Faculty of Data Science, Shiga University (1st, Spring 2025)</li>
       <li>JSAS Best Paper Award 2023</li>
       <li>Best Paper Award, BCD 2017</li>
       <li>JSAS Best Paper Award 2015</li>
       <li>JSAS Best Paper Award 2010</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Professional Service</h2>
+
+  <div class="card">
+    <ul>
+      <li>Councillor (Tokai-Kinki District), <a href="https://www.applstat.gr.jp/about/organization/trustees/">Japanese Society of Applied Statistics (JSAS)</a>, 2026-2027</li>
     </ul>
   </div>
 </div>
@@ -112,13 +131,13 @@ title: English
 
     <li>R. Kawabata et al.: Int J Clin Oncol, 29, 1334-1346, 2024. <a class="pub-link" href="https://doi.org/10.1007/s10147-024-02552-w">DOI</a></li>
 
-    <li>Y. Kuroda et al.: Geriatr Gerontol Int, 1-8, 2024. <a class="pub-link" href="https://doi.org/10.1111/ggi.14794">DOI</a></li>
+    <li>Y. Kuroda et al.: Geriatr Gerontol Int, 24, 221-228, 2024. <a class="pub-link" href="https://doi.org/10.1111/ggi.14794">DOI</a></li>
 
-    <li>A. Goto et al.: Lancet Reg Health, 40, 1-3, 2023. <a class="pub-link" href="https://doi.org/10.1016/j.lanwpc.2023.100946">DOI</a></li>
+    <li>A. Goto et al.: Lancet Reg Health West Pac, 40, 100946, 2023. <a class="pub-link" href="https://doi.org/10.1016/j.lanwpc.2023.100946">DOI</a></li>
 
     <li>L. Kinoshita et al.: Front Commun, 8, 2023. <a class="pub-link" href="https://doi.org/10.3389/fcomm.2023.1008108">DOI</a></li>
 
-    <li>Y. Kuroda et al.: Int J Environ Res Public Health, 19(16), 2022. <a class="pub-link" href="https://doi.org/10.3390/ijerph191610094">DOI</a></li>
+    <li>Y. Kuroda et al.: Int J Environ Res Public Health, 19(16), 10094, 2022. <a class="pub-link" href="https://doi.org/10.3390/ijerph191610094">DOI</a></li>
 
     <li>Y. Sakamoto et al.: J Infect Chemother, 28(10), 1439-1444, 2022. <a class="pub-link" href="https://doi.org/10.1016/j.jiac.2022.06.002">DOI</a></li>
 
@@ -132,7 +151,7 @@ title: English
 
     <li>A. Goto et al.: JMA Journal, 3(1), 67-72, 2020. <a class="pub-link" href="https://doi.org/10.31662/jmaj.2019-0031">DOI</a></li>
 
-    <li>H. Obinata et al.: J Lipid Res, 60(1), 1912-1921, 2019. <a class="pub-link" href="https://doi.org/10.1194/jlr.RA119000277">DOI</a></li>
+    <li>H. Obinata et al.: J Lipid Res, 60(11), 1912-1921, 2019. <a class="pub-link" href="https://doi.org/10.1194/jlr.RA119000277">DOI</a></li>
 
     <li>T. Yoshiya et al.: Invest New Drugs, 38, 485-492, 2020. <a class="pub-link" href="https://doi.org/10.1007/s10637-019-00836-x">DOI</a></li>
 
@@ -216,11 +235,11 @@ title: English
 
     <li>F. Yamasaki et al.: Radiology, 235-3, 985-991, 2005. <a class="pub-link" href="https://doi.org/10.1148/radiol.2353031338">DOI</a></li>
 
-    <li>Y. Nitta et al.: J Radiat Res, 45-1, 2004. <a class="pub-link" href="https://doi.org/10.1269/jrr.45.245">DOI</a></li>
+    <li>Y. Nitta et al.: J Radiat Res, 45(2), 245-251, 2004. <a class="pub-link" href="https://doi.org/10.1269/jrr.45.245">DOI</a></li>
 
     <li>T. Tanaka et al.: Int J Cancer, 111, 617-626, 2004. <a class="pub-link" href="https://doi.org/10.1002/ijc.20289">DOI</a></li>
 
-    <li><strong class="author-highlight">K. Satoh</strong> and M. Ohtaki: Commun Stat Theory Methods, 33-10, 1-14, 2004. <a class="pub-link" href="https://doi.org/10.1081/STA-200031363">DOI</a></li>
+    <li><strong class="author-highlight">K. Satoh</strong> and M. Ohtaki: Commun Stat Theory Methods, 33(10), 2409-2422, 2004. <a class="pub-link" href="https://doi.org/10.1081/STA-200031363">DOI</a></li>
 
     <li><strong class="author-highlight">K. Satoh</strong> et al.: Jpn J Biometrics, 25, 61-67, 2004. <a class="pub-link" href="https://doi.org/10.5691/jjb.25.61">DOI</a></li>
 
