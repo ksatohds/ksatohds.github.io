@@ -18,7 +18,7 @@ title: 論文
     <ul class="pub-list">
       <li>青木高明, 市川治, 今井貴史, 岩崎悟, 太田智美, 奥村太一, 小松尚登, 齋藤邦彦, <strong class="author-highlight">佐藤健一</strong>, 鈴木清, 陳峻冬, チャンディントゥアン, 南條浩輝, 松原悠: 生成AIを活用したデータサイエンス入門（竹村彰通 監修）, 学術図書出版社, 2026年2月. ISBN 978-4-7806-1414-5 <a class="pub-link" href="https://www.gakujutsu.co.jp/product/978-4-7806-1414-5/">Link</a><br>本書の企画と第8章「十種競技の種目の関係を探る」を担当．</li>
       <li><strong class="author-highlight">佐藤健一</strong>, 杉本知之, 寺口俊介, 江崎剛史: 実況!Rで学ぶ医療・製薬系データサイエンスセミナー, 学術図書出版社, 2023年4月. ISBN 978-4-7806-1103-8 <a class="pub-link" href="https://www.gakujutsu.co.jp/product/978-4-7806-1103-8/">Link</a><br>著者代表．全11回中5回分を担当．社会人向けのRのハンズオンセミナー（2019〜2025年，累計受講者190名超）を書籍化したもの．</li>
-      <li>藤井良宜, <strong class="author-highlight">佐藤健一</strong>, 冨田哲治, 和泉志津恵: 事例でわかる統計シリーズ 医療系のための統計入門（景山三平 監修）, 実教出版, 2015年11月. ISBN 978-4-407-33713-6<br>応用編の全5章（第11〜15章）を執筆．</li>
+      <li>藤井良宜, <strong class="author-highlight">佐藤健一</strong>, 冨田哲治, 和泉志津恵: 事例でわかる統計シリーズ 医療系のための統計入門（景山三平 監修）, 実教出版, 2015年11月. ISBN 978-4-407-33713-6 <a class="pub-link" href="https://www.jikkyo.co.jp/book/detail/15500008/">Link</a><br>応用編の全5章（第11〜15章）を執筆．</li>
     </ul>
   </div>
 </div>
