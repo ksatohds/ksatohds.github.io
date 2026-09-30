@@ -8,6 +8,7 @@ title: English
   <div>
     <h1>Kenichi SATOH, Ph.D.</h1>
     <h2>Professor</h2>
+    <h3>Assistant to the President</h3>
     <h3>Associate Dean of Faculty of Data Science</h3>
     <h3>Shiga University, JAPAN</h3>
     <p><a href="https://www.ds.shiga-u.ac.jp/">https://www.ds.shiga-u.ac.jp/</a></p>
@@ -51,6 +52,10 @@ title: English
 
   <div class="card">
     <div class="timeline">
+      <div class="year">
+        <span>Oct 2026 - Mar 2027</span>
+        <p>Assistant to the President, Shiga University (concurrent)</p>
+      </div>
       <div class="year">
         <span>Apr 2026 - Present</span>
         <p>Director, <a href="https://www.ohmi-dsi.jp/">OHMI Data Science Initiative</a> (General Incorporated Association; concurrent)</p>
