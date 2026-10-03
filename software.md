@@ -31,7 +31,7 @@ title: Software
 
 <div class="section">
   <h2 class="section-title" data-ja="ソフトウェア">Software</h2>
-  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="GitHubで公開しているRパッケージ、ブラウザで動くHTMLアプリ、サーバー上で動くWebアプリを紹介します。いずれもインストール不要です。">R packages published on GitHub, plus browser-based HTML apps and a server-hosted web app — no installation required.</p>
+  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="GitHubで公開しているRパッケージ、ブラウザで動くHTMLアプリ、webR によりブラウザ上で動く R Shiny アプリを紹介します。いずれもインストール不要です。">R packages published on GitHub, plus browser-based HTML apps and R Shiny apps that run in the browser with webR — no installation required.</p>
 </div>
 
 <div class="section">
@@ -210,16 +210,17 @@ title: Software
 </div>
 
 <div class="section">
-  <h2 class="section-title" data-ja="Webアプリ">Web apps</h2>
-  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="外部サーバー上で動作するアプリです。">Apps that run on an external server (R Shiny).</p>
+  <h2 class="section-title" data-ja="R Shiny アプリ（webR）">R Shiny apps (webR)</h2>
+  <p style="color: var(--color-text-light); line-height: 1.8; max-width: 800px;" data-ja="R を WebAssembly 化した webR により、R Shiny アプリをブラウザだけで動かしています。サーバーは使わず、読み込んだデータは手元のパソコンから外に出ません。初回は R 本体を読み込むため、起動に時間がかかります。">R Shiny apps that run entirely in your browser with webR (R compiled to WebAssembly). No server is involved, and the data you load stay on your computer. The first launch takes a while because R itself is downloaded.</p>
   <div class="gallery-grid sw-web">
 
     <div class="gallery-item">
       <div class="gallery-body">
         <h3 data-ja="回帰木・分類木 CART">Regression &amp; Classification Tree (CART)</h3>
-        <p data-ja="回帰木・分類木（CART）を構築する R Shiny アプリ。">An R Shiny app that builds regression and classification trees (CART).</p>
+        <p data-ja="R の rpart で回帰木・分類木（CART）を構築します。木の図（rpart.plot・partykit）、ROC曲線、変数重要度、複雑度パラメータの図を表示し、学習・テストデータへの分割にも対応します。図は PDF/PNG で保存できます。">Builds regression and classification trees (CART) with R's rpart. Shows tree diagrams (rpart.plot, partykit), the ROC curve, variable importance and the complexity-parameter plot, and supports a train/test split. Figures can be saved as PDF/PNG.</p>
         <div class="gallery-links">
-          <a href="https://kenichi-satoh.shinyapps.io/CART/" data-ja="アプリを開く">Open app</a>
+          <a href="https://ksatohds.github.io/webR/CART/" data-ja="アプリを開く">Open app</a>
+          <a href="https://github.com/ksatohds/webR">GitHub</a>
         </div>
       </div>
     </div>
