@@ -120,7 +120,7 @@ title: English
   <h2 class="section-title">Publication List (English)</h2>
 
   <ol class="pub-list">
-    <li><strong class="author-highlight">K. Satoh</strong>: Am J Math Manage Sci, 2026. <a class="pub-link" href="https://doi.org/10.1080/01966324.2026.2740470">DOI</a> <a class="pub-link" href="https://arxiv.org/abs/2403.05359">arXiv</a></li>
+    <li><strong class="author-highlight">K. Satoh</strong>: Am J Math Manage Sci, 1-21, 2026. <a class="pub-link" href="https://doi.org/10.1080/01966324.2026.2740470">DOI</a> <a class="pub-link" href="https://arxiv.org/abs/2403.05359">arXiv</a></li>
 
     <li>N. Kondo et al.: PLOS ONE, accepted.</li>
 
